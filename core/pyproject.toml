@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "core"
+version = "0.1.0"
+description = ""
+authors = ["Marvin Willms <marvin.willms@code.berlin>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pymobiledevice3 = "^4.14.16"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
