@@ -363,14 +363,14 @@ class TestClientSocket:
             with pytest.raises(TimeoutError):
                 await client.receive(timeout=timeout)
 
-    @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
-    def test_close(self, mock_zmq_context, client_socket):
+    def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, client_socket):
         socket = client_socket._socket
 
         client_socket.close()
 
         assert client_socket._socket is None
-        assert mock_zmq_context.term.called is True
+        spy_zmq_socket_close.assert_called_once()
+        spy_zmq_context_term.assert_called_once()
         assert socket.closed is True
 
 
@@ -423,13 +423,12 @@ class TestServerSocket:
             [SuccessResponse(message="Success", data={}).encode()]
         )
 
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[HeartbeatRequest().encode()]], indirect=True)
-    async def test_close(self, mock_zmq_context, server_socket):
+    def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, server_socket):
         socket = server_socket._socket
 
         server_socket.close()
 
         assert server_socket._socket is None
-        assert mock_zmq_context.term.called is True
+        spy_zmq_socket_close.assert_called_once()
+        spy_zmq_context_term.assert_called_once()
         assert socket.closed is True

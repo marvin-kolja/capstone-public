@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 import zmq
+import zmq.asyncio
 
 from core.socket import SocketMessageCodec
 
@@ -39,6 +40,16 @@ def mock_zmq_poller(magic_mock_socket):
         mock_poll.return_value = mock_poller_instance
 
         yield mock_poller_instance
+
+
+@pytest.fixture(scope="function")
+def spy_zmq_socket_close(mocker):
+    return mocker.spy(zmq.asyncio.Socket, "close")
+
+
+@pytest.fixture(scope="function")
+def spy_zmq_context_term(mocker):
+    return mocker.spy(zmq.asyncio.Context, "term")
 
 
 @pytest.fixture(scope="function")
