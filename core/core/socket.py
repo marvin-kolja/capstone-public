@@ -1,8 +1,9 @@
 import json
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Union
 
+import zmq.asyncio
 from pydantic import BaseModel, field_validator, Field, ValidationError
 
 from core.exceptions.socket import InvalidSocketMessage
@@ -123,3 +124,79 @@ class SocketMessageCodec:
             raise InvalidSocketMessage("Data must be a JSON object")
 
         return SocketMessageFactory.parse_message_data(decoded_message)
+
+
+class ClientSocketMessageCodec(SocketMessageCodec):
+    @staticmethod
+    def decode_message(message: bytes) -> ServerResponse:
+        return SocketMessageCodec.decode_message(message)
+
+
+class ServerSocketMessageCodec(SocketMessageCodec):
+    @staticmethod
+    def decode_message(message: bytes) -> ServerResponse:
+        return SocketMessageCodec.decode_message(message)
+
+
+class Socket:
+    _address = '127.0.0.1'
+
+    def __init__(self, codec: SocketMessageCodec = SocketMessageCodec()):
+        self._zmq_context = zmq.asyncio.Context()
+        self._socket: Optional[zmq.asyncio.Socket] = None
+        self._codec = codec
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def close(self):
+        if self._socket is not None:
+            self._socket.close()
+            self._socket = None
+        self._zmq_context.term()
+
+
+class ClientSocket(Socket):
+    def __init__(self, port: int, codec: Optional[ClientSocketMessageCodec] = None):
+        super().__init__(codec=codec)
+        self._port = port
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def connect(self):
+        raise NotImplementedError()
+
+    async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ServerResponse:
+        raise NotImplementedError()
+
+    async def send(self, message: ClientRequest):
+        raise NotImplementedError()
+
+
+class ServerSocket(Socket):
+
+    def __init__(self, port: Optional[int] = None, codec: Optional[ServerSocketMessageCodec] = None):
+        super().__init__(codec=codec)
+        self.__port: Optional[int] = port
+
+    @property
+    def port(self) -> int:
+        return self.__port
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def start(self):
+        raise NotImplementedError()
+
+    async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ClientRequest:
+        raise NotImplementedError()
+
+    async def respond(self, message: ServerResponse):
+        raise NotImplementedError()
