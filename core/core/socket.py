@@ -195,8 +195,19 @@ class ClientSocket(Socket):
         self._socket.connect(f"tcp://{self._address}:{self._port}")
         self._socket.setsockopt(zmq.LINGER, 0)
 
-    async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ServerResponse:
-        raise NotImplementedError()
+    async def receive(self, timeout: Optional[timedelta] = None) -> ServerResponse:
+        if timeout is None:
+            timeout = timedelta(seconds=0.1)
+
+        poller = zmq.asyncio.Poller()
+        poller.register(self._socket, zmq.POLLIN)
+
+        socks = dict(await poller.poll(timeout.microseconds // 1000))
+        if self._socket in socks and socks[self._socket] == zmq.POLLIN:
+            response = await self._socket.recv_multipart()
+            return self._codec.decode_message(response[0])
+        else:
+            raise TimeoutError("Server response timeout")
 
     async def send(self, message: ClientRequest):
         raise NotImplementedError()
