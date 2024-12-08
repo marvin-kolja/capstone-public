@@ -137,7 +137,7 @@ class ClientSocketMessageCodec(SocketMessageCodec):
 
 class ServerSocketMessageCodec(SocketMessageCodec):
     @staticmethod
-    def decode_message(message: bytes) -> ServerResponse:
+    def decode_message(message: bytes) -> ClientRequest:
         decoded_message = SocketMessageCodec.decode_message(message)
         if not isinstance(decoded_message, ClientRequest):
             raise InvalidSocketMessage("Invalid client request")
