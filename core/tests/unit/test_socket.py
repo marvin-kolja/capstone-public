@@ -379,8 +379,9 @@ class TestServerSocket:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("port", ports)
-    async def test_start_server_with_port(self, port):
-        with ServerSocket(port=port) as server:
+    @pytest.mark.parametrize("use_context_manager", [True, False])
+    async def test_start_server(self, port, use_context_manager):
+        def assertions():
             socket_port = server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
             if port is None:
                 assert socket_port == str(server.port)
@@ -388,18 +389,14 @@ class TestServerSocket:
                 assert server.port == port
                 assert socket_port == str(port)
 
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("port", ports)
-    async def test_not_using_context_manager(self, port):
-        server = ServerSocket(port=port)
-        server.start()
-        socket_port = server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
-        if port is None:
-            assert socket_port == str(server.port)
+        if use_context_manager:
+            with ServerSocket(port=port) as server:
+                assertions()
         else:
-            assert server.port == port
-            assert socket_port == str(port)
-        server.close()
+            server = ServerSocket(port=port)
+            server.start()
+            assertions()
+            server.close()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("timeout", timeouts)
