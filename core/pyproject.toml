@@ -9,6 +9,13 @@ readme = "README.md"
 python = "^3.13"
 pymobiledevice3 = "^4.14.16"
 
+[tool.poetry.group.dev.dependencies]
+pdoc3 = "^0.11.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+coverage = "^7.6.4"
 
 [build-system]
 requires = ["poetry-core"]
