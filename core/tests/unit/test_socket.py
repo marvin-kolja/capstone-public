@@ -9,7 +9,7 @@ from core.socket import BaseMessage, SocketMessageFactory, ErrorResponse, Client
     HeartbeatRequest, \
     SocketMessageCodec, ServerSocket, ClientSocket, ServerSocketMessageCodec, ClientSocketMessageCodec
 
-invalid_timestamps = [
+INVALID_TIMESTAMPS = [
     # Invalid timestamp
     "2021-01-01T00:00:00",
     # Invalid Unix timestamp
@@ -27,13 +27,13 @@ class TestMessage:
         )
         assert message.timestamp_as_datetime.isoformat() == "2021-02-01T00:00:00+00:00"
 
-    @pytest.mark.parametrize("timestamp", invalid_timestamps)
-    def test_invalid_timestamp(self, timestamp):
-        with pytest.raises(ValueError):
-            BaseMessage(
-                message_type="request",
-                timestamp=timestamp,
-            )
+    def test_invalid_timestamp(self):
+        for invalid_timestamp in INVALID_TIMESTAMPS:
+            with pytest.raises(ValueError):
+                BaseMessage(
+                    message_type="request",
+                    timestamp=invalid_timestamp,
+                )
 
 
 valid_requests = [
@@ -294,14 +294,14 @@ class TestSocketMessageFactory:
         with pytest.raises(InvalidSocketMessage):
             SocketMessageFactory.parse_message_data(message_data)
 
-    @pytest.mark.parametrize("timestamp", invalid_timestamps)
-    def test_invalid_timestamps(self, timestamp):
-        with pytest.raises(InvalidSocketMessage):
-            SocketMessageFactory.parse_message_data({
-                "message_type": "request",
-                "action": "heartbeat",
-                "timestamp": timestamp,
-            })
+    def test_invalid_timestamps(self):
+        for invalid_timestamp in INVALID_TIMESTAMPS:
+            with pytest.raises(InvalidSocketMessage):
+                SocketMessageFactory.parse_message_data({
+                    "message_type": "request",
+                    "action": "heartbeat",
+                    "timestamp": invalid_timestamp,
+                })
 
     def test_missing_fields(self):
         with pytest.raises(InvalidSocketMessage):
