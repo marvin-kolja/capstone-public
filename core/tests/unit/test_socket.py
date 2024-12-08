@@ -277,7 +277,8 @@ class TestEncoding:
             with pytest.raises(InvalidSocketMessage):
                 codec_class.encode_message(message)
 
-        assert spy_socket_encode.call_count == len(messages)
+        # If the message is invalid, the encode_message method should not be called
+        assert spy_socket_encode.call_count == 0
 
 
 class TestSocketMessageFactory:
