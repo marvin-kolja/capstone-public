@@ -187,7 +187,9 @@ class ClientSocket(Socket):
         return self
 
     def connect(self):
-        raise NotImplementedError()
+        self._socket = self._zmq_context.socket(zmq.REQ)
+        self._socket.connect(f"tcp://{self._address}:{self._port}")
+        self._socket.setsockopt(zmq.LINGER, 0)
 
     async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ServerResponse:
         raise NotImplementedError()
