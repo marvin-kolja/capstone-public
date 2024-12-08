@@ -329,13 +329,23 @@ class TestClientSocket:
     )
 
     @pytest.mark.asyncio
-    async def test_connect(self, port):
-        with ClientSocket(port=port) as client:
+    @pytest.mark.parametrize("use_context_manager", [True, False])
+    async def test_connect(self, port, use_context_manager):
+        def assertions(client):
             assert client._socket is not None
             assert client._socket.closed is False
             last_endpoint = client._socket.getsockopt_string(zmq.LAST_ENDPOINT)
             last_endpoint_port = last_endpoint.split(":")[-1]
             assert last_endpoint_port == str(port)
+
+        if use_context_manager:
+            with ClientSocket(port=port) as c:
+                assertions(c)
+        else:
+            c = ClientSocket(port=port)
+            c.connect()
+            assertions(c)
+            c.close()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
