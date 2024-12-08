@@ -249,4 +249,4 @@ class ServerSocket(Socket):
         return self._codec.decode_message(json_message[0])
 
     async def respond(self, message: ServerResponse):
-        raise NotImplementedError()
+        await self._socket.send_multipart([self._codec.encode_message(message)])
