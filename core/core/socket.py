@@ -160,6 +160,8 @@ class Socket:
     _address = '127.0.0.1'
 
     def __init__(self, codec: SocketMessageCodec = SocketMessageCodec()):
+        if not isinstance(codec, SocketMessageCodec):
+            raise ValueError("Invalid codec")
         self._zmq_context = zmq.asyncio.Context()
         self._socket: Optional[zmq.asyncio.Socket] = None
         self._codec = codec
@@ -179,6 +181,8 @@ class Socket:
 
 class ClientSocket(Socket):
     def __init__(self, port: int, codec: Optional[ClientSocketMessageCodec] = None):
+        if codec is None:
+            codec = ClientSocketMessageCodec()
         super().__init__(codec=codec)
         self._port = port
 
@@ -201,6 +205,8 @@ class ClientSocket(Socket):
 class ServerSocket(Socket):
 
     def __init__(self, port: Optional[int] = None, codec: Optional[ServerSocketMessageCodec] = None):
+        if codec is None:
+            codec = ServerSocketMessageCodec()
         super().__init__(codec=codec)
         self.__port: Optional[int] = port
 
