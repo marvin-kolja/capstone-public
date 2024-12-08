@@ -230,7 +230,11 @@ class ServerSocket(Socket):
         return self
 
     def start(self):
-        raise NotImplementedError()
+        self._socket = self._zmq_context.socket(zmq.REP)
+        if self.__port is None:
+            self.__port = self._socket.bind_to_random_port(f"tcp://{self._address}")
+        else:
+            self._socket.bind(f"tcp://{self._address}:{self.__port}")
 
     async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ClientRequest:
         raise NotImplementedError()
