@@ -210,7 +210,7 @@ class ClientSocket(Socket):
             raise TimeoutError("Server response timeout")
 
     async def send(self, message: ClientRequest):
-        raise NotImplementedError()
+        await self._socket.send_multipart([self._codec.encode_message(message)])
 
 
 class ServerSocket(Socket):
