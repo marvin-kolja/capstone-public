@@ -2,6 +2,7 @@ import sys
 from datetime import timedelta
 
 import pytest
+import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
 from core.socket import BaseMessage, SocketMessageFactory, ErrorResponse, ClientRequest, SuccessResponse, \
@@ -315,8 +316,6 @@ timeouts = [
     None,
 ]
 
-ports = [12345, None]
-
 
 class TestClientSocket:
     success_response = SuccessResponse(
@@ -330,17 +329,13 @@ class TestClientSocket:
     )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("port", ports)
     async def test_connect(self, port):
         with ClientSocket(port=port) as client:
             assert client._socket is not None
             assert client._socket.closed is False
-            if port is None:
-                assert client.port > 0
-                assert client._socket.getpeername()[1] == client.port
-            else:
-                assert client.port == port
-                assert client._socket.getpeername()[1] == port
+            last_endpoint = client._socket.getsockopt_string(zmq.LAST_ENDPOINT)
+            last_endpoint_port = last_endpoint.split(":")[-1]
+            assert last_endpoint_port == str(port)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
@@ -380,6 +375,8 @@ class TestClientSocket:
 
 
 class TestServerSocket:
+    ports = [12345, None]
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize("port", ports)
     async def test_start_server_with_port(self, port):
