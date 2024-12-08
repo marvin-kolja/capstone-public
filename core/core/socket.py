@@ -236,8 +236,17 @@ class ServerSocket(Socket):
         else:
             self._socket.bind(f"tcp://{self._address}:{self.__port}")
 
-    async def receive(self, timeout: timedelta = timedelta(seconds=0.1)) -> ClientRequest:
-        raise NotImplementedError()
+    async def receive(self, timeout: Optional[timedelta] = None) -> ClientRequest:
+        if timeout is None:
+            timeout = timedelta(seconds=0.1)
+        self._socket.setsockopt(zmq.RCVTIMEO, timeout.microseconds // 1000)
+        try:
+            json_message = await self._socket.recv_multipart()
+        except zmq.error.Again:
+            raise TimeoutError()
+        if len(json_message) != 1:
+            raise ValueError("Only one message is expected")
+        return self._codec.decode_message(json_message[0])
 
     async def respond(self, message: ServerResponse):
         raise NotImplementedError()
