@@ -36,7 +36,7 @@ class TestMessage:
                 )
 
 
-valid_requests = [
+VALID_REQUESTS = [
     ClientRequest(
         action="some_action",
         data={
@@ -58,7 +58,7 @@ valid_requests = [
     HeartbeatRequest()
 ]
 
-valid_responses = [
+VALID_RESPONSES = [
     ErrorResponse(
         message="Internal Error",
         error_code=0,
@@ -88,104 +88,104 @@ valid_responses = [
     ),
 ]
 
-valid_messages = valid_requests + valid_responses
+VALID_MESSAGES = VALID_REQUESTS + VALID_RESPONSES
 
-valid_timestamp = 1612137600000
+VALID_TIMESTAMP = 1612137600000
 
-invalid_request_data = [
+INVALID_REQUEST_DATA = [
     # No action field
     {
         "message_type": "request",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
     },
     # Incorrect data type
     {
         "message_type": "request",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "data": [],
     },
     {
         "message_type": "request",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "data": 1,
     },
     {
         "message_type": "request",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "data": "Hello, World!",
     },
 ]
 
-invalid_response_data = [
+INVALID_RESPONSE_DATA = [
     # No error_code field
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "ERROR",
     },
     # Invalid status field
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "INVALID",
     },
     # Incorrect data type
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "ERROR",
     },
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "ERROR",
         "error_code": 0.1,
     },
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "OK",
         "data": 1,
     },
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
         "status": "OK",
         "data": "Hello, World!",
     },
     # No status field
     {
         "message_type": "response",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
     },
 ]
 
-invalid_messages_data = [
+INVALID_MESSAGE_DATA = [
     # No data
     {},
     # Invalid message type
     {
         "message_type": "invalid",
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
     },
     {
-        "timestamp": valid_timestamp,
+        "timestamp": VALID_TIMESTAMP,
     },
 ]
-invalid_messages_data += invalid_request_data + invalid_response_data
-invalid_messages_data += [
-    message.model_dump(exclude={"timestamp"}) for message in valid_messages
+INVALID_MESSAGE_DATA += INVALID_REQUEST_DATA + INVALID_RESPONSE_DATA
+INVALID_MESSAGE_DATA += [
+    message.model_dump(exclude={"timestamp"}) for message in VALID_MESSAGES
 ]
 
 
 class TestSocketMessageCodec:
-    @pytest.mark.parametrize("message", valid_messages)
-    def test_encode_decode(self, message):
-        encoded_message = SocketMessageCodec.encode_message(message)
-        decoded_message = SocketMessageCodec.decode_message(encoded_message)
-        assert decoded_message.model_dump() == message.model_dump()
+    def test_encode_decode(self):
+        for message in VALID_MESSAGES:
+            encoded_message = SocketMessageCodec.encode_message(message)
+            decoded_message = SocketMessageCodec.decode_message(encoded_message)
+            assert decoded_message.model_dump() == message.model_dump()
 
-    invalid_encoded_messages = [
+    INVALID_ENCODED_MESSAGES = [
         # Valid JSON but not invalid message
         b'{"message_type": "invalid"}',
         b'{"message_type": "request"}',
@@ -201,10 +201,10 @@ class TestSocketMessageCodec:
         b'{"message_type": "response"',
     ]
 
-    @pytest.mark.parametrize("encoded_message", invalid_encoded_messages)
-    def test_invalid_encoded_message(self, encoded_message):
-        with pytest.raises(InvalidSocketMessage):
-            SocketMessageCodec.decode_message(encoded_message)
+    def test_invalid_encoded_message(self):
+        for encoded_message in self.INVALID_ENCODED_MESSAGES:
+            with pytest.raises(InvalidSocketMessage):
+                SocketMessageCodec.decode_message(encoded_message)
 
 
 behavior_map = {
@@ -234,7 +234,7 @@ behavior_map = {
 class TestDecoding:
     def test_decode_success_type(self, codec_class, role, spy_socket_decode):
         success_type = behavior_map[(role, "decode")]["decode_success_type"]
-        messages = valid_requests if success_type == "request" else valid_responses
+        messages = VALID_REQUESTS if success_type == "request" else VALID_RESPONSES
 
         for message in messages:
             encoded_message = SocketMessageCodec.encode_message(message)
@@ -245,7 +245,7 @@ class TestDecoding:
 
     def test_decode_fail_type(self, codec_class, role, spy_socket_decode):
         fail_type = behavior_map[(role, "decode")]["decode_fail_type"]
-        messages = valid_requests if fail_type == "request" else valid_responses
+        messages = VALID_REQUESTS if fail_type == "request" else VALID_RESPONSES
 
         for message in messages:
             encoded_message = SocketMessageCodec.encode_message(message)
@@ -262,7 +262,7 @@ class TestDecoding:
 class TestEncoding:
     def test_encode_success_type(self, codec_class, role, spy_socket_encode):
         success_type = behavior_map[(role, "encode")]["encode_success_type"]
-        messages = valid_requests if success_type == "request" else valid_responses
+        messages = VALID_REQUESTS if success_type == "request" else VALID_RESPONSES
 
         for message in messages:
             encoded_message = codec_class.encode_message(message)
@@ -272,7 +272,7 @@ class TestEncoding:
 
     def test_encode_fail_type(self, codec_class, role, spy_socket_encode):
         fail_type = behavior_map[(role, "encode")]["encode_fail_type"]
-        messages = valid_requests if fail_type == "request" else valid_responses
+        messages = VALID_REQUESTS if fail_type == "request" else VALID_RESPONSES
 
         for message in messages:
             with pytest.raises(InvalidSocketMessage):
@@ -283,16 +283,16 @@ class TestEncoding:
 
 
 class TestSocketMessageFactory:
-    @pytest.mark.parametrize("message", valid_messages)
-    def test_parse_message_data(self, message):
-        message_data = message.model_dump()
-        parsed_message = SocketMessageFactory.parse_message_data(message_data)
-        assert parsed_message.model_dump() == message.model_dump()
+    def test_parse_message_data(self):
+        for message in VALID_MESSAGES:
+            message_data = message.model_dump()
+            parsed_message = SocketMessageFactory.parse_message_data(message_data)
+            assert parsed_message.model_dump() == message.model_dump()
 
-    @pytest.mark.parametrize("message_data", invalid_messages_data)
-    def test_invalid_message_data(self, message_data):
-        with pytest.raises(InvalidSocketMessage):
-            SocketMessageFactory.parse_message_data(message_data)
+    def test_invalid_message_data(self):
+        for message_data in INVALID_MESSAGE_DATA:
+            with pytest.raises(InvalidSocketMessage):
+                SocketMessageFactory.parse_message_data(message_data)
 
     def test_invalid_timestamps(self):
         for invalid_timestamp in INVALID_TIMESTAMPS:
@@ -349,7 +349,7 @@ class TestClientSocket:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
-    @pytest.mark.parametrize("client_request", valid_requests)
+    @pytest.mark.parametrize("client_request", VALID_REQUESTS)
     async def test_send(self, mock_zmq_context, client_socket, client_request):
         await client_socket.send(client_request)
 
