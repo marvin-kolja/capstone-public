@@ -386,6 +386,7 @@ class TestClientSocket:
 
 class TestServerSocket:
     ports = [12345, None]
+    heartbeat_request = HeartbeatRequest()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("port", ports)
@@ -415,14 +416,14 @@ class TestServerSocket:
             await server_socket.receive(timeout=timeout)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[HeartbeatRequest().encode()]], indirect=True)
+    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
     async def test_receive(self, mock_zmq_context, server_socket):
         request = await server_socket.receive()
         assert isinstance(request, HeartbeatRequest)
-        assert request == HeartbeatRequest()
+        assert request == self.heartbeat_request
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[HeartbeatRequest().encode()]], indirect=True)
+    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
     async def test_respond(self, mock_zmq_context, server_socket):
         await server_socket.respond(SuccessResponse(message="Success", data={}))
 
