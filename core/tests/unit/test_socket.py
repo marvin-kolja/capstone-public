@@ -381,24 +381,24 @@ class TestServerSocket:
     @pytest.mark.parametrize("port", ports)
     async def test_start_server_with_port(self, port):
         with ServerSocket(port=port) as server:
+            socket_port = server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
             if port is None:
-                assert server.port > 0
-                assert server._socket.getsockname()[1] == server.port
+                assert socket_port == str(server.port)
             else:
                 assert server.port == port
-                assert server._socket.getsockname()[1] == port
+                assert socket_port == str(port)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("port", ports)
     async def test_not_using_context_manager(self, port):
         server = ServerSocket(port=port)
         server.start()
+        socket_port = server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
         if port is None:
-            assert server.port > 0
-            assert server._socket.getsockname()[1] == server.port
+            assert socket_port == str(server.port)
         else:
             assert server.port == port
-            assert server._socket.getsockname()[1] == port
+            assert socket_port == str(port)
         server.close()
 
     @pytest.mark.asyncio
