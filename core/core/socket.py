@@ -172,6 +172,12 @@ class Socket:
     def __exit__(self, *args):
         self.close()
 
+    async def receive(self) -> BaseMessage:
+        message = await self._socket.recv_multipart()
+        if len(message) != 1:
+            raise InvalidSocketMessage("Only one message is expected")
+        return self._codec.decode_message(message[0])
+
     def close(self):
         if self._socket is not None:
             self._socket.close()
@@ -208,10 +214,7 @@ class ClientSocket(Socket):
 
         socks = dict(await poller.poll(_timedelta_to_milliseconds(timeout)))
         if self._socket in socks and socks[self._socket] == zmq.POLLIN:
-            response = await self._socket.recv_multipart()
-            if len(response) != 1:
-                raise InvalidSocketMessage("Only one message is expected")
-            return self._codec.decode_message(response[0])
+            return await super().receive()
         else:
             raise TimeoutError("Server response timeout")
 
@@ -247,12 +250,9 @@ class ServerSocket(Socket):
             timeout = timedelta(seconds=0.1)
         self._socket.setsockopt(zmq.RCVTIMEO, _timedelta_to_milliseconds(timeout))
         try:
-            json_message = await self._socket.recv_multipart()
+            return await super().receive()
         except zmq.error.Again:
             raise TimeoutError()
-        if len(json_message) != 1:
-            raise InvalidSocketMessage("Only one message is expected")
-        return self._codec.decode_message(json_message[0])
 
     async def respond(self, message: ServerResponse):
         await self._socket.send_multipart([self._codec.encode_message(message)])
