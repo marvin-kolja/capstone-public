@@ -355,6 +355,20 @@ class TestClientSocket:
         mock_zmq_poller.poll.assert_called_once_with(100)
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode(), success_response.encode()]],
+                             indirect=True)
+    async def test_receive_two_message_parts(self, mock_zmq_context, mock_zmq_poller, client_socket):
+        """
+        GIVEN: A client socket with a mocked receive method
+
+        WHEN: Receiving a message with two parts
+
+        THEN: An InvalidSocketMessage exception should be raised
+        """
+        with pytest.raises(InvalidSocketMessage):
+            await client_socket.receive()
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("timeout", timeouts)
     async def test_receive_timout(self, timeout):
         """
@@ -463,6 +477,20 @@ class TestServerSocket:
         request = await server_socket.receive()
         assert isinstance(request, HeartbeatRequest)
         assert request == self.heartbeat_request
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode(), heartbeat_request.encode()]],
+                             indirect=True)
+    async def test_receive_two_message_parts(self, mock_zmq_context, server_socket):
+        """
+        GIVEN: A server socket with a mocked receive method
+
+        WHEN: Receiving a message with two parts
+
+        THEN: An InvalidSocketMessage exception should be raised
+        """
+        with pytest.raises(InvalidSocketMessage):
+            await server_socket.receive()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
