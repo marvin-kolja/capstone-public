@@ -209,6 +209,8 @@ class ClientSocket(Socket):
         socks = dict(await poller.poll(_timedelta_to_milliseconds(timeout)))
         if self._socket in socks and socks[self._socket] == zmq.POLLIN:
             response = await self._socket.recv_multipart()
+            if len(response) != 1:
+                raise InvalidSocketMessage("Only one message is expected")
             return self._codec.decode_message(response[0])
         else:
             raise TimeoutError("Server response timeout")
@@ -249,7 +251,7 @@ class ServerSocket(Socket):
         except zmq.error.Again:
             raise TimeoutError()
         if len(json_message) != 1:
-            raise ValueError("Only one message is expected")
+            raise InvalidSocketMessage("Only one message is expected")
         return self._codec.decode_message(json_message[0])
 
     async def respond(self, message: ServerResponse):
