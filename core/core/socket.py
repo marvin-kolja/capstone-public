@@ -179,6 +179,10 @@ class Socket:
         self._zmq_context.term()
 
 
+def _timedelta_to_milliseconds(delta: timedelta) -> int:
+    return int(delta.total_seconds() * 1e3)
+
+
 class ClientSocket(Socket):
     def __init__(self, port: int, codec: Optional[ClientSocketMessageCodec] = None):
         if codec is None:
@@ -202,7 +206,7 @@ class ClientSocket(Socket):
         poller = zmq.asyncio.Poller()
         poller.register(self._socket, zmq.POLLIN)
 
-        socks = dict(await poller.poll(timeout.microseconds // 1000))
+        socks = dict(await poller.poll(_timedelta_to_milliseconds(timeout)))
         if self._socket in socks and socks[self._socket] == zmq.POLLIN:
             response = await self._socket.recv_multipart()
             return self._codec.decode_message(response[0])
@@ -239,7 +243,7 @@ class ServerSocket(Socket):
     async def receive(self, timeout: Optional[timedelta] = None) -> ClientRequest:
         if timeout is None:
             timeout = timedelta(seconds=0.1)
-        self._socket.setsockopt(zmq.RCVTIMEO, timeout.microseconds // 1000)
+        self._socket.setsockopt(zmq.RCVTIMEO, _timedelta_to_milliseconds(timeout))
         try:
             json_message = await self._socket.recv_multipart()
         except zmq.error.Again:
