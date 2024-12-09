@@ -1,3 +1,4 @@
+import datetime
 import time
 from datetime import timedelta
 
@@ -14,11 +15,22 @@ from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VAL
 
 class TestMessage:
     def test_timestamp_as_datetime(self):
+        """
+        GIVEN: A BaseMessage instance with a POSIX timestamp in milliseconds
+
+        WHEN: Accessing the timestamp_as_datetime property
+
+        THEN: The property should return the timestamp as the correct datetime with millisecond precision
+        """
+        now = datetime.datetime.now(datetime.UTC)
+        now = now.replace(microsecond=0)  # Base message only supports milliseconds
+        posix_timestamp_millis = int(now.timestamp() * 1e3)
+
         message = BaseMessage(
             message_type="request",
-            timestamp=1612137600000,
+            timestamp=posix_timestamp_millis,
         )
-        assert message.timestamp_as_datetime.isoformat() == "2021-02-01T00:00:00+00:00"
+        assert message.timestamp_as_datetime == now
 
     def test_invalid_timestamp(self):
         for invalid_timestamp in INVALID_TIMESTAMPS:
