@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 import pytest
@@ -162,9 +163,19 @@ class TestSocketMessageFactory:
 
 
 timeouts = [
+    timedelta(seconds=1),
+    timedelta(seconds=0.5),
     timedelta(seconds=0.1),
     None,
 ]
+
+
+def _assert_time_passed(start_time: float, end_time: float, timeout: timedelta = None):
+    elapsed_time = end_time - start_time
+    if timeout is None:
+        assert elapsed_time >= 0.1
+    else:
+        assert elapsed_time >= timeout.total_seconds()
 
 
 class TestClientSocket:
@@ -220,8 +231,11 @@ class TestClientSocket:
     @pytest.mark.parametrize("timeout", timeouts)
     async def test_receive_timout(self, timeout):
         with ClientSocket(12345) as client:
+            start_time = time.perf_counter()
             with pytest.raises(TimeoutError):
                 await client.receive(timeout=timeout)
+            end_time = time.perf_counter()
+            _assert_time_passed(start_time, end_time, timeout)
 
     def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, client_socket):
         socket = client_socket._socket
@@ -262,8 +276,11 @@ class TestServerSocket:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("timeout", timeouts)
     async def test_receive_timeout(self, server_socket, timeout):
+        start_time = time.perf_counter()
         with pytest.raises(TimeoutError):
             await server_socket.receive(timeout=timeout)
+        end_time = time.perf_counter()
+        _assert_time_passed(start_time, end_time, timeout)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
