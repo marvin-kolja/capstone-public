@@ -304,10 +304,19 @@ class TestServerSocket:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
     async def test_respond(self, mock_zmq_context, server_socket):
-        await server_socket.respond(SuccessResponse(message="Success", data={}))
+        """
+        GIVEN: A server socket with a mocked send method
+
+        WHEN: Responding
+
+        THEN: The mocked zmq socket `send_multipart` method should be called with the encoded response
+        """
+        success_response = SuccessResponse(message="Success", data={})
+
+        await server_socket.respond(success_response)
 
         mock_zmq_context.send_multipart.assert_called_once_with(
-            [SuccessResponse(message="Success", data={}).encode()]
+            [success_response.encode()]
         )
 
     def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, server_socket):
