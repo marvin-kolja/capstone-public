@@ -136,15 +136,3 @@ class TestSocket:
                     server_send_message(valid_response),
                     client_receive_message(valid_request, valid_response),
                 )
-
-    @pytest.mark.asyncio
-    async def test_server_sends_before_receiving(self, server_socket):
-        """
-        GIVEN: A server socket
-
-        WHEN: The server tries to respond before having received a message
-
-        THEN: The server should raise a ZMQError
-        """
-        with pytest.raises(zmq.error.ZMQError):
-            await server_socket.respond(SuccessResponse())

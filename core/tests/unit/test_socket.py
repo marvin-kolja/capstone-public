@@ -482,6 +482,18 @@ class TestServerSocket:
             [success_response.encode()]
         )
 
+    @pytest.mark.asyncio
+    async def test_respond_before_receiving(self, server_socket):
+        """
+        GIVEN: A server socket
+
+        WHEN: The server tries to respond before having received a message
+
+        THEN: The server should raise a ZMQError
+        """
+        with pytest.raises(zmq.error.ZMQError):
+            await server_socket.respond(SuccessResponse())
+
     def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, server_socket):
         """
         GIVEN: A server socket has been started
