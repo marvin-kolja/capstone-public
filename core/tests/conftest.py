@@ -3,6 +3,12 @@ import pytest
 from core.socket import ClientSocket, ServerSocket
 
 
+def pytest_runtest_setup(item):
+    import os
+
+    if "requires_sudo" in item.keywords and os.geteuid() != 0:
+        pytest.skip("Test requires sudo")
+
 @pytest.fixture
 def port():
     # max user-defined port
