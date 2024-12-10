@@ -3,11 +3,21 @@ import pytest
 from core.socket import ClientSocket, ServerSocket
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        '--device', action='store_true', default=False, help='Run tests that require a real device',
+    )
+
+
 def pytest_runtest_setup(item):
     import os
 
     if "requires_sudo" in item.keywords and os.geteuid() != 0:
         pytest.skip("Test requires sudo")
+
+    if "real_device" in item.keywords and not item.config.getoption("--device"):
+        pytest.skip("Test requires a real device. Use --device to run")
+
 
 @pytest.fixture
 def port():
