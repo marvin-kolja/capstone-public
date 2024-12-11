@@ -1,11 +1,8 @@
 import asyncio
-import warnings
 
 import pytest
-import zmq
 
-from core.socket import ServerSocket, ClientSocket, ClientRequest, \
-    ServerResponse, SuccessResponse
+from core.socket import ServerSocket, ClientSocket, ClientRequest, ServerResponse
 from tests.test_data.socket_test_data import VALID_REQUESTS, VALID_RESPONSES
 
 
