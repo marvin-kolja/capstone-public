@@ -380,7 +380,7 @@ class TestClientSocket:
         THEN: A TimeoutError should be raised
         AND: The time passed should be equal or greater to the timeout
         """
-        with ClientSocket(12345) as client:
+        with ClientSocket(port=12345) as client:
             start_time = time.perf_counter()
             with pytest.raises(TimeoutError):
                 await client.receive(timeout=timeout)

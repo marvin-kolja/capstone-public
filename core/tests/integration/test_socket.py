@@ -22,11 +22,11 @@ class TestSocket:
         """
 
         async def client_send_message(message: ClientRequest):
-            with ClientSocket(port) as client_socket:
+            with ClientSocket(port=port) as client_socket:
                 await client_socket.send(message)
 
         async def server_receive_message():
-            with ServerSocket(port) as server_socket:
+            with ServerSocket(port=port) as server_socket:
                 with pytest.raises(TimeoutError):
                     await server_socket.receive()
 
@@ -52,13 +52,13 @@ class TestSocket:
         """
 
         async def client_send_message(message: ClientRequest):
-            with ClientSocket(port) as client_socket:
+            with ClientSocket(port=port) as client_socket:
                 await client_socket.send(message)
                 with pytest.raises(TimeoutError):
                     await client_socket.receive()
 
         async def server_receive_message():
-            with ServerSocket(port) as server_socket:
+            with ServerSocket(port=port) as server_socket:
                 await server_socket.receive()
 
         for valid_request in VALID_REQUESTS:
@@ -81,13 +81,13 @@ class TestSocket:
         """
 
         async def client_send_message(message: ClientRequest):
-            with ClientSocket(port) as client_socket:
+            with ClientSocket(port=port) as client_socket:
                 await client_socket.send(message)
                 # We need to wait for a bit to make sure the message is actually sent
                 await asyncio.sleep(0.001)
 
         async def server_receive_message(message: ClientRequest):
-            with ServerSocket(port) as server_socket:
+            with ServerSocket(port=port) as server_socket:
                 received_request = await server_socket.receive()
 
                 assert received_request is not None
@@ -115,7 +115,7 @@ class TestSocket:
         """
 
         async def client_receive_message(request: ClientRequest, response: ServerResponse):
-            with ClientSocket(port) as client_socket:
+            with ClientSocket(port=port) as client_socket:
                 await client_socket.send(request)
                 # We need to wait to make sure the message is sent and received by the server
                 await asyncio.sleep(0)
@@ -123,7 +123,7 @@ class TestSocket:
                 assert received_response.model_dump() == response.model_dump()
 
         async def server_send_message(response: ServerResponse):
-            with ServerSocket(port) as server_socket:
+            with ServerSocket(port=port) as server_socket:
                 await server_socket.receive()
                 await server_socket.respond(response)
 
