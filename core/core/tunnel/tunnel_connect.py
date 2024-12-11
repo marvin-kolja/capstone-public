@@ -94,7 +94,18 @@ class TunnelConnect:
 
         :param udid: The UDID of the device to disconnect from.
         """
-        raise NotImplementedError()
+        tunnel_task = self._tunnel_manager.tunnel_tasks.pop(udid, None)
+        if tunnel_task is None:
+            return
+        if tunnel_task.tunnel is None or tunnel_task.udid is None:
+            return
+        if tunnel_task.task.done():
+            return
+
+        tunnel_task.task.cancel()
+
+        with suppress(asyncio.CancelledError):
+            await tunnel_task.task
 
     def get_tunnel(self, udid: str) -> Optional[TunnelResult]:
         """
