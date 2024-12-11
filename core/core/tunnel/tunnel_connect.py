@@ -132,8 +132,6 @@ class TunnelConnect:
                 continue
             if tunnel_task.task.done():
                 continue
-            if tunnel_task.task.cancelled():
-                continue
 
             tunnel_task.task.cancel()
             with suppress(asyncio.CancelledError):
