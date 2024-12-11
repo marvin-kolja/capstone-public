@@ -158,6 +158,7 @@ class ServerSocketMessageCodec(SocketMessageCodec):
 
 class Socket:
     _address = '127.0.0.1'
+    _protocol = 'tcp'
 
     def __init__(self, codec: SocketMessageCodec = SocketMessageCodec()):
         if not isinstance(codec, SocketMessageCodec):
@@ -202,7 +203,7 @@ class ClientSocket(Socket):
 
     def connect(self):
         self._socket = self._zmq_context.socket(zmq.REQ)
-        self._socket.connect(f"tcp://{self._address}:{self._port}")
+        self._socket.connect(f"{self._protocol}://{self._address}:{self._port}")
         self._socket.setsockopt(zmq.LINGER, 0)
 
     async def receive(self, timeout: Optional[timedelta] = None) -> ServerResponse:
@@ -241,9 +242,9 @@ class ServerSocket(Socket):
     def start(self):
         self._socket = self._zmq_context.socket(zmq.REP)
         if self.__port is None:
-            self.__port = self._socket.bind_to_random_port(f"tcp://{self._address}")
+            self.__port = self._socket.bind_to_random_port(f"{self._protocol}://{self._address}")
         else:
-            self._socket.bind(f"tcp://{self._address}:{self.__port}")
+            self._socket.bind(f"{self._protocol}://{self._address}:{self.__port}")
 
     async def receive(self, timeout: Optional[timedelta] = None) -> ClientRequest:
         if timeout is None:
