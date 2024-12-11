@@ -100,6 +100,7 @@ class SocketMessageFactory:
         except ValidationError as e:
             raise InvalidSocketMessage(str(e))
 
+
 class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_INPUT, D_OUTPUT]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
