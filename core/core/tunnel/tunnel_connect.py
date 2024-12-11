@@ -104,6 +104,7 @@ class TunnelConnect:
 
         tunnel_task.task.cancel()
 
+        # Suppress the CancelledError as it is expected.
         with suppress(asyncio.CancelledError):
             await tunnel_task.task
 
@@ -134,6 +135,8 @@ class TunnelConnect:
                 continue
 
             tunnel_task.task.cancel()
+
+            # Suppress the CancelledError as it is expected.
             with suppress(asyncio.CancelledError):
                 await tunnel_task.task
             # Trying to remove the task manually to not break cleanup.
