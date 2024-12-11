@@ -1,6 +1,6 @@
 import sys
 
-from core.socket import ClientRequest, HeartbeatRequest, ErrorResponse, SuccessResponse
+from core.codec.socket_json_codec import ClientRequest, HeartbeatRequest, ErrorResponse, SuccessResponse
 
 INVALID_TIMESTAMPS = [
     # Invalid timestamp

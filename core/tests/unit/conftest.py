@@ -4,7 +4,7 @@ import pytest
 import zmq
 import zmq.asyncio
 
-from core.socket import SocketMessageJSONCodec
+from core.codec.socket_json_codec import SocketMessageJSONCodec
 
 
 @pytest.fixture

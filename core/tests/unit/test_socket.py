@@ -6,8 +6,9 @@ import pytest
 import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
-from core.socket import BaseMessage, SocketMessageFactory, ErrorResponse, SuccessResponse, HeartbeatRequest, \
-    SocketMessageJSONCodec, ServerSocket, ClientSocket, ServerSocketMessageJSONCodec, ClientSocketMessageJSONCodec
+from core.socket import ClientSocket, ServerSocket
+from core.codec.socket_json_codec import SocketMessageJSONCodec, ServerSocketMessageJSONCodec, \
+    ClientSocketMessageJSONCodec, BaseMessage, SocketMessageFactory, SuccessResponse, ErrorResponse, HeartbeatRequest
 from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VALID_RESPONSES, INVALID_MESSAGE_DATA, \
     INVALID_TIMESTAMPS
 

@@ -2,7 +2,8 @@ import asyncio
 
 import pytest
 
-from core.socket import ServerSocket, ClientSocket, ClientRequest, ServerResponse
+from core.socket import ServerSocket, ClientSocket
+from core.codec.socket_json_codec import ClientRequest, ServerResponse
 from tests.test_data.socket_test_data import VALID_REQUESTS, VALID_RESPONSES
 
 
