@@ -103,7 +103,10 @@ class TunnelConnect:
         :param udid: The UDID of the device to get the tunnel for.
         :return: The tunnel result if the tunnel exists, otherwise None.
         """
-        raise NotImplementedError()
+        if self._tunnel_manager.tunnel_exists_for_udid(udid):
+            tunnel_task = self._tunnel_manager.tunnel_tasks[udid]
+            return self._parse_pymobiledevice3_tunnel_result(tunnel_task.tunnel)
+        return None
 
     async def close(self):
         """
