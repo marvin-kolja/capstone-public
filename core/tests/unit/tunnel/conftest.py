@@ -72,8 +72,9 @@ async def mock_tunnel_connect__start_usbmux_tcp_tunnel_task(mocker, mocked_pymd3
             # break things if cleanup fails.
             await asyncio.sleep(1)
         finally:
-            # We need to remove the tunnel task from the tunnel tasks to not break cleanup
-            self._tunnel_manager.tunnel_tasks.pop(udid)
+            # If the tunnel task still exists in the tunnel tasks, we need to remove it to not break cleanup
+            if udid in self._tunnel_manager.tunnel_tasks:
+                self._tunnel_manager.tunnel_tasks.pop(udid)
 
     def start_tcp_tunnel_using_usbmux(self, udid: str, queue: asyncio.Queue) -> asyncio.Task:
         task = asyncio.create_task(
