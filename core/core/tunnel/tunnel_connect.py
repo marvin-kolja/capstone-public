@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 from typing import Optional
 
 from pydantic import BaseModel, IPvAnyAddress
@@ -108,5 +109,21 @@ class TunnelConnect:
         """
         Close all open tunnels.
         """
-        # TODO: pass instead of raise, so that test cleanup does not fail for `start_tunnel` method
-        pass
+        tunnel_tasks = self._tunnel_manager.tunnel_tasks.copy()
+
+        for udid in tunnel_tasks:
+            tunnel_task = self._tunnel_manager.tunnel_tasks[udid]
+
+            if tunnel_task is None:
+                continue
+            if tunnel_task.task.done():
+                continue
+            if tunnel_task.task.cancelled():
+                continue
+
+            tunnel_task.task.cancel()
+            with suppress(asyncio.CancelledError):
+                await tunnel_task.task
+            # Trying to remove the task manually to not break cleanup.
+            # The task should remove itself from the tunnel tasks on completion. However, it did occur that it may not.
+            self._tunnel_manager.tunnel_tasks.pop(udid, None)
