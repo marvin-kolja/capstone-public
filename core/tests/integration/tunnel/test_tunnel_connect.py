@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import suppress
+
 import pytest
 
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
@@ -53,6 +56,45 @@ class TestTunnelConnect:
 
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
+    async def test_stop_tunnel_on_already_cancelled_task(self, tunnel_connect, device_udid):
+        """
+        GIVEN: A TunnelConnect instance
+        AND: A started tunnel task
+        AND: The tunnel task is fully cancelled
+
+        WHEN: stop_tunnel is called
+
+        THEN: The tunnel task should be removed from the tunnel tasks
+        """
+        await tunnel_connect.start_tunnel(device_udid)
+        tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancel()
+        with suppress(asyncio.CancelledError):
+            await tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task
+        assert device_udid in tunnel_connect._tunnel_manager.tunnel_tasks
+        assert tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancelled()
+
+        await tunnel_connect.stop_tunnel(device_udid)
+
+        assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
+
+    async def test_stop_tunnel_on_already_cancelling_task(self, tunnel_connect, device_udid):
+        """
+        GIVEN: A TunnelConnect instance
+        AND: A started tunnel task
+        AND: The tunnel task is requested to be cancelled
+
+        WHEN: stop_tunnel is called
+
+        THEN: The tunnel task should be removed from the tunnel tasks
+        """
+        await tunnel_connect.start_tunnel(device_udid)
+        tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancel()
+        assert tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancelling()
+
+        await tunnel_connect.stop_tunnel(device_udid)
+
+        assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
+
     async def test_get_tunnel(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -83,4 +125,3 @@ class TestTunnelConnect:
         await tunnel_connect.close()
 
         assert not tunnel_connect._tunnel_manager.tunnel_tasks
-
