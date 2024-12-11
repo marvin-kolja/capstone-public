@@ -6,9 +6,8 @@ import pytest
 import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
-from core.socket import BaseMessage, SocketMessageFactory, ErrorResponse, ClientRequest, SuccessResponse, \
-    HeartbeatRequest, \
-    SocketMessageCodec, ServerSocket, ClientSocket, ServerSocketMessageCodec, ClientSocketMessageCodec
+from core.socket import BaseMessage, SocketMessageFactory, ErrorResponse, SuccessResponse, HeartbeatRequest, \
+    SocketMessageJSONCodec, ServerSocket, ClientSocket, ServerSocketMessageJSONCodec, ClientSocketMessageJSONCodec
 from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VALID_RESPONSES, INVALID_MESSAGE_DATA, \
     INVALID_TIMESTAMPS
 
@@ -60,8 +59,8 @@ class TestSocketMessageCodec:
         THEN: The decoded messages should be equal to the original messages
         """
         for message in VALID_MESSAGES:
-            encoded_message = SocketMessageCodec.encode_message(message)
-            decoded_message = SocketMessageCodec.decode_message(encoded_message)
+            encoded_message = SocketMessageJSONCodec.encode_message(message)
+            decoded_message = SocketMessageJSONCodec.decode_message(encoded_message)
             assert decoded_message.model_dump() == message.model_dump()
 
     INVALID_ENCODED_MESSAGES = [
@@ -90,7 +89,7 @@ class TestSocketMessageCodec:
         """
         for encoded_message in self.INVALID_ENCODED_MESSAGES:
             with pytest.raises(InvalidSocketMessage):
-                SocketMessageCodec.decode_message(encoded_message)
+                SocketMessageJSONCodec.decode_message(encoded_message)
 
 
 # The behavior map is used to determine the message type to use for each encoding/decoding test
@@ -115,8 +114,8 @@ behavior_map = {
 
 
 @pytest.mark.parametrize("codec_class,role", [
-    (ServerSocketMessageCodec, "server"),
-    (ClientSocketMessageCodec, "client")
+    (ServerSocketMessageJSONCodec, "server"),
+    (ClientSocketMessageJSONCodec, "client")
 ])
 class TestDecoding:
     def test_decode_success_type(self, codec_class, role, spy_socket_decode):
@@ -133,7 +132,7 @@ class TestDecoding:
         messages = VALID_REQUESTS if success_type == "request" else VALID_RESPONSES
 
         for message in messages:
-            encoded_message = SocketMessageCodec.encode_message(message)
+            encoded_message = SocketMessageJSONCodec.encode_message(message)
             decoded_message = codec_class.decode_message(encoded_message)
             assert decoded_message.model_dump() == message.model_dump()
 
@@ -153,7 +152,7 @@ class TestDecoding:
         messages = VALID_REQUESTS if fail_type == "request" else VALID_RESPONSES
 
         for message in messages:
-            encoded_message = SocketMessageCodec.encode_message(message)
+            encoded_message = SocketMessageJSONCodec.encode_message(message)
             with pytest.raises(InvalidSocketMessage):
                 codec_class.decode_message(encoded_message)
 
@@ -161,8 +160,8 @@ class TestDecoding:
 
 
 @pytest.mark.parametrize("codec_class,role", [
-    (ServerSocketMessageCodec, "server"),
-    (ClientSocketMessageCodec, "client")
+    (ServerSocketMessageJSONCodec, "server"),
+    (ClientSocketMessageJSONCodec, "client")
 ])
 class TestEncoding:
     def test_encode_success_type(self, codec_class, role, spy_socket_encode):

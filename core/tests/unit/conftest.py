@@ -4,7 +4,7 @@ import pytest
 import zmq
 import zmq.asyncio
 
-from core.socket import SocketMessageCodec
+from core.socket import SocketMessageJSONCodec
 
 
 @pytest.fixture
@@ -54,9 +54,9 @@ def spy_zmq_context_term(mocker):
 
 @pytest.fixture(scope="function")
 def spy_socket_decode(mocker):
-    return mocker.spy(SocketMessageCodec, "decode_message")
+    return mocker.spy(SocketMessageJSONCodec, "decode_message")
 
 
 @pytest.fixture(scope="function")
 def spy_socket_encode(mocker):
-    return mocker.spy(SocketMessageCodec, "encode_message")
+    return mocker.spy(SocketMessageJSONCodec, "encode_message")

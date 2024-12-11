@@ -100,7 +100,7 @@ class SocketMessageFactory:
             raise InvalidSocketMessage(str(e))
 
 
-class SocketMessageCodec:
+class SocketMessageJSONCodec:
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         """
@@ -126,31 +126,31 @@ class SocketMessageCodec:
         return SocketMessageFactory.parse_message_data(decoded_message)
 
 
-class ClientSocketMessageCodec(SocketMessageCodec):
+class ClientSocketMessageJSONCodec(SocketMessageJSONCodec):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ClientRequest):
             raise InvalidSocketMessage("Invalid client request")
-        return SocketMessageCodec.encode_message(message)
+        return SocketMessageJSONCodec.encode_message(message)
 
     @staticmethod
     def decode_message(message: bytes) -> ServerResponse:
-        decoded_message = SocketMessageCodec.decode_message(message)
+        decoded_message = SocketMessageJSONCodec.decode_message(message)
         if not isinstance(decoded_message, ServerResponse):
             raise InvalidSocketMessage("Invalid server response")
         return decoded_message
 
 
-class ServerSocketMessageCodec(SocketMessageCodec):
+class ServerSocketMessageJSONCodec(SocketMessageJSONCodec):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ServerResponse):
             raise InvalidSocketMessage("Invalid server response")
-        return SocketMessageCodec.encode_message(message)
+        return SocketMessageJSONCodec.encode_message(message)
 
     @staticmethod
     def decode_message(message: bytes) -> ClientRequest:
-        decoded_message = SocketMessageCodec.decode_message(message)
+        decoded_message = SocketMessageJSONCodec.decode_message(message)
         if not isinstance(decoded_message, ClientRequest):
             raise InvalidSocketMessage("Invalid client request")
         return decoded_message
@@ -160,8 +160,8 @@ class Socket:
     _address = '127.0.0.1'
     _protocol = 'tcp'
 
-    def __init__(self, codec: SocketMessageCodec = SocketMessageCodec()):
-        if not isinstance(codec, SocketMessageCodec):
+    def __init__(self, codec: SocketMessageJSONCodec = SocketMessageJSONCodec()):
+        if not isinstance(codec, SocketMessageJSONCodec):
             raise ValueError("Invalid codec")
         self._zmq_context = zmq.asyncio.Context()
         self._socket: Optional[zmq.asyncio.Socket] = None
@@ -191,9 +191,9 @@ def _timedelta_to_milliseconds(delta: timedelta) -> int:
 
 
 class ClientSocket(Socket):
-    def __init__(self, port: int, codec: Optional[ClientSocketMessageCodec] = None):
+    def __init__(self, port: int, codec: Optional[ClientSocketMessageJSONCodec] = None):
         if codec is None:
-            codec = ClientSocketMessageCodec()
+            codec = ClientSocketMessageJSONCodec()
         super().__init__(codec=codec)
         self._port = port
 
@@ -225,9 +225,9 @@ class ClientSocket(Socket):
 
 class ServerSocket(Socket):
 
-    def __init__(self, port: Optional[int] = None, codec: Optional[ServerSocketMessageCodec] = None):
+    def __init__(self, port: Optional[int] = None, codec: Optional[ServerSocketMessageJSONCodec] = None):
         if codec is None:
-            codec = ServerSocketMessageCodec()
+            codec = ServerSocketMessageJSONCodec()
         super().__init__(codec=codec)
         self.__port: Optional[int] = port
 
