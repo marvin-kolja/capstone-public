@@ -67,8 +67,10 @@ async def mock_tunnel_connect__start_usbmux_tcp_tunnel_task(mocker, mocked_pymd3
             # Put the mocked tunnel result in the queue
             queue.put_nowait(mocked_pymd3_tunnel_result)
 
-            # Simulate waiting for the tunnel to close
-            await asyncio.sleep(100)
+            # Simulate waiting for the tunnel to close.
+            # Usually this would be very long-running, but for testing purposes we can just wait for a short time to not
+            # break things if cleanup fails.
+            await asyncio.sleep(1)
         finally:
             # We need to remove the tunnel task from the tunnel tasks to not break cleanup
             self._tunnel_manager.tunnel_tasks.pop(udid)
