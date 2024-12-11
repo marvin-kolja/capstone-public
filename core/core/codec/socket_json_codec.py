@@ -1,10 +1,12 @@
 import json
 import time
 from datetime import datetime, timezone
-from typing import Optional, Union
+from typing import Optional, Union, Generic
 
 from pydantic import field_validator, BaseModel, Field, ValidationError
 
+from core.codec.codec_protocol import CodecProtocol, E_INPUT, D_OUTPUT
+from core.codec.json_codec import JSONCodec
 from core.exceptions.socket import InvalidSocketMessage
 
 
@@ -98,14 +100,13 @@ class SocketMessageFactory:
         except ValidationError as e:
             raise InvalidSocketMessage(str(e))
 
-
-class SocketMessageJSONCodec:
+class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_INPUT, D_OUTPUT]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         """
         Encode message data to bytes for sending over socket
         """
-        return message.encode()
+        return JSONCodec.encode_message(message)
 
     @staticmethod
     def decode_message(message: bytes) -> BaseMessage:
@@ -113,7 +114,7 @@ class SocketMessageJSONCodec:
         Decode message data from bytes received over socket
         """
         try:
-            decoded_message = json.loads(message.decode())
+            decoded_message = JSONCodec.decode_message(message)
         except json.JSONDecodeError:
             raise InvalidSocketMessage("Invalid JSON data")
         except UnicodeDecodeError:
@@ -125,7 +126,7 @@ class SocketMessageJSONCodec:
         return SocketMessageFactory.parse_message_data(decoded_message)
 
 
-class ClientSocketMessageJSONCodec(SocketMessageJSONCodec):
+class ClientSocketMessageJSONCodec(SocketMessageJSONCodec[ClientRequest, ServerResponse]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ClientRequest):
@@ -140,7 +141,7 @@ class ClientSocketMessageJSONCodec(SocketMessageJSONCodec):
         return decoded_message
 
 
-class ServerSocketMessageJSONCodec(SocketMessageJSONCodec):
+class ServerSocketMessageJSONCodec(SocketMessageJSONCodec[ServerResponse, ClientRequest]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ServerResponse):
