@@ -1,19 +1,19 @@
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Generic
 
 import zmq.asyncio
 
-from core.codec.socket_json_codec import SocketMessageJSONCodec, BaseMessage, ClientSocketMessageJSONCodec, \
-    ServerSocketMessageJSONCodec, ClientRequest, ServerResponse
+from core.codec.codec_protocol import E_INPUT, D_OUTPUT, CodecProtocol
+from core.codec.socket_json_codec import ClientSocketMessageJSONCodec, ServerSocketMessageJSONCodec
 from core.exceptions.socket import InvalidSocketMessage
 
 
-class Socket:
+class Socket(Generic[E_INPUT, D_OUTPUT]):
     _address = '127.0.0.1'
     _protocol = 'tcp'
 
-    def __init__(self, codec: SocketMessageJSONCodec = SocketMessageJSONCodec()):
-        if not isinstance(codec, SocketMessageJSONCodec):
+    def __init__(self, codec: CodecProtocol[E_INPUT, D_OUTPUT]):
+        if not isinstance(codec, CodecProtocol):
             raise ValueError("Invalid codec")
         self._zmq_context = zmq.asyncio.Context()
         self._socket: Optional[zmq.asyncio.Socket] = None
@@ -25,7 +25,7 @@ class Socket:
     def __exit__(self, *args):
         self.close()
 
-    async def receive(self) -> BaseMessage:
+    async def receive(self) -> D_OUTPUT:
         message = await self._socket.recv_multipart()
         if len(message) != 1:
             raise InvalidSocketMessage("Only one message is expected")
@@ -42,8 +42,12 @@ def _timedelta_to_milliseconds(delta: timedelta) -> int:
     return int(delta.total_seconds() * 1e3)
 
 
-class ClientSocket(Socket):
-    def __init__(self, port: int, codec: Optional[ClientSocketMessageJSONCodec] = None):
+class ClientSocket(Socket[E_INPUT, D_OUTPUT]):
+    def __init__(self, port: int, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None):
+        """
+        :param port:
+        :param codec: The codec to use to encode/decode messages (default: ClientSocketMessageJSONCodec)
+        """
         if codec is None:
             codec = ClientSocketMessageJSONCodec()
         super().__init__(codec=codec)
@@ -58,7 +62,7 @@ class ClientSocket(Socket):
         self._socket.connect(f"{self._protocol}://{self._address}:{self._port}")
         self._socket.setsockopt(zmq.LINGER, 0)
 
-    async def receive(self, timeout: Optional[timedelta] = None) -> ServerResponse:
+    async def receive(self, timeout: Optional[timedelta] = None) -> D_OUTPUT:
         if timeout is None:
             timeout = timedelta(seconds=0.1)
 
@@ -71,13 +75,17 @@ class ClientSocket(Socket):
         else:
             raise TimeoutError("Server response timeout")
 
-    async def send(self, message: ClientRequest):
+    async def send(self, message: E_INPUT):
         await self._socket.send_multipart([self._codec.encode_message(message)])
 
 
-class ServerSocket(Socket):
+class ServerSocket(Socket[E_INPUT, D_OUTPUT]):
 
-    def __init__(self, port: Optional[int] = None, codec: Optional[ServerSocketMessageJSONCodec] = None):
+    def __init__(self, port: Optional[int] = None, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None):
+        """
+        :param port:
+        :param codec: The codec to use to encode/decode messages (default: ServerSocketMessageJSONCodec)
+        """
         if codec is None:
             codec = ServerSocketMessageJSONCodec()
         super().__init__(codec=codec)
@@ -98,7 +106,7 @@ class ServerSocket(Socket):
         else:
             self._socket.bind(f"{self._protocol}://{self._address}:{self.__port}")
 
-    async def receive(self, timeout: Optional[timedelta] = None) -> ClientRequest:
+    async def receive(self, timeout: Optional[timedelta] = None) -> D_OUTPUT:
         if timeout is None:
             timeout = timedelta(seconds=0.1)
         self._socket.setsockopt(zmq.RCVTIMEO, _timedelta_to_milliseconds(timeout))
@@ -107,5 +115,5 @@ class ServerSocket(Socket):
         except zmq.error.Again:
             raise TimeoutError()
 
-    async def respond(self, message: ServerResponse):
+    async def respond(self, message: E_INPUT):
         await self._socket.send_multipart([self._codec.encode_message(message)])
