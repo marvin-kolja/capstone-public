@@ -5,9 +5,13 @@ from abc import ABC
 from types import MethodType
 from typing import Optional, TypeVar, Generic
 
+from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
+
 from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse
+from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
+from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, NotFoundError
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -96,7 +100,19 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
         :raises TunnelServerError: If there is an error starting the tunnel.
         :raises MalformedRequestError: If the request is malformed.
         """
-        ...
+        if not isinstance(udid, str):
+            raise MalformedRequestError()
+        if not udid:
+            raise MalformedRequestError()
+
+        try:
+            return await self.tunnel_connect.start_tunnel(udid)
+        except DeviceNotFoundError:
+            raise TunnelServerError(error_code=TunnelServerErrorCode.DEVICE_NOT_FOUND)
+        except TunnelAlreadyExistsError:
+            raise TunnelServerError(error_code=TunnelServerErrorCode.TUNNEL_ALREADY_EXISTS)
+        except NoDeviceConnectedError:
+            raise TunnelServerError(error_code=TunnelServerErrorCode.NO_DEVICE_CONNECTED)
 
     @server_method
     async def stop_tunnel(self, udid: str) -> None:
@@ -109,7 +125,12 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
 
         :raises MalformedRequestError: If the request is malformed.
         """
-        ...
+        if not isinstance(udid, str):
+            raise MalformedRequestError()
+        if not udid:
+            raise MalformedRequestError()
+
+        await self.tunnel_connect.stop_tunnel(udid)
 
     @server_method
     def get_tunnel(self, udid: str) -> TunnelResult:
@@ -122,7 +143,18 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
         :raises MalformedRequestError: If the request is malformed.
         :raises NotFoundError: If the tunnel does not exist
         """
-        ...
+
+        if not isinstance(udid, str):
+            raise MalformedRequestError()
+        if not udid:
+            raise MalformedRequestError()
+
+        tunnel = self.tunnel_connect.get_tunnel(udid)
+
+        if tunnel is None:
+            raise NotFoundError()
+
+        return tunnel
 
     async def cleanup(self):
         """
