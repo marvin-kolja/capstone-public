@@ -402,6 +402,7 @@ class TestServer:
 
         THEN: The method should return a `SuccessResponse` with the correct data.
         """
+
         class FakeBaseModel(BaseModel):
             foo: str
             ip: IPvAnyAddress
@@ -440,6 +441,26 @@ class TestServer:
             Server._construct_response_from_result(12345)
 
     @pytest.mark.asyncio
+    async def test_serve_fail(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A mocked service.
+        AND: A mocked __server_task method.
+
+        WHEN: Starting the server
+        AND: The server fails to start.
+
+        THEN: The server should raise an exception.
+        """
+        mock_service = MagicMock(spec=ServerMethodHandler)
+        server = Server(mock_service)
+
+        with patch.object(server, '_Server__server_task') as mock_server_task:
+            mock_server_task.side_effect = Exception
+            with pytest.raises(Exception):
+                await server.serve(port=port)
+
+    @pytest.mark.asyncio
     async def test_serve_and_stop(self, port):
         """
         GIVEN: A `Server` instance
@@ -468,4 +489,3 @@ class TestServer:
 
             assert task.done()
             assert server._server_task is None
-
