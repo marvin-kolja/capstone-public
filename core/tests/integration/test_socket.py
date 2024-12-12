@@ -1,10 +1,11 @@
 import asyncio
+import time
 
 import pytest
 
 from core.socket import ServerSocket, ClientSocket
 from core.codec.socket_json_codec import ClientRequest, ServerResponse
-from tests.test_data.socket_test_data import VALID_REQUESTS, VALID_RESPONSES
+from tests.test_data.socket_test_data import VALID_REQUESTS, VALID_RESPONSES, TIMEOUTS
 
 
 class TestSocket:
@@ -134,3 +135,36 @@ class TestSocket:
                     server_send_message(valid_response),
                     client_receive_message(valid_request, valid_response),
                 )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("socket_type", ["client", "server"])
+    @pytest.mark.parametrize("timeout", TIMEOUTS)
+    async def test_server_receive_timeout(self, socket_type, client_socket, server_socket, timeout):
+        """
+        GIVEN: A server or client socket
+        AND: A timeout
+
+        WHEN: Trying to receive a request with the given timeout
+        AND: And nothing is sent
+
+        THEN: A TimeoutError should be raised
+        AND: The time passed should be equal or greater to the timeout
+        """
+        def _assert_time_passed(start: float, end: float):
+            """ Assert that the time passed between two points is equal or greater to the given timeout """
+            elapsed_time = end - start
+            if timeout is None:
+                assert elapsed_time >= 0.1
+            else:
+                assert elapsed_time >= timeout.total_seconds()
+
+        start_time = time.perf_counter()
+        with pytest.raises(TimeoutError):
+            if socket_type == "server":
+                await server_socket.receive(timeout=timeout)
+            elif socket_type == "client":
+                await client_socket.receive(timeout=timeout)
+            else:
+                pytest.fail(f"Invalid socket type: {socket_type}")
+        end_time = time.perf_counter()
+        _assert_time_passed(start_time, end_time)

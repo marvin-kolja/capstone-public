@@ -1,4 +1,5 @@
 import sys
+from datetime import timedelta
 
 from core.codec.socket_json_codec import ClientRequest, HeartbeatRequest, ErrorResponse, SuccessResponse
 
@@ -150,4 +151,14 @@ INVALID_MESSAGE_DATA = [
 INVALID_MESSAGE_DATA += INVALID_REQUEST_DATA + INVALID_RESPONSE_DATA
 INVALID_MESSAGE_DATA += [
     message.model_dump(exclude={"timestamp"}) for message in VALID_MESSAGES
+]
+
+TIMEOUTS = [
+    timedelta(seconds=1),
+    timedelta(seconds=0.1),
+    timedelta(milliseconds=100),
+    timedelta(microseconds=1000),
+    timedelta(microseconds=1),
+    timedelta(0),
+    None,
 ]

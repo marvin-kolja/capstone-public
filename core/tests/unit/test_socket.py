@@ -1,16 +1,16 @@
 import datetime
-import time
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
-from core.socket import ClientSocket, ServerSocket
+from core.socket import ClientSocket, ServerSocket, _timedelta_to_milliseconds
 from core.codec.socket_json_codec import SocketMessageJSONCodec, ServerSocketMessageJSONCodec, \
     ClientSocketMessageJSONCodec, BaseMessage, SocketMessageFactory, SuccessResponse, ErrorResponse, HeartbeatRequest
 from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VALID_RESPONSES, INVALID_MESSAGE_DATA, \
-    INVALID_TIMESTAMPS
+    INVALID_TIMESTAMPS, TIMEOUTS
 
 
 class TestMessage:
@@ -262,23 +262,6 @@ class TestSocketMessageFactory:
             })
 
 
-timeouts = [
-    timedelta(seconds=1),
-    timedelta(seconds=0.5),
-    timedelta(seconds=0.1),
-    None,
-]
-
-
-def _assert_time_passed(start_time: float, end_time: float, timeout: timedelta = None):
-    """ Assert that the time passed between two points is equal or greater to the given timeout """
-    elapsed_time = end_time - start_time
-    if timeout is None:
-        assert elapsed_time >= 0.1
-    else:
-        assert elapsed_time >= timeout.total_seconds()
-
-
 class TestClientSocket:
     success_response = SuccessResponse(
         message="Success",
@@ -369,24 +352,27 @@ class TestClientSocket:
             await client_socket.receive()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("timeout", timeouts)
-    async def test_receive_timout(self, timeout):
+    @pytest.mark.parametrize("timeout", TIMEOUTS)
+    async def test_receive_timeout(self, client_socket, mock_zmq_poller, timeout):
         """
         GIVEN: A client socket
+        AND: A mocked zmq.asyncio.Poller
         AND: A timeout
 
         WHEN: Trying to receive a response with the given timeout
-        AND: No response is sent
 
-        THEN: A TimeoutError should be raised
-        AND: The time passed should be equal or greater to the timeout
+        THEN: The poller should be called with the given timeout
+        AND: A TimeoutError should be raised
         """
-        with ClientSocket(port=12345) as client:
-            start_time = time.perf_counter()
-            with pytest.raises(TimeoutError):
-                await client.receive(timeout=timeout)
-            end_time = time.perf_counter()
-            _assert_time_passed(start_time, end_time, timeout)
+        with pytest.raises(TimeoutError):
+            await client_socket.receive(timeout=timeout)
+
+        if timeout is None:
+            expected = _timedelta_to_milliseconds(timedelta(seconds=0.1))
+        else:
+            expected = _timedelta_to_milliseconds(timeout)
+
+        mock_zmq_poller.poll.assert_called_once_with(expected)
 
     def test_close(self, spy_zmq_socket_close, spy_zmq_context_term, client_socket):
         """
@@ -445,23 +431,26 @@ class TestServerSocket:
             server.close()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("timeout", timeouts)
+    @pytest.mark.parametrize("timeout", TIMEOUTS)
     async def test_receive_timeout(self, server_socket, timeout):
         """
         GIVEN: A server socket
+        AND: A mocked `Socket.receive` method
         AND: A timeout
 
         WHEN: Trying to receive a request with the given timeout
-        AND: No request is sent
 
-        THEN: A TimeoutError should be raised
-        AND: The time passed should be equal or greater to the timeout
+        THEN: The socket should have the correct zmq.RCVTIMEO option set
         """
-        start_time = time.perf_counter()
-        with pytest.raises(TimeoutError):
+        with patch("core.socket.Socket.receive"):
             await server_socket.receive(timeout=timeout)
-        end_time = time.perf_counter()
-        _assert_time_passed(start_time, end_time, timeout)
+
+            if timeout is None:
+                expected = _timedelta_to_milliseconds(timedelta(seconds=0.1))
+            else:
+                expected = _timedelta_to_milliseconds(timeout)
+
+            assert server_socket._socket.getsockopt(zmq.RCVTIMEO) == expected
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
