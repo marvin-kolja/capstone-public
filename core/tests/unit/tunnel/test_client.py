@@ -7,7 +7,7 @@ from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedErr
 from core.codec.socket_json_codec import ClientRequest, ErrorResponse, SuccessResponse
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ClientSocket
-from core.tunnel.client import get_error_from_context, Client
+from core.tunnel.client import get_error_from_context, Client, TunnelClient
 from core.tunnel.server_exceptions import ServerErrorCode, TunnelServerErrorCode, InternalServerError, \
     MalformedRequestError, NotFoundError
 
@@ -149,3 +149,122 @@ class TestClient:
             print(client._socket)
             with pytest.raises(NotFoundError):
                 await client._call_server('invalid_action', param='test')
+
+
+class TestTunnelClient:
+    @pytest.fixture
+    def tunnel_client_with_mocked_socket(self, mocked_client_socket, port):
+        """
+        A fixture to create a `TunnelClient` instance with a mocked `ClientSocket`.
+        """
+        with TunnelClient(port=port, timeout=timedelta(seconds=1)) as client:
+            yield client
+
+    @pytest.mark.asyncio
+    async def test_start_tunnel_success(self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to start a tunnel.
+        AND: The server responds with a tunnel result.
+
+        THEN: The called method should return the tunnel result as is.
+        """
+        # Simulate a successful tunnel creation
+        tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse(
+            data=fake_tunnel_result.model_dump(mode='json'))
+
+        result = await tunnel_client_with_mocked_socket.start_tunnel(fake_udid)
+        assert result == fake_tunnel_result
+
+    @pytest.mark.asyncio
+    async def test_start_tunnel_tunnel_already_exists(self, tunnel_client_with_mocked_socket, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to start a tunnel.
+        AND: The server responds with a TUNNEL_ALREADY_EXISTS error.
+
+        THEN: The called method should raise TunnelAlreadyExistsError.
+        """
+        # Simulate a tunnel already exists error
+        tunnel_client_with_mocked_socket._socket.receive.return_value = ErrorResponse(
+            error_code=TunnelServerErrorCode.TUNNEL_ALREADY_EXISTS.value
+        )
+        with pytest.raises(TunnelAlreadyExistsError):
+            await tunnel_client_with_mocked_socket.start_tunnel(fake_udid)
+
+    @pytest.mark.asyncio
+    async def test_stop_tunnel_success(self, tunnel_client_with_mocked_socket, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to stop a tunnel.
+        AND: The server responds with a success response.
+
+        THEN: The called method should return None.
+        """
+        # Simulate a successful server response for stopping a tunnel
+        tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse()
+
+        result = await tunnel_client_with_mocked_socket.stop_tunnel(fake_udid)
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_stop_tunnel_device_not_found(self, tunnel_client_with_mocked_socket, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to stop a tunnel.
+        AND: The server responds with a DEVICE_NOT_FOUND error.
+
+        THEN: The called method should raise a DeviceNotFoundError
+        """
+        # Simulate a device not found error
+        tunnel_client_with_mocked_socket._socket.receive.return_value = ErrorResponse(
+            error_code=TunnelServerErrorCode.DEVICE_NOT_FOUND.value
+        )
+        with pytest.raises(DeviceNotFoundError):
+            await tunnel_client_with_mocked_socket.stop_tunnel(fake_udid)
+
+    @pytest.mark.asyncio
+    async def test_get_tunnel_success(self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to get a tunnel.
+        AND: The server responds with a tunnel result.
+
+        THEN: The called method should return the tunnel result as is.
+        """
+        # Simulate a successful tunnel retrieval
+        tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse(
+            data=fake_tunnel_result.model_dump(mode='json'))
+
+        result = await tunnel_client_with_mocked_socket.get_tunnel(fake_udid)
+
+        assert result == fake_tunnel_result
+
+    @pytest.mark.asyncio
+    async def test_get_tunnel_not_found(self, tunnel_client_with_mocked_socket, fake_udid):
+        """
+        GIVEN: A `TunnelClient` instance.
+        AND: A mocked `ClientSocket` instance.
+
+        WHEN: The client tries to get a tunnel.
+        AND: The server responds with a NOT_FOUND error.
+
+        THEN: The called method should raise a NotFoundError.
+        """
+        # Simulate a tunnel not found error
+        tunnel_client_with_mocked_socket._socket.receive.return_value = ErrorResponse(
+            error_code=ServerErrorCode.NOT_FOUND.value
+        )
+        with pytest.raises(NotFoundError):
+            await tunnel_client_with_mocked_socket.get_tunnel(fake_udid)
