@@ -99,8 +99,16 @@ class TunnelClient(Client, TunnelConnectInterface):
     """
 
     async def start_tunnel(self, udid: str) -> TunnelResult:
-        # TODO: Call the server with the 'start_tunnel' action and the udid as a parameter.
-        raise NotImplementedError
+        """
+        Implementation of the :func:`core.tunnel.interface.TunnelConnectInterface.start_tunnel` method.
+
+        :raises CoreServerError: If the server returns an error that is not a tunnel error.
+        :raises TunnelAlreadyExistsError: If a tunnel to the device already exists.
+        :raises DeviceNotFoundError: If the device with the UDID is not found.
+        :raises NoDeviceConnectedError: If no device is connected.
+        """
+        data = await self._call_server('start_tunnel', udid=udid)
+        return TunnelResult(**data)
 
     async def stop_tunnel(self, udid: str) -> None:
         # TODO: Call the server with the 'stop_tunnel' action and the udid as a parameter.
