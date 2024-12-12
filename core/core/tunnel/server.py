@@ -205,7 +205,13 @@ class Server(Generic[SERVICE]):
         """
         :raises NotFoundError: If the method does not exist.
         """
-        ...
+        try:
+            attribute = self._service[method_name]
+            return check_server_method(attribute)
+        except (KeyError, AttributeError, TypeError) as e:
+            # TODO: better error handling
+            print(repr(e))
+            raise NotFoundError()
 
     @staticmethod
     def _bind_arguments(method: MethodType, data: dict) -> dict:
