@@ -199,7 +199,7 @@ class Server(Generic[SERVICE]):
             5. construct response (self._construct_response_from_result)
             6. respond
         """
-        ...
+        raise NotImplementedError()
 
     def _get_method(self, method_name: str) -> MethodType:
         """
@@ -261,8 +261,13 @@ class Server(Generic[SERVICE]):
         Start a server task
 
         Will wait for a short time to check if the server closes immediately.
+
+        If the server closes immediately, the server is awaited which may raise an exception.
         """
-        ...
+        self._server_task = asyncio.create_task(self.__server_task(port=port))
+        await asyncio.sleep(0.1)
+        if self._server_task.done():
+            await self.await_close()
 
     async def await_close(self):
         """
@@ -270,13 +275,17 @@ class Server(Generic[SERVICE]):
 
         :raises: Any exception that caused the server task to close.
         """
-        ...
+        try:
+            await self._server_task
+            self._server_task.result()
+        finally:
+            await self._service.cleanup()
 
     async def stop(self):
         """
         Cancels the server task if it exists and waits for it to close.
         """
-        ...
+        raise NotImplementedError()
 
 
 def get_tunnel_server() -> Server[TunnelConnectService]:
