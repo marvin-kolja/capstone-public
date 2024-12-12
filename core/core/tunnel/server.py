@@ -220,7 +220,14 @@ class Server(Generic[SERVICE]):
 
         :raises MalformedRequestError: if it fails to bind the arguments.
         """
-        ...
+        try:
+            kwargs = bind_arguments(method, data)
+        except TypeError as e:
+            # TODO: better error handling
+            print(repr(e))
+            raise MalformedRequestError()
+
+        return kwargs
 
     @staticmethod
     async def _call_method(method: MethodType, kwargs: dict):
