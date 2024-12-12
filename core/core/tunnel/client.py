@@ -89,3 +89,23 @@ class Client:
         if isinstance(response, ErrorResponse):
             raise get_error_from_context(request, response)
         return response.data
+
+
+class TunnelClient(Client, TunnelConnectInterface):
+    """
+    Implementation of the TunnelConnectInterface for the client side.
+
+    Inherits the `Client` for communication with the server.
+    """
+
+    async def start_tunnel(self, udid: str) -> TunnelResult:
+        # TODO: Call the server with the 'start_tunnel' action and the udid as a parameter.
+        raise NotImplementedError
+
+    async def stop_tunnel(self, udid: str) -> None:
+        # TODO: Call the server with the 'stop_tunnel' action and the udid as a parameter.
+        raise NotImplementedError
+
+    async def get_tunnel(self, udid: str) -> TunnelResult:
+        # TODO: Call the server with the 'get_tunnel' action and the udid as a parameter.
+        raise NotImplementedError
