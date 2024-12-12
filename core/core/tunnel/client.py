@@ -81,10 +81,10 @@ class Client:
         :raises: InvalidSocketMessage: If the request or response are invalid.
         :raises: Parsed server errors, see `get_error_from_context`.
         """
-        # TODO:
-        #  1. Create a request with the given action and data.
-        #  2. Send the request to the server.
-        #  3. Receive the response from the server.
-        #  4. If the response is an error, raise the appropriate exception.
-        #  5. Return the response data.
-        raise NotImplementedError
+        request = ClientRequest(action=action, data=kwargs)
+        await self._socket.send(request)
+        response = await self._socket.receive(timeout=self._timeout)
+
+        if isinstance(response, ErrorResponse):
+            raise get_error_from_context(request, response)
+        return response.data
