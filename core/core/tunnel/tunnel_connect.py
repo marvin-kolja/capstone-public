@@ -2,7 +2,6 @@ import asyncio
 from contextlib import suppress
 from typing import Optional
 
-from pydantic import BaseModel, IPvAnyAddress
 from pymobiledevice3.exceptions import PyMobileDevice3Exception
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.remote.common import TunnelProtocol
@@ -10,18 +9,10 @@ from pymobiledevice3.remote.tunnel_service import TunnelResult as pymobiledevice
 from pymobiledevice3.tunneld import TunneldCore, TunnelTask
 
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
+from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 
 
-class TunnelResult(BaseModel):
-    """
-    A class to represent a tunnel connection result.
-    """
-    address: IPvAnyAddress
-    port: int
-    protocol: TunnelProtocol
-
-
-class TunnelConnect:
+class TunnelConnect(TunnelConnectInterface):
     """
     A class to that wraps the TunneldCore functionality of `pymobiledevice`.
 
@@ -51,15 +42,6 @@ class TunnelConnect:
         )
 
     async def start_tunnel(self, udid: str) -> TunnelResult:
-        """
-        Start a tunnel to a device.
-
-        For now only USBMux is supported using TCP.
-
-        :param udid: The UDID of the device to connect to.
-
-        :raises TunnelAlreadyExistsError: If a tunnel to the device already exists.
-        """
         if self._tunnel_manager.tunnel_exists_for_udid(udid):
             raise TunnelAlreadyExistsError(f"Tunnel to {udid} already exists")
 
@@ -87,13 +69,6 @@ class TunnelConnect:
             raise e
 
     async def stop_tunnel(self, udid: str) -> None:
-        """
-        Stop the tunnel to a device.
-
-        Does nothing if the tunnel does not exist.
-
-        :param udid: The UDID of the device to disconnect from.
-        """
         tunnel_task = self._tunnel_manager.tunnel_tasks.pop(udid, None)
         if tunnel_task is None:
             return
@@ -109,12 +84,6 @@ class TunnelConnect:
             await tunnel_task.task
 
     def get_tunnel(self, udid: str) -> Optional[TunnelResult]:
-        """
-        Get the tunnel to a device.
-
-        :param udid: The UDID of the device to get the tunnel for.
-        :return: The tunnel result if the tunnel exists, otherwise None.
-        """
         if self._tunnel_manager.tunnel_exists_for_udid(udid):
             tunnel_task = self._tunnel_manager.tunnel_tasks[udid]
             return self._parse_pymobiledevice3_tunnel_result(tunnel_task.tunnel)
