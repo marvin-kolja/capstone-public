@@ -8,6 +8,7 @@ from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ClientSocket
 from core.tunnel.server_exceptions import ServerErrorCode, InternalServerError, MalformedRequestError, NotFoundError, \
     TunnelServerErrorCode
+from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 
 
 def get_error_from_context(request: ClientRequest, error_response: ErrorResponse) -> Exception:
