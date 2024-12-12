@@ -13,6 +13,7 @@ class TestTunnelConnect:
     Test cases for TunnelConnect class
     """
 
+    @pytest.mark.asyncio
     async def test_start_tunnel(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -26,6 +27,7 @@ class TestTunnelConnect:
 
         assert tunnel_result is not None
 
+    @pytest.mark.asyncio
     async def test_start_tunnel_already_started(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -41,6 +43,7 @@ class TestTunnelConnect:
         with pytest.raises(TunnelAlreadyExistsError):
             await tunnel_connect.start_tunnel(device_udid)
 
+    @pytest.mark.asyncio
     async def test_stop_tunnel(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -56,6 +59,7 @@ class TestTunnelConnect:
 
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
+    @pytest.mark.asyncio
     async def test_stop_tunnel_on_already_cancelled_task(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -77,6 +81,7 @@ class TestTunnelConnect:
 
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
+    @pytest.mark.asyncio
     async def test_stop_tunnel_on_already_cancelling_task(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -95,6 +100,7 @@ class TestTunnelConnect:
 
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
+    @pytest.mark.asyncio
     async def test_get_tunnel(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
@@ -111,6 +117,7 @@ class TestTunnelConnect:
         assert tunnel_result is not None
         assert tunnel_result == started_tunnel
 
+    @pytest.mark.asyncio
     async def test_close(self, tunnel_connect, device_udid):
         """
         GIVEN: A TunnelConnect instance
