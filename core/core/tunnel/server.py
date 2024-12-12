@@ -231,7 +231,10 @@ class Server(Generic[SERVICE]):
 
     @staticmethod
     async def _call_method(method: MethodType, kwargs: dict):
-        ...
+        if asyncio.iscoroutinefunction(method):
+            return await method(**kwargs)
+        else:
+            return method(**kwargs)
 
     @staticmethod
     def _construct_response_from_result(result) -> SuccessResponse:
