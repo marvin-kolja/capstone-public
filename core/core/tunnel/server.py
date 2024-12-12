@@ -5,13 +5,15 @@ from abc import ABC
 from types import MethodType
 from typing import Optional, TypeVar, Generic
 
+from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
 from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
-from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, NotFoundError
+from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
+    NotFoundError, InternalServerError
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -227,7 +229,16 @@ class Server(Generic[SERVICE]):
 
         :raises InternalServerError: If result is not a BaseModel, dict, or None.
         """
-        ...
+        if result is None:
+            return SuccessResponse()
+        if isinstance(result, BaseModel):
+            return SuccessResponse(data=result.model_dump(mode='json'))
+        if isinstance(result, dict):
+            return SuccessResponse(data=result)
+        else:
+            # TODO: better error handling
+            print(f"Invalid response data: {result}")
+            raise InternalServerError()
 
     async def serve(self, port: int):
         """
