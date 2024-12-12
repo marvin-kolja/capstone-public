@@ -114,5 +114,5 @@ class TunnelClient(Client, TunnelConnectInterface):
         await self._call_server('stop_tunnel', udid=udid)
 
     async def get_tunnel(self, udid: str) -> TunnelResult:
-        # TODO: Call the server with the 'get_tunnel' action and the udid as a parameter.
-        raise NotImplementedError
+        data = await self._call_server('get_tunnel', udid=udid)
+        return TunnelResult(**data)
