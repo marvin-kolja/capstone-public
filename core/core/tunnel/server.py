@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 from abc import ABC
+from datetime import timedelta
 
 from types import MethodType
 from typing import Optional, TypeVar, Generic
@@ -8,12 +9,13 @@ from typing import Optional, TypeVar, Generic
 from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
-from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse
+from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse
+from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
-    NotFoundError, InternalServerError
+    NotFoundError, InternalServerError, CoreServerError, ServerErrorCode
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -190,16 +192,33 @@ class Server(Generic[SERVICE]):
             await self._service.cleanup()
 
     async def _process_incoming_request(self, server: ServerSocket):
-        """
-        TODO:
-            1. receive request
-            2. get method (self._get_method)
-            3. bind arguments (self._bind_arguments)
-            4. call method (self._call_method)
-            5. construct response (self._construct_response_from_result)
-            6. respond
-        """
-        raise NotImplementedError()
+        try:
+            request = await server.receive(timeout=timedelta(seconds=360))
+        except TimeoutError as e:
+            # TODO: better logging
+            print(repr(e))
+            return
+
+        try:
+            method = self._get_method(request.action)
+            kwargs = self._bind_arguments(method, request.data)
+            result = await self._call_method(method, kwargs)
+            response = self._construct_response_from_result(result)
+        except CoreServerError as e:
+            # TODO: better logging
+            print(repr(e))
+            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+        except Exception as e:
+            # TODO: better logging
+            print(f"Unexpected error: {repr(e)}")
+            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+
+        try:
+            await server.respond(response)
+        except InvalidSocketMessage as e:
+            # TODO: better logging
+            print(f"Failed to respond: {repr(e)}")
+            await server.respond(ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
 
     def _get_method(self, method_name: str) -> MethodType:
         """
