@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import timedelta
 from typing import Optional
 
@@ -116,3 +117,15 @@ class TunnelClient(Client, TunnelConnectInterface):
     async def get_tunnel(self, udid: str) -> TunnelResult:
         data = await self._call_server('get_tunnel', udid=udid)
         return TunnelResult(**data)
+
+
+@contextmanager
+def get_tunnel_client(port: int, timeout: Optional[timedelta] = None) -> TunnelClient:
+    """
+    Get a tunnel client instance.
+
+    :param port: The port to connect to.
+    :param timeout: The timeout for receiving responses.
+    """
+    with TunnelClient(port=port, timeout=timeout) as client:
+        yield client
