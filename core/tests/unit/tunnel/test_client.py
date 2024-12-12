@@ -7,7 +7,7 @@ from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedErr
 from core.codec.socket_json_codec import ClientRequest, ErrorResponse, SuccessResponse
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ClientSocket
-from core.tunnel.client import get_error_from_context, Client, TunnelClient
+from core.tunnel.client import get_error_from_context, Client, get_tunnel_client
 from core.tunnel.server_exceptions import ServerErrorCode, TunnelServerErrorCode, InternalServerError, \
     MalformedRequestError, NotFoundError
 
@@ -157,7 +157,7 @@ class TestTunnelClient:
         """
         A fixture to create a `TunnelClient` instance with a mocked `ClientSocket`.
         """
-        with TunnelClient(port=port, timeout=timedelta(seconds=1)) as client:
+        with get_tunnel_client(port=port, timeout=timedelta(seconds=1)) as client:
             yield client
 
     @pytest.mark.asyncio
