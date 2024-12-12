@@ -1,0 +1,229 @@
+import asyncio
+import inspect
+from abc import ABC
+
+from types import MethodType
+from typing import Optional, TypeVar, Generic
+
+from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse
+from core.socket import ServerSocket
+from core.tunnel.interface import TunnelConnectInterface, TunnelResult
+from core.tunnel.tunnel_connect import TunnelConnect
+
+
+def server_method(func):
+    """
+    Decorator to mark a method as a server method
+
+    Inspired by https://github.com/aio-libs/aiozmq/blob/master/aiozmq/rpc/base.py#L79-L83
+
+    """
+    func.__server__ = {}
+    func.__signature__ = inspect.signature(func)
+    return func
+
+
+def check_server_method(func) -> MethodType:
+    if not isinstance(func, MethodType):
+        raise TypeError
+    if not hasattr(func, '__server__'):
+        raise AttributeError
+    if not hasattr(func, '__signature__'):
+        raise AttributeError
+    return func
+
+
+def bind_arguments(method: MethodType, data: dict) -> dict:
+    """
+    Tries to bind the arguments to the method signature.
+
+    :param method: The method to bind the arguments to.
+    :param data: The data to bind to the method.
+
+    :return: The bound arguments.
+
+    :raises TypeError: If the data does not match the method signature.
+    """
+    signature = inspect.signature(method)
+    bound_arguments = signature.bind(**data)
+    return bound_arguments.arguments
+
+
+class ServerMethodHandler(ABC):
+    """
+    An abstract class to handle server methods and cleanup.
+    """
+
+    def __getitem__(self, key):
+        """
+        Get an attribute by key.
+
+        :param key: The name of the attribute.
+        :return: The attribute if it exists
+
+        :raises KeyError: If the attribute does not exist
+        """
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError
+
+    async def cleanup(self):
+        """
+        Cleanup any resources used by the handler.
+        """
+        pass
+
+
+class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
+    """
+    A class that uses the TunnelConnect class to provide a server interface to start, stop and get tunnels to devices.
+    """
+
+    def __init__(self, tunnel_connect: TunnelConnect):
+        if tunnel_connect is None:
+            raise ValueError("TunnelConnect cannot be None")
+        self.tunnel_connect = tunnel_connect
+
+    @server_method
+    async def start_tunnel(self, udid: str) -> TunnelResult:
+        """
+        Start a tunnel to a device.
+
+        :param udid: The UDID of the device to connect to.
+        :return: The tunnel result.
+
+        :raises TunnelServerError: If there is an error starting the tunnel.
+        :raises MalformedRequestError: If the request is malformed.
+        """
+        ...
+
+    @server_method
+    async def stop_tunnel(self, udid: str) -> None:
+        """
+        Stop the tunnel to a device.
+
+        Does nothing if the tunnel does not exist.
+
+        :param udid: The UDID of the device to disconnect from.
+
+        :raises MalformedRequestError: If the request is malformed.
+        """
+        ...
+
+    @server_method
+    def get_tunnel(self, udid: str) -> TunnelResult:
+        """
+        Get the tunnel to a device.
+
+        :param udid: The UDID of the device to get the tunnel for.
+        :return: The tunnel result
+
+        :raises MalformedRequestError: If the request is malformed.
+        :raises NotFoundError: If the tunnel does not exist
+        """
+        ...
+
+    async def cleanup(self):
+        """
+        Close all tunnels and cleanup resources
+        """
+        await self.tunnel_connect.close()
+
+
+SERVICE = TypeVar('SERVICE', bound=ServerMethodHandler)
+
+
+class Server(Generic[SERVICE]):
+    """
+    A class to run a socket server that handles requests and responses using a ServerMethodHandler.
+
+    Messages are encoded and decoded using the ServerSocketMessageJSONCodec.
+    """
+
+    def __init__(self, service: SERVICE):
+        if service is None or not isinstance(service, ServerMethodHandler):
+            raise ValueError("Invalid service")
+        self._service: SERVICE = service
+        self._server_task: Optional[asyncio.Task] = None
+
+    async def __server_task(self, port: int):
+        try:
+            with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
+                while True:
+                    await self._process_incoming_request(server)
+        finally:
+            await self._service.cleanup()
+
+    async def _process_incoming_request(self, server: ServerSocket):
+        """
+        TODO:
+            1. receive request
+            2. get method (self._get_method)
+            3. bind arguments (self._bind_arguments)
+            4. call method (self._call_method)
+            5. construct response (self._construct_response_from_result)
+            6. respond
+        """
+        ...
+
+    def _get_method(self, method_name: str) -> MethodType:
+        """
+        :raises NotFoundError: If the method does not exist.
+        """
+        ...
+
+    @staticmethod
+    def _bind_arguments(method: MethodType, data: dict) -> dict:
+        """
+        Bind the arguments to the method signature.
+
+        :raises MalformedRequestError: if it fails to bind the arguments.
+        """
+        ...
+
+    @staticmethod
+    async def _call_method(method: MethodType, kwargs: dict):
+        ...
+
+    @staticmethod
+    def _construct_response_from_result(result) -> SuccessResponse:
+        """
+        Construct a response from the result of a service method.
+        :param result: Can be a BaseModel, dict or None.
+        :return: A SuccessResponse with the data from the result.
+
+        :raises InternalServerError: If result is not a BaseModel, dict, or None.
+        """
+        ...
+
+    async def serve(self, port: int):
+        """
+        Start a server task
+
+        Will wait for a short time to check if the server closes immediately.
+        """
+        ...
+
+    async def await_close(self):
+        """
+        Await the server task to close and cleanup the service.
+
+        :raises: Any exception that caused the server task to close.
+        """
+        ...
+
+    async def stop(self):
+        """
+        Cancels the server task if it exists and waits for it to close.
+        """
+        ...
+
+
+def get_tunnel_server() -> Server[TunnelConnectService]:
+    """
+    Get a server instance for the tunnel connect service.
+    """
+    tunnel_connect = TunnelConnect()
+    server_handler = TunnelConnectService(tunnel_connect)
+    return Server(service=server_handler)
