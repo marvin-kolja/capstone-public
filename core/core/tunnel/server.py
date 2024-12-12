@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 from abc import ABC
+from contextlib import suppress
 from datetime import timedelta
 
 from types import MethodType
@@ -303,8 +304,19 @@ class Server(Generic[SERVICE]):
     async def stop(self):
         """
         Cancels the server task if it exists and waits for it to close.
+
+        Uses `await_close` to wait and cleanup.
         """
-        raise NotImplementedError()
+        task = self._server_task
+        if task is None:
+            return
+
+        task.cancel()
+        try:
+            with suppress(asyncio.CancelledError):
+                await self.await_close()
+        finally:
+            self._server_task = None
 
 
 def get_tunnel_server() -> Server[TunnelConnectService]:
