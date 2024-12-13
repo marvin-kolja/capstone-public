@@ -103,11 +103,11 @@ class Process:
 
     def terminate(self):
         if self.is_running:
-            os.kill(self.__process.pid, signal.SIGTERM)
+            self._send_signal(self.__process.pid, signal.SIGTERM)
 
     def kill(self):
         if self.is_running:
-            os.kill(self.__process.pid, signal.SIGKILL)
+            self._send_signal(self.__process.pid, signal.SIGKILL)
 
     async def wait(self) -> tuple[[str], [str]]:
         """
@@ -134,3 +134,8 @@ class Process:
             decoded_line = line.decode().strip()
             lines.append(decoded_line)
         return lines
+
+    @staticmethod
+    def _send_signal(pid: int, sig: signal.Signals):
+        """ Uses the `os.kill` to send a signal to the process group. """
+        os.kill(pid, sig)
