@@ -1,0 +1,102 @@
+import asyncio
+from abc import ABC, abstractmethod
+from asyncio import subprocess
+from typing import Optional
+
+
+class ProcessCommand(ABC):
+    """
+    Used by the `Process` class to parse the command
+    """
+
+    @abstractmethod
+    def parse(self) -> [str]:
+        """
+        Parse the command to be executed by the `Process` class.
+        :return: A list of strings representing the command.
+        """
+        ...
+
+
+class ProcessError(Exception):
+    """ Base class for all exceptions process related. """
+
+
+class CommandError(ProcessError):
+    """ Raised when the command is invalid. """
+
+
+class ProcessAlreadyRunningError(ProcessError):
+    """ Raised when trying to start a process that is already running. """
+
+
+class Process:
+    """
+    A wrapper around the `asyncio.create_subprocess_exec` to make it easier to execute commands.
+
+    The main functionalities are:
+        - Execute a command in a subprocess
+        - Ability to terminate or kill the process
+        - Checking the status of the process
+        - Getting the return code of the process
+        - Waiting for the process to finish
+            - Exposes the stdout and stderr as lists of strings
+    """
+
+    def __init__(self, command: ProcessCommand):
+        """
+        :param command: The command to be executed by the process.
+        """
+        if not isinstance(command, ProcessCommand):
+            raise CommandError(f"Invalid command: {command}")
+        self.__command = command
+        self.__process: Optional[subprocess.Process] = None
+
+    @property
+    def command(self) -> ProcessCommand:
+        return self.__command
+
+    @property
+    def returncode(self) -> Optional[int]:
+        if self.__process is None:
+            return None
+        return self.__process.returncode
+
+    @property
+    def is_running(self) -> bool:
+        return self.__process is not None and self.returncode is None
+
+    @property
+    def terminated(self) -> bool:
+        return self.__process is not None and self.returncode is not None
+
+    @property
+    def failed(self) -> bool:
+        if self.terminated:
+            return self.__process.returncode != 0
+        return False
+
+    async def execute(self, cwd: Optional[str] = None):
+        """
+        Execute the command in an asyncio subprocess.
+
+        :param cwd: The working directory to execute the command in.
+        """
+        # TODO:
+        #  - Check if the process is already running
+        #  - execute the command
+        #  - register the atexit handler (self.kill)
+
+    def terminate(self):
+        ...
+
+    def kill(self):
+        ...
+
+    async def wait(self) -> tuple[[str], [str]]:
+        """
+        Wait for the process to finish and return the stdout and stderr as a tuple.
+
+        :return: A tuple containing the stdout and stderr as lists of strings.
+        """
+        ...
