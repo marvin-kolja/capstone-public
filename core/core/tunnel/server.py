@@ -196,7 +196,7 @@ class Server(Generic[SERVICE]):
     async def __server_task(self, port: int):
         try:
             with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
-                print(f"Server started to listen on port {port}")
+                logger.info(f"Server started to listen on port {port}")
                 while True:
                     await self._process_incoming_request(server)
         finally:
