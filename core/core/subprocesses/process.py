@@ -94,7 +94,8 @@ class Process:
             os.kill(self.__process.pid, signal.SIGTERM)
 
     def kill(self):
-        ...
+        if self.is_running:
+            os.kill(self.__process.pid, signal.SIGKILL)
 
     async def wait(self) -> tuple[[str], [str]]:
         """
