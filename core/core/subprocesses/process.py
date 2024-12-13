@@ -1,4 +1,6 @@
 import asyncio
+import os
+import signal
 from abc import ABC, abstractmethod
 from asyncio import subprocess
 from typing import Optional
@@ -88,7 +90,8 @@ class Process:
         #  - register the atexit handler (self.kill)
 
     def terminate(self):
-        ...
+        if self.is_running:
+            os.kill(self.__process.pid, signal.SIGTERM)
 
     def kill(self):
         ...
