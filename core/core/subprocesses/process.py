@@ -119,6 +119,7 @@ class Process:
             stdout = await self._read_stream(self.__process.stdout)
             stderr = await self._read_stream(self.__process.stderr)
             await self.__process.wait()
+            atexit.unregister(self.kill)
             return stdout, stderr
 
     @staticmethod
