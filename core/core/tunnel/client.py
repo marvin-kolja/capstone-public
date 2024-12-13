@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from datetime import timedelta
 from typing import Optional
@@ -10,6 +11,8 @@ from core.socket import ClientSocket
 from core.tunnel.server_exceptions import ServerErrorCode, InternalServerError, MalformedRequestError, NotFoundError, \
     TunnelServerErrorCode
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
+
+logger = logging.getLogger(__name__)
 
 
 def get_error_from_context(request: ClientRequest, error_response: ErrorResponse) -> Exception:
@@ -65,10 +68,12 @@ class Client:
         self._timeout = timeout
 
     def __enter__(self):
+        logger.debug(f"Entering {self.__class__.__name__} context manager")
         self._socket = ClientSocket(port=self._port, codec=ClientSocketMessageJSONCodec()).__enter__()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.debug(f"Exiting {self.__class__.__name__} context manager")
         self._socket.__exit__(exc_type, exc_val, exc_tb)
 
     async def _call_server(self, action: str, **kwargs) -> dict:
@@ -84,11 +89,14 @@ class Client:
         :raises: Parsed server errors, see `get_error_from_context`.
         """
         request = ClientRequest(action=action, data=kwargs)
+        logger.debug(f"Calling server with action: {action}")
         await self._socket.send(request)
         response = await self._socket.receive(timeout=self._timeout)
 
         if isinstance(response, ErrorResponse):
+            logger.error(f"Received error response from server", extra={'response': response.model_dump()})
             raise get_error_from_context(request, response)
+        logger.debug(f"Received response from server", extra={'response': response.model_dump()})
         return response.data
 
 

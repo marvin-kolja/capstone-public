@@ -13,6 +13,5 @@ class SocketError(CoreException):
 class InvalidSocketMessage(SocketError):
     """ Invalid socket message"""
 
-    def __init__(self, message_data):
-        self.message_data = message_data
+    def __init__(self):
         super().__init__()

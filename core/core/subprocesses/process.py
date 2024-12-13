@@ -1,10 +1,13 @@
 import asyncio
 import atexit
+import logging
 import os
 import signal
 from abc import ABC, abstractmethod
 from asyncio import subprocess
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessCommand(ABC):
@@ -51,7 +54,8 @@ class Process:
         :param command: The command to be executed by the process.
         """
         if not isinstance(command, ProcessCommand):
-            raise CommandError(f"Invalid command: {command}")
+            logger.critical(f"Provided command is not an instance of ProcessCommand: {command.__class__.__name__}")
+            raise CommandError()
         self.__command = command
         self.__process: Optional[subprocess.Process] = None
 
@@ -91,6 +95,7 @@ class Process:
             raise ProcessAlreadyRunningError()
 
         args = self.command.parse()
+        logger.info(f"Executing command: {' '.join(args)}")
 
         self.__process = await asyncio.create_subprocess_exec(
             *args,
@@ -98,8 +103,10 @@ class Process:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
+        logger.debug(f"Process started with PID: {self.__process.pid}")
 
         atexit.register(self.kill)
+        logger.debug("Registered kill at exit handler")
 
     def terminate(self):
         if self.is_running:
@@ -118,8 +125,11 @@ class Process:
         if self.is_running:
             stdout = await self._read_stream(self.__process.stdout)
             stderr = await self._read_stream(self.__process.stderr)
+            logger.debug("Waiting for process to finish")
             await self.__process.wait()
+            logger.debug("Process finished")
             atexit.unregister(self.kill)
+            logger.debug("Unregistered kill at exit handler")
             return stdout, stderr
 
     @staticmethod
@@ -131,12 +141,15 @@ class Process:
         while True:
             line = await stream.readline()
             if not line:  # EOF, no more lines to read
+                logger.debug("EOF reached, no more lines to read")
                 break
             decoded_line = line.decode().strip()
+            logger.debug(f"Read line new line from stream: {decoded_line}")
             lines.append(decoded_line)
         return lines
 
     @staticmethod
     def _send_signal(pid: int, sig: signal.Signals):
         """ Uses the `os.kill` to send a signal to the process group. """
+        logger.debug(f"Sending {sig} to process with PID: {pid}")
         os.kill(pid, sig)

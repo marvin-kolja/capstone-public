@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 from abc import ABC
 from contextlib import suppress
 from datetime import timedelta
@@ -11,13 +12,14 @@ from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
 from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse
-from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
     NotFoundError, InternalServerError, CoreServerError, ServerErrorCode
 from core.tunnel.tunnel_connect import TunnelConnect
+
+logger = logging.getLogger(__name__)
 
 
 def server_method(func):
@@ -34,10 +36,13 @@ def server_method(func):
 
 def check_server_method(func) -> MethodType:
     if not isinstance(func, MethodType):
+        logger.warning(f"Server method is not a method: {type(func)}")
         raise TypeError
     if not hasattr(func, '__server__'):
+        logger.warning(f"Server method does not have __server__ attribute")
         raise AttributeError
     if not hasattr(func, '__signature__'):
+        logger.warning(f"Server method does not have __signature__ attribute")
         raise AttributeError
     return func
 
@@ -75,6 +80,7 @@ class ServerMethodHandler(ABC):
         try:
             return getattr(self, key)
         except AttributeError:
+            logger.debug(f"Attribute {key} does not exist on {self.__class__.__name__}")
             raise KeyError
 
     async def cleanup(self):
@@ -91,7 +97,8 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
 
     def __init__(self, tunnel_connect: TunnelConnect):
         if tunnel_connect is None:
-            raise ValueError("TunnelConnect cannot be None")
+            logger.critical("Argument tunnel_connect is None")
+            raise ValueError
         self.tunnel_connect = tunnel_connect
 
     @server_method
@@ -165,6 +172,7 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
         """
         Close all tunnels and cleanup resources
         """
+        logger.debug("Cleaning up TunnelConnectService")
         await self.tunnel_connect.close()
 
 
@@ -180,13 +188,15 @@ class Server(Generic[SERVICE]):
 
     def __init__(self, service: SERVICE):
         if service is None or not isinstance(service, ServerMethodHandler):
-            raise ValueError("Invalid service")
+            logger.critical(f"Invalid service provided: {service.__class__.__name__}")
+            raise ValueError()
         self._service: SERVICE = service
         self._server_task: Optional[asyncio.Task] = None
 
     async def __server_task(self, port: int):
         try:
             with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
+                print(f"Server started to listen on port {port}")
                 while True:
                     await self._process_incoming_request(server)
         finally:
@@ -195,9 +205,8 @@ class Server(Generic[SERVICE]):
     async def _process_incoming_request(self, server: ServerSocket):
         try:
             request = await server.receive(timeout=timedelta(seconds=360))
-        except TimeoutError as e:
-            # TODO: better logging
-            print(repr(e))
+        except TimeoutError:
+            logger.debug(f"Server request timeout")
             return
 
         try:
@@ -206,19 +215,16 @@ class Server(Generic[SERVICE]):
             result = await self._call_method(method, kwargs)
             response = self._construct_response_from_result(result)
         except CoreServerError as e:
-            # TODO: better logging
-            print(repr(e))
+            logger.error(f"Error handling request: {e.__class__.__name__}")
             response = ErrorResponse(error_code=e.error_code.value)
-        except Exception as e:
-            # TODO: better logging
-            print(f"Unexpected error: {repr(e)}")
+        except BaseException as e:
+            logger.critical(f"An unexpected error occurred while request handling: {e}", exc_info=True)
             response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
 
         try:
             await server.respond(response)
-        except InvalidSocketMessage as e:
-            # TODO: better logging
-            print(f"Failed to respond: {repr(e)}")
+        except BaseException as e:
+            logger.critical(f"Failed to send response: {e}", exc_info=True)
             await server.respond(ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
 
     def _get_method(self, method_name: str) -> MethodType:
@@ -229,8 +235,6 @@ class Server(Generic[SERVICE]):
             attribute = self._service[method_name]
             return check_server_method(attribute)
         except (KeyError, AttributeError, TypeError) as e:
-            # TODO: better error handling
-            print(repr(e))
             raise NotFoundError()
 
     @staticmethod
@@ -243,8 +247,6 @@ class Server(Generic[SERVICE]):
         try:
             kwargs = bind_arguments(method, data)
         except TypeError as e:
-            # TODO: better error handling
-            print(repr(e))
             raise MalformedRequestError()
 
         return kwargs
@@ -272,8 +274,7 @@ class Server(Generic[SERVICE]):
         if isinstance(result, dict):
             return SuccessResponse(data=result)
         else:
-            # TODO: better error handling
-            print(f"Invalid response data: {result}")
+            logger.critical(f"Response data does not follow the expected types: {result.__class__.__name__}")
             raise InternalServerError()
 
     async def serve(self, port: int):
@@ -286,6 +287,7 @@ class Server(Generic[SERVICE]):
         """
         self._server_task = asyncio.create_task(self.__server_task(port=port))
         await asyncio.sleep(0.1)
+        logger.debug("Checking if sever task failed early")
         if self._server_task.done():
             await self.await_close()
 
@@ -296,8 +298,13 @@ class Server(Generic[SERVICE]):
         :raises: Any exception that caused the server task to close.
         """
         try:
+            logger.debug("Awaiting server task to close")
             await self._server_task
+            logger.debug("Server task closed")
             self._server_task.result()
+            logger.debug("Server task closed without errors")
+        except asyncio.CancelledError:
+            logger.debug("Server task was cancelled")
         finally:
             await self._service.cleanup()
 
@@ -309,8 +316,10 @@ class Server(Generic[SERVICE]):
         """
         task = self._server_task
         if task is None:
+            logger.warning("Server task is not running")
             return
 
+        logger.debug("Cancelling server task")
         task.cancel()
         try:
             with suppress(asyncio.CancelledError):

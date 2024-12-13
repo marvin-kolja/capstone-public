@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from datetime import datetime, timezone
 from typing import Optional, Union, Generic
@@ -8,6 +9,8 @@ from pydantic import field_validator, BaseModel, Field, ValidationError
 from core.codec.codec_protocol import CodecProtocol, E_INPUT, D_OUTPUT
 from core.codec.json_codec import JSONCodec
 from core.exceptions.socket import InvalidSocketMessage
+
+logger = logging.getLogger(__name__)
 
 
 class BaseMessage(BaseModel):
@@ -77,10 +80,12 @@ class SocketMessageFactory:
         """
         try:
             if message_data.get("timestamp") is None:
-                raise InvalidSocketMessage("Timestamp is required")
+                logger.error("Timestamp is required when parsing message data")
+                raise InvalidSocketMessage
             message_type = message_data.get("message_type")
             if message_type is None:
-                raise InvalidSocketMessage("Message type is required")
+                logger.error("Message type is required when parsing message data")
+                raise InvalidSocketMessage
 
             if message_type == "response":
                 status = message_data.get("status")
@@ -89,16 +94,19 @@ class SocketMessageFactory:
                 elif status == "OK":
                     return SuccessResponse(**message_data)
                 else:
-                    raise InvalidSocketMessage(f"Unknown server response status: {status}")
+                    logger.error(f"Unknown server response status: {status}")
+                    raise InvalidSocketMessage
             elif message_type == "request":
                 action = message_data.get("action")
                 if action == "heartbeat":
                     return HeartbeatRequest(**message_data)
                 return ClientRequest(**message_data)
             else:
-                raise InvalidSocketMessage(f"Unknown message type: {message_type}")
+                logger.error(f"Unknown message type: {message_type}")
+                raise InvalidSocketMessage
         except ValidationError as e:
-            raise InvalidSocketMessage(str(e))
+            logger.error(f"Failed to validate message data: {e}", exc_info=True)
+            raise InvalidSocketMessage
 
 
 class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_INPUT, D_OUTPUT]):
@@ -116,13 +124,16 @@ class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_
         """
         try:
             decoded_message = JSONCodec.decode_message(message)
-        except json.JSONDecodeError:
-            raise InvalidSocketMessage("Invalid JSON data")
-        except UnicodeDecodeError:
-            raise InvalidSocketMessage("Invalid UTF-8 data")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON data: {e}", exc_info=True)
+            raise InvalidSocketMessage()
+        except UnicodeDecodeError as e:
+            logger.error(f"Invalid UTF-8 data: {e}", exc_info=True)
+            raise InvalidSocketMessage()
 
         if not isinstance(decoded_message, dict):
-            raise InvalidSocketMessage("Data must be a JSON object")
+            logger.error("Data must be a JSON object")
+            raise InvalidSocketMessage()
 
         return SocketMessageFactory.parse_message_data(decoded_message)
 
@@ -131,14 +142,16 @@ class ClientSocketMessageJSONCodec(SocketMessageJSONCodec[ClientRequest, ServerR
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ClientRequest):
-            raise InvalidSocketMessage("Invalid client request")
+            logger.error(f"Message is not a client request: {type(message)}")
+            raise InvalidSocketMessage()
         return SocketMessageJSONCodec.encode_message(message)
 
     @staticmethod
     def decode_message(message: bytes) -> ServerResponse:
         decoded_message = SocketMessageJSONCodec.decode_message(message)
         if not isinstance(decoded_message, ServerResponse):
-            raise InvalidSocketMessage("Invalid server response")
+            logger.error(f"Message is not a server response: {type(decoded_message)}")
+            raise InvalidSocketMessage()
         return decoded_message
 
 
@@ -146,12 +159,14 @@ class ServerSocketMessageJSONCodec(SocketMessageJSONCodec[ServerResponse, Client
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         if not isinstance(message, ServerResponse):
-            raise InvalidSocketMessage("Invalid server response")
+            logger.error(f"Message is not a server response: {type(message)}")
+            raise InvalidSocketMessage()
         return SocketMessageJSONCodec.encode_message(message)
 
     @staticmethod
     def decode_message(message: bytes) -> ClientRequest:
         decoded_message = SocketMessageJSONCodec.decode_message(message)
         if not isinstance(decoded_message, ClientRequest):
-            raise InvalidSocketMessage("Invalid client request")
+            logger.error(f"Message is not a client request: {type(decoded_message)}")
+            raise InvalidSocketMessage()
         return decoded_message
