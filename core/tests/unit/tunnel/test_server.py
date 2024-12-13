@@ -5,11 +5,12 @@ import pytest
 from pydantic import BaseModel, IPvAnyAddress
 from pymobiledevice3.exceptions import DeviceNotFoundError
 
-from core.codec.socket_json_codec import SuccessResponse
+from core.codec.socket_json_codec import SuccessResponse, ClientRequest, ErrorResponse
+from core.socket import ServerSocket
 from core.tunnel.server import server_method, Server, ServerMethodHandler, check_server_method, bind_arguments, \
     TunnelConnectService
 from core.tunnel.server_exceptions import MalformedRequestError, NotFoundError, TunnelServerError, \
-    TunnelServerErrorCode, InternalServerError
+    TunnelServerErrorCode, InternalServerError, ServerErrorCode
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -489,3 +490,59 @@ class TestServer:
 
             assert task.done()
             assert server._server_task is None
+
+    @pytest.mark.asyncio
+    async def test_process_incoming_request_valid(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing a valid incoming request.
+
+        THEN: The server should respond with the correct data.
+        """
+
+        class DummyService(ServerMethodHandler):
+            @server_method
+            def hello(self, name: str):
+                return {"hello": name}
+
+        server = Server(DummyService())
+
+        mocked_socket = AsyncMock(spec=ServerSocket)
+        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.respond.return_value = None
+
+        await server._process_incoming_request(mocked_socket)
+
+        mocked_socket.respond.assert_awaited_once_with(SuccessResponse(data={"hello": "Alice"}))
+
+    @pytest.mark.asyncio
+    async def test_process_incoming_request_server_error(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing a valid incoming request.
+        AND: The server raises some server error.
+
+        THEN: The server should respond with an `ErrorResponse` with the correct error code.
+        """
+
+        class DummyService(ServerMethodHandler):
+            @server_method
+            def hello(self, name: str):
+                raise MalformedRequestError()
+
+        server = Server(DummyService())
+
+        mocked_socket = AsyncMock(spec=ServerSocket)
+        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.respond.return_value = None
+
+        await server._process_incoming_request(mocked_socket)
+
+        mocked_socket.respond.assert_awaited_once_with(
+            ErrorResponse(error_code=ServerErrorCode.MALFORMED_REQUEST.value))
