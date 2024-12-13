@@ -8,6 +8,7 @@ from core.codec.codec_protocol import CodecProtocol
 
 logger = logging.getLogger(__name__)
 
+
 class JSONCodec(CodecProtocol[Any, Any]):
     @staticmethod
     def encode_message(message: Any) -> bytes:
