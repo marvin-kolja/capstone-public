@@ -131,7 +131,7 @@ class TestProcess:
         with patch("atexit.register") as mock_atexit_register:
             await process.execute()
 
-            mock_atexit_register.assert_called_once_with(Process.kill)
+            mock_atexit_register.assert_called_once_with(process.kill)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
