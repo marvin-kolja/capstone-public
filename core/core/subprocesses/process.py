@@ -115,4 +115,22 @@ class Process:
 
         :return: A tuple containing the stdout and stderr as lists of strings.
         """
-        ...
+        if self.is_running:
+            stdout = await self._read_stream(self.__process.stdout)
+            stderr = await self._read_stream(self.__process.stderr)
+            await self.__process.wait()
+            return stdout, stderr
+
+    @staticmethod
+    async def _read_stream(stream: asyncio.StreamReader) -> list[str]:
+        """
+        Read a stream, line by line and decode it.
+        """
+        lines = []
+        while True:
+            line = await stream.readline()
+            if not line:  # EOF, no more lines to read
+                break
+            decoded_line = line.decode().strip()
+            lines.append(decoded_line)
+        return lines
