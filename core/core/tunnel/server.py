@@ -208,7 +208,7 @@ class Server(Generic[SERVICE]):
         except CoreServerError as e:
             # TODO: better logging
             print(repr(e))
-            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+            response = ErrorResponse(error_code=e.error_code.value)
         except Exception as e:
             # TODO: better logging
             print(f"Unexpected error: {repr(e)}")
