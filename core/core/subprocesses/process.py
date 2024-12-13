@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import os
 import signal
 from abc import ABC, abstractmethod
@@ -83,11 +84,22 @@ class Process:
         Execute the command in an asyncio subprocess.
 
         :param cwd: The working directory to execute the command in.
+
+        :raises ProcessAlreadyRunningError: If the process is already running.
         """
-        # TODO:
-        #  - Check if the process is already running
-        #  - execute the command
-        #  - register the atexit handler (self.kill)
+        if self.is_running:
+            raise ProcessAlreadyRunningError()
+
+        args = self.command.parse()
+
+        self.__process = await asyncio.create_subprocess_exec(
+            *args,
+            cwd=cwd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        atexit.register(self.kill)
 
     def terminate(self):
         if self.is_running:
