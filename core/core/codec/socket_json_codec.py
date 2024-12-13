@@ -138,35 +138,37 @@ class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_
         return SocketMessageFactory.parse_message_data(decoded_message)
 
 
+def check_client_request(message: BaseMessage) -> ClientRequest:
+    if not isinstance(message, ClientRequest):
+        logger.error(f"Message is not a client request: {type(message)}")
+        raise InvalidSocketMessage()
+    return message
+
+
+def check_server_response(message: BaseMessage) -> ServerResponse:
+    if not isinstance(message, ServerResponse):
+        logger.error(f"Message is not a server response: {type(message)}")
+        raise InvalidSocketMessage()
+    return message
+
+
 class ClientSocketMessageJSONCodec(SocketMessageJSONCodec[ClientRequest, ServerResponse]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
-        if not isinstance(message, ClientRequest):
-            logger.error(f"Message is not a client request: {type(message)}")
-            raise InvalidSocketMessage()
-        return SocketMessageJSONCodec.encode_message(message)
+        return SocketMessageJSONCodec.encode_message(check_client_request(message))
 
     @staticmethod
     def decode_message(message: bytes) -> ServerResponse:
         decoded_message = SocketMessageJSONCodec.decode_message(message)
-        if not isinstance(decoded_message, ServerResponse):
-            logger.error(f"Message is not a server response: {type(decoded_message)}")
-            raise InvalidSocketMessage()
-        return decoded_message
+        return check_server_response(decoded_message)
 
 
 class ServerSocketMessageJSONCodec(SocketMessageJSONCodec[ServerResponse, ClientRequest]):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
-        if not isinstance(message, ServerResponse):
-            logger.error(f"Message is not a server response: {type(message)}")
-            raise InvalidSocketMessage()
-        return SocketMessageJSONCodec.encode_message(message)
+        return SocketMessageJSONCodec.encode_message(check_server_response(message))
 
     @staticmethod
     def decode_message(message: bytes) -> ClientRequest:
         decoded_message = SocketMessageJSONCodec.decode_message(message)
-        if not isinstance(decoded_message, ClientRequest):
-            logger.error(f"Message is not a client request: {type(decoded_message)}")
-            raise InvalidSocketMessage()
-        return decoded_message
+        return check_client_request(decoded_message)
