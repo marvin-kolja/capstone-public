@@ -134,6 +134,26 @@ class TestProcess:
             mock_atexit_register.assert_called_once_with(process.kill)
 
     @pytest.mark.asyncio
+    async def test_atexist_handler_unregistered(self, mock_asyncio_process, process):
+        """
+        GIVEN: A Process instance
+        AND: A mocked asyncio subprocess process
+        AND: A mocked `_read_stream` method
+
+        WHEN: The process is waited for
+
+        THEN: The `atexit.unregister` should be called with the `kill` method
+        """
+        with patch("atexit.unregister") as mock_atexit_unregister:
+            process._Process__process = mock_asyncio_process
+            mock_asyncio_process.returncode = None
+            with patch.object(process, "_read_stream", AsyncMock(return_value=[])):
+
+                await process.wait()
+
+            mock_atexit_unregister.assert_called_once_with(process.kill)
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "returncode, expected",
         [
