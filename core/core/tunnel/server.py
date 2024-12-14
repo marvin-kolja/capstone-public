@@ -200,6 +200,7 @@ class Server(Generic[SERVICE]):
                 while True:
                     await self._process_incoming_request(server)
         finally:
+            self._server_task = None
             await self._service.cleanup()
 
     async def _process_incoming_request(self, server: ServerSocket):
