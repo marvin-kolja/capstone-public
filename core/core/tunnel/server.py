@@ -11,7 +11,8 @@ from typing import Optional, TypeVar, Generic
 from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
-from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse
+from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse, ClientRequest, \
+    ServerResponse
 from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
@@ -208,15 +209,12 @@ class Server(Generic[SERVICE]):
 
     async def _process_incoming_request(self, server: ServerSocket):
         response = None
+
         try:
-            try:
-                logger.debug("Waiting for request from client")
-                request = await server.receive(timeout=timedelta(seconds=360))
-                logger.debug(f"Received action request: {request.action}")
-            except InvalidSocketMessage:
-                raise MalformedRequestError()
-            except TimeoutError:
-                logger.debug(f"Server request timeout")
+            logger.debug("Waiting for request from client")
+            request = await self._await_request(server)
+
+            if request is None:
                 return
 
             method = self._get_method(request.action)
@@ -235,7 +233,55 @@ class Server(Generic[SERVICE]):
             raise e
         finally:
             if response is not None:
-                await server.respond(response)
+                await self._send_response(server, response)
+
+    @staticmethod
+    async def _await_request(server: ServerSocket) -> Optional[ClientRequest]:
+        """
+        Await a request from the client.
+
+        :return: The request if it was received. If the request times out, None is returned.
+
+        :raises MalformedRequestError: If the socket message is invalid.
+        :raises BaseException: If an unexpected error occurs.
+        :raises asyncio.CancelledError:
+        """
+        try:
+            return await server.receive(timeout=timedelta(seconds=360))
+        except TimeoutError:
+            logger.debug("Server request timeout")
+            return None
+        except InvalidSocketMessage:
+            logger.error("Invalid socket message received")
+            raise MalformedRequestError()
+        except asyncio.CancelledError:
+            raise
+        except BaseException as e:
+            logger.critical(f"Unable to receive a request: {e}", exc_info=True)
+            raise
+
+    @staticmethod
+    async def _send_response(server: ServerSocket, response: ServerResponse):
+        """
+        Send a response to the client.
+
+        If the response fails to send and is not an internal server error response, it will try to send an internal
+        server error response. If that also fails, it will raise a CriticalServerError.
+
+        :raises InternalServerError: If unable to send the response.
+        :raises asyncio.CancelledError:
+        """
+        try:
+            await server.respond(response)
+        except asyncio.CancelledError:
+            raise
+        except BaseException as e:
+            logger.critical(f"Unable to send response: {e}", exc_info=True)
+            if isinstance(response, ErrorResponse):
+                if response.error_code == ServerErrorCode.INTERNAL.value:
+                    raise InternalServerError
+            logger.info(f"Trying to send internal server error response")
+            await Server._send_response(server, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
 
     def _get_method(self, method_name: str) -> MethodType:
         """
