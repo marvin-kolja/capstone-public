@@ -37,3 +37,10 @@ class TunnelServerErrorCode(IntEnum):
 class TunnelServerError(CoreServerError):
     def __init__(self, error_code: TunnelServerErrorCode):
         super().__init__(error_code=error_code)
+
+
+class CriticalServerError(Exception):
+    """ A critical server error that the server cannot handle """
+
+    def __init__(self, error: BaseException):
+        self.error = error

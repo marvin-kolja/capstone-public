@@ -11,7 +11,7 @@ from core.socket import ServerSocket
 from core.tunnel.server import server_method, Server, ServerMethodHandler, check_server_method, bind_arguments, \
     TunnelConnectService
 from core.tunnel.server_exceptions import MalformedRequestError, NotFoundError, TunnelServerError, \
-    TunnelServerErrorCode, InternalServerError, ServerErrorCode
+    TunnelServerErrorCode, InternalServerError, ServerErrorCode, CriticalServerError
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -594,7 +594,7 @@ class TestServer:
         WHEN: Processing an incoming request.
         AND: The `SeverSocket.receive` method raises an unexpected exception.
 
-        THEN: The processing should raise that exception (maybe causing the server to stop).
+        THEN: The processing should raise a `CriticalServerError`.
         """
 
         class DummyService(ServerMethodHandler):
@@ -607,8 +607,11 @@ class TestServer:
 
         mocked_socket = AsyncMock(spec=ServerSocket)
         mocked_socket.receive.side_effect = DummyException
+        mocked_socket.respond.return_value = None
 
-        with pytest.raises(DummyException):
+        mocked_socket.respond.return_value = None
+
+        with pytest.raises(CriticalServerError):
             await server._process_incoming_request(mocked_socket)
 
     @pytest.mark.asyncio
@@ -621,7 +624,7 @@ class TestServer:
         WHEN: Processing an incoming request.
         AND: The `ServerSocket.respond` method fails.
 
-        THEN: The method should raise propagate the exception.
+        THEN: The method should raise a `CriticalServerError`.
         """
 
         class DummyService(ServerMethodHandler):
@@ -638,7 +641,7 @@ class TestServer:
         mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
         mocked_socket.respond.side_effect = DummyException
 
-        with pytest.raises(DummyException):
+        with pytest.raises(CriticalServerError):
             await server._process_incoming_request(mocked_socket)
 
     @pytest.mark.asyncio
