@@ -1,4 +1,5 @@
 import logging
+import signal
 import sys
 import asyncio
 import argparse
@@ -10,6 +11,13 @@ logger = logging.getLogger(__name__)
 
 async def run_server(port: int):
     server = get_tunnel_server()
+
+    loop = asyncio.get_event_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(
+            sig, lambda: server.stop()
+        )
+
     await server.serve(port)
     await server.await_close()
 
