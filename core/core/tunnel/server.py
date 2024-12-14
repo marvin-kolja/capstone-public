@@ -18,7 +18,7 @@ from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
-    NotFoundError, InternalServerError, CoreServerError, ServerErrorCode
+    NotFoundError, InternalServerError, CoreServerError, ServerErrorCode, CriticalServerError
 from core.tunnel.tunnel_connect import TunnelConnect
 
 logger = logging.getLogger(__name__)
@@ -201,13 +201,26 @@ class Server(Generic[SERVICE]):
                 logger.info(f"Server started to listen on port {port}")
                 while True:
                     await asyncio.sleep(0)
-                    await self._process_incoming_request(server)
+                    try:
+                        await self._process_incoming_request(server)
+                    except asyncio.CancelledError:
+                        logger.debug("Server task was cancelled while handling request")
+                        raise
+                    except CriticalServerError as e:
+                        logger.critical(f"Critical server error occurred while handling request: {e.error}",
+                                        exc_info=True)
 
         finally:
             self._server_task = None
             await self._service.cleanup()
 
     async def _process_incoming_request(self, server: ServerSocket):
+        """
+        Process an incoming request from the client.
+
+        :raises CriticalServerError: If an unexpected error occurs and is unable to send a response.
+        :raises asyncio.CancelledError:
+        """
         response = None
 
         try:
@@ -225,12 +238,13 @@ class Server(Generic[SERVICE]):
         except CoreServerError as e:
             logger.error(f"Error handling request: {e.__class__.__name__}")
             response = ErrorResponse(error_code=e.error_code.value)
-        except asyncio.CancelledError as e:
-            logger.debug("Server task was cancelled while handling request")
-            raise e
+        except CriticalServerError:
+            raise
+        except asyncio.CancelledError:
+            raise
         except BaseException as e:
             logger.critical(f"Unexpected error handling request: {e}", exc_info=True)
-            raise e
+            raise CriticalServerError(e)
         finally:
             if response is not None:
                 await self._send_response(server, response)
@@ -243,7 +257,7 @@ class Server(Generic[SERVICE]):
         :return: The request if it was received. If the request times out, None is returned.
 
         :raises MalformedRequestError: If the socket message is invalid.
-        :raises BaseException: If an unexpected error occurs.
+        :raises CriticalServerError: If an unexpected error occurs.
         :raises asyncio.CancelledError:
         """
         try:
@@ -258,7 +272,7 @@ class Server(Generic[SERVICE]):
             raise
         except BaseException as e:
             logger.critical(f"Unable to receive a request: {e}", exc_info=True)
-            raise
+            raise CriticalServerError(e)
 
     @staticmethod
     async def _send_response(server: ServerSocket, response: ServerResponse):
@@ -268,7 +282,7 @@ class Server(Generic[SERVICE]):
         If the response fails to send and is not an internal server error response, it will try to send an internal
         server error response. If that also fails, it will raise a CriticalServerError.
 
-        :raises InternalServerError: If unable to send the response.
+        :raises CriticalServerError: If unable to send the response.
         :raises asyncio.CancelledError:
         """
         try:
@@ -279,7 +293,7 @@ class Server(Generic[SERVICE]):
             logger.critical(f"Unable to send response: {e}", exc_info=True)
             if isinstance(response, ErrorResponse):
                 if response.error_code == ServerErrorCode.INTERNAL.value:
-                    raise InternalServerError
+                    raise CriticalServerError(e)
             logger.info(f"Trying to send internal server error response")
             await Server._send_response(server, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
 
