@@ -470,11 +470,13 @@ class TestServer:
 
         WHEN: Starting the server
         AND: Stopping the server.
+        AND: Waiting for the server to close.
 
         THEN: The server should create a task that is not done.
-        AND: The server should stop the task and remove it.
+        AND: The server should cancel the task and remove it.
+        AND: The service cleanup method should be called.
         """
-        mock_service = MagicMock(spec=ServerMethodHandler)
+        mock_service = AsyncMock(spec=ServerMethodHandler)
         server = Server(mock_service)
 
         with patch('core.socket.ServerSocket') as mock_socket:
@@ -486,10 +488,12 @@ class TestServer:
             task = server._server_task
             assert not task.done()
 
-            await server.stop()
+            server.stop()
+            await server.await_close()
 
             assert task.done()
             assert server._server_task is None
+            mock_service.cleanup.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_process_incoming_request_valid(self, port):
