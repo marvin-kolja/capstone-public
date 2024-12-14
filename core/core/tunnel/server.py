@@ -283,15 +283,18 @@ class Server(Generic[SERVICE]):
         """
         Start a server task
 
-        Will wait for a short time to check if the server closes immediately.
+        Will wait for a short time to check if the server closed immediately.
 
-        If the server closes immediately, the server is awaited which may raise an exception.
+        If the server closes immediately, the server task result is received and may raise the exception that caused the
+        server to close.
         """
-        self._server_task = asyncio.create_task(self.__server_task(port=port))
+        task = asyncio.create_task(self.__server_task(port=port))
+        self._server_task = task
         await asyncio.sleep(0.1)
         logger.debug("Checking if sever task failed early")
-        if self._server_task.done():
-            await self.await_close()
+        if task.done():
+            logger.warning("Server task finished early")
+            task.result()
 
     async def await_close(self):
         """
