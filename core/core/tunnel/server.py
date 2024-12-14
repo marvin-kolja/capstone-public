@@ -294,9 +294,9 @@ class Server(Generic[SERVICE]):
 
     async def await_close(self):
         """
-        Await the server task to close and cleanup the service.
+        Await the server task and raise any exceptions that caused the server task to close.
 
-        :raises: Any exception that caused the server task to close.
+        If the server task was cancelled, it will not raise an exception.
         """
         try:
             logger.debug("Awaiting server task to close")
@@ -306,8 +306,6 @@ class Server(Generic[SERVICE]):
             logger.debug("Server task closed without errors")
         except asyncio.CancelledError:
             logger.debug("Server task was cancelled")
-        finally:
-            await self._service.cleanup()
 
     def stop(self):
         """
