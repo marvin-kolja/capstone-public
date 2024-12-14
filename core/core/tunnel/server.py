@@ -308,11 +308,11 @@ class Server(Generic[SERVICE]):
         finally:
             await self._service.cleanup()
 
-    async def stop(self):
+    def stop(self):
         """
-        Cancels the server task if it exists and waits for it to close.
+        Cancels the server task if it exists
 
-        Uses `await_close` to wait and cleanup.
+        NOTE: Please use `await_close` to wait for the server to close.
         """
         task = self._server_task
         if task is None:
@@ -321,11 +321,6 @@ class Server(Generic[SERVICE]):
 
         logger.debug("Cancelling server task")
         task.cancel()
-        try:
-            with suppress(asyncio.CancelledError):
-                await self.await_close()
-        finally:
-            self._server_task = None
 
 
 def get_tunnel_server() -> Server[TunnelConnectService]:
