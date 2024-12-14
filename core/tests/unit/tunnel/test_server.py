@@ -685,3 +685,51 @@ class TestServer:
                 assert not mock_instance.respond.called
                 assert server._server_task is None
                 wrapped_dummy_service_cleanup.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_server_send_response_fails_twice(self, port):
+        """
+        GIVEN: A `Server` class
+        AND: A mocked server socket.
+        AND: A success response.
+
+        WHEN: Trying to send a response using the `Server._send_response` method.
+        AND: The socket raises an exception.
+
+        THEN: It should raise a `CriticalServerError`.
+        AND: The method should have tried to send the response twice.
+        """
+
+        class DummyException(Exception):
+            pass
+
+        mocket_socket = AsyncMock(spec=ServerSocket)
+        mocket_socket.respond.side_effect = DummyException
+
+        with pytest.raises(CriticalServerError):
+            await Server._send_response(mocket_socket, SuccessResponse(data={"hello": "Alice"}))
+        assert mocket_socket.respond.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_server_send_response_fails_once(self, port):
+        """
+        GIVEN: A `Server` class
+        AND: A mocked server socket.
+        AND: An internal server error response.
+
+        WHEN: Trying to send an internal server error response using the `Server._send_response` method.
+        AND: The socket raises an exception.
+
+        THEN: It should raise a `CriticalServerError`.
+        AND: The method should have tried to send the response once.
+        """
+
+        class DummyException(Exception):
+            pass
+
+        mocket_socket = AsyncMock(spec=ServerSocket)
+        mocket_socket.respond.side_effect = DummyException
+
+        with pytest.raises(CriticalServerError):
+            await Server._send_response(mocket_socket, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
+        assert mocket_socket.respond.await_count == 1
