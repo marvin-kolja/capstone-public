@@ -678,9 +678,8 @@ class TestServer:
                 mock_instance.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
                 mock_instance.respond.return_value = None
 
-                with pytest.raises(asyncio.CancelledError):
-                    # As we raise an asyncio.CancelledError immediately, this will raise the error
-                    await server.serve(port=port)
+                await server.serve(port=port)
+                await server.await_close()
 
                 assert not mock_instance.respond.called
                 assert server._server_task is None
