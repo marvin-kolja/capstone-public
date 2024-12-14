@@ -28,7 +28,8 @@ class TestTunnelClientServerCommunication:
 
     @pytest.mark.asyncio
     @pytest.mark.real_device
-    async def test_malformed_requests(self, tunnel_server, tunnel_client, device_udid):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_malformed_requests(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -44,7 +45,8 @@ class TestTunnelClientServerCommunication:
             await tunnel_client._call_server('start_tunnel', udid=device_udid, invalid_key='invalid_value')
 
     @pytest.mark.asyncio
-    async def test_calling_invalid_method(self, tunnel_server, tunnel_client):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_calling_invalid_method(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -59,7 +61,8 @@ class TestTunnelClientServerCommunication:
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    async def test_start_tunnel(self, tunnel_server, tunnel_client, device_udid):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_start_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -78,7 +81,8 @@ class TestTunnelClientServerCommunication:
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
-    async def test_start_tunnel_no_device(self, tunnel_server, tunnel_client):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_start_tunnel_no_device(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -93,7 +97,8 @@ class TestTunnelClientServerCommunication:
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    async def test_start_tunnel_already_started(self, tunnel_server, tunnel_client, device_udid):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_start_tunnel_already_started(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -112,7 +117,8 @@ class TestTunnelClientServerCommunication:
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    async def test_stop_tunnel(self, tunnel_server, tunnel_client, device_udid):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_stop_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -127,12 +133,14 @@ class TestTunnelClientServerCommunication:
 
         await tunnel_client.stop_tunnel(device_udid)
 
-        assert device_udid not in tunnel_server._service.tunnel_connect._tunnel_manager.tunnel_tasks
+        with pytest.raises(NotFoundError):
+            await tunnel_client.get_tunnel(device_udid)
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    async def test_get_tunnel(self, tunnel_server, tunnel_client, device_udid):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_get_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -151,7 +159,8 @@ class TestTunnelClientServerCommunication:
         assert tunnel_result == started_tunnel
 
     @pytest.mark.asyncio
-    async def test_get_non_existing_tunnel(self, tunnel_server, tunnel_client):
+    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    async def test_get_non_existing_tunnel(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
