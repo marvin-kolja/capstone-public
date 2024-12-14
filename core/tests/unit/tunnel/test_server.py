@@ -6,6 +6,7 @@ from pydantic import BaseModel, IPvAnyAddress
 from pymobiledevice3.exceptions import DeviceNotFoundError
 
 from core.codec.socket_json_codec import SuccessResponse, ClientRequest, ErrorResponse
+from core.exceptions.socket import InvalidSocketMessage
 from core.socket import ServerSocket
 from core.tunnel.server import server_method, Server, ServerMethodHandler, check_server_method, bind_arguments, \
     TunnelConnectService
@@ -555,6 +556,90 @@ class TestServer:
 
         mocked_socket.respond.assert_awaited_once_with(
             ErrorResponse(error_code=ServerErrorCode.MALFORMED_REQUEST.value))
+
+    @pytest.mark.asyncio
+    async def test_process_incoming_request_receive_raises_invalid_socket_message(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing an incoming request.
+        AND: The `SeverSocket.receive` method raises an `InvalidSocketMessage`.
+
+        THEN: The server should respond with a `MalformedRequestError`.
+        """
+
+        class DummyService(ServerMethodHandler):
+            pass
+
+        server = Server(DummyService())
+
+        mocked_socket = AsyncMock(spec=ServerSocket)
+        mocked_socket.receive.side_effect = InvalidSocketMessage
+        mocked_socket.respond.return_value = None
+
+        await server._process_incoming_request(mocked_socket)
+
+        assert mocked_socket.respond.call_args[0][0].error_code == ServerErrorCode.MALFORMED_REQUEST.value
+        mocked_socket.respond.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_process_incoming_request_receive_raises_unexpected_exception(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing an incoming request.
+        AND: The `SeverSocket.receive` method raises an unexpected exception.
+
+        THEN: The processing should raise that exception (maybe causing the server to stop).
+        """
+
+        class DummyService(ServerMethodHandler):
+            pass
+
+        server = Server(DummyService())
+
+        class DummyException(Exception):
+            pass
+
+        mocked_socket = AsyncMock(spec=ServerSocket)
+        mocked_socket.receive.side_effect = DummyException
+
+        with pytest.raises(DummyException):
+            await server._process_incoming_request(mocked_socket)
+
+    @pytest.mark.asyncio
+    async def test_process_incoming_request_fails(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing an incoming request.
+        AND: The `ServerSocket.respond` method fails.
+
+        THEN: The method should raise propagate the exception.
+        """
+
+        class DummyService(ServerMethodHandler):
+            @server_method
+            def hello(self, name: str):
+                return {"hello": name}
+
+        server = Server(DummyService())
+
+        class DummyException(Exception):
+            pass
+
+        mocked_socket = AsyncMock(spec=ServerSocket)
+        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.respond.side_effect = DummyException
+
+        with pytest.raises(DummyException):
+            await server._process_incoming_request(mocked_socket)
 
     @pytest.mark.asyncio
     async def test_server_canceled_during_request_handling(self, port):
