@@ -479,9 +479,10 @@ class TestServer:
         mock_service = AsyncMock(spec=ServerMethodHandler)
         server = Server(mock_service)
 
-        with patch('core.socket.ServerSocket') as mock_socket:
-            mock_instance = MagicMock()
+        with patch('core.tunnel.server.ServerSocket') as mock_socket:
+            mock_instance = AsyncMock()
             mock_socket.return_value.__enter__.return_value = mock_instance
+            mock_instance.receive.side_effect = asyncio.TimeoutError
 
             await server.serve(port=port)
 
