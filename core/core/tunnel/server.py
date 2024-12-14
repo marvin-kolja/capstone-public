@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
 from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse
+from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
@@ -200,45 +201,41 @@ class Server(Generic[SERVICE]):
                 while True:
                     await asyncio.sleep(0)
                     await self._process_incoming_request(server)
+
         finally:
             self._server_task = None
             await self._service.cleanup()
 
     async def _process_incoming_request(self, server: ServerSocket):
+        response = None
         try:
-            logger.debug("Waiting for request from client")
-            request = await server.receive(timeout=timedelta(seconds=360))
-            logger.debug(f"Received action request: {request.action}")
-        except TimeoutError:
-            logger.debug(f"Server request timeout")
-            return
+            try:
+                logger.debug("Waiting for request from client")
+                request = await server.receive(timeout=timedelta(seconds=360))
+                logger.debug(f"Received action request: {request.action}")
+            except InvalidSocketMessage:
+                raise MalformedRequestError()
+            except TimeoutError:
+                logger.debug(f"Server request timeout")
+                return
 
-        cancelled_exception: Optional[asyncio.CancelledError] = None
-
-        try:
             method = self._get_method(request.action)
             kwargs = self._bind_arguments(method, request.data)
             result = await self._call_method(method, kwargs)
             response = self._construct_response_from_result(result)
+
         except CoreServerError as e:
             logger.error(f"Error handling request: {e.__class__.__name__}")
             response = ErrorResponse(error_code=e.error_code.value)
         except asyncio.CancelledError as e:
             logger.debug("Server task was cancelled while handling request")
-            cancelled_exception = e
-            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+            raise e
         except BaseException as e:
-            logger.critical(f"An unexpected error occurred while request handling: {e}", exc_info=True)
-            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
-
-        try:
-            await server.respond(response)
-        except BaseException as e:
-            logger.critical(f"Failed to send response: {e}", exc_info=True)
-            await server.respond(ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
+            logger.critical(f"Unexpected error handling request: {e}", exc_info=True)
+            raise e
         finally:
-            if cancelled_exception is not None:
-                raise cancelled_exception
+            if response is not None:
+                await server.respond(response)
 
     def _get_method(self, method_name: str) -> MethodType:
         """
