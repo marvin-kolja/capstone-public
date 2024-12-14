@@ -446,19 +446,23 @@ class TestServer:
         """
         GIVEN: A `Server` instance
         AND: A mocked service.
-        AND: A mocked __server_task method.
+        AND: A mocked ServerSocket that raises an exception.
 
         WHEN: Starting the server
         AND: The server fails to start.
 
-        THEN: The server should raise an exception.
+        THEN: The server should raise the exception that caused the failure.
         """
         mock_service = MagicMock(spec=ServerMethodHandler)
         server = Server(mock_service)
 
-        with patch.object(server, '_Server__server_task') as mock_server_task:
-            mock_server_task.side_effect = Exception
-            with pytest.raises(Exception):
+        class DummyException(Exception):
+            pass
+
+        with patch('core.tunnel.server.ServerSocket') as mocked_socket:
+            mocked_socket.return_value.__enter__.side_effect = DummyException
+
+            with pytest.raises(DummyException):
                 await server.serve(port=port)
 
     @pytest.mark.asyncio
