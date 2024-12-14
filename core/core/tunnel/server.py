@@ -2,7 +2,6 @@ import asyncio
 import inspect
 import logging
 from abc import ABC
-from contextlib import suppress
 from datetime import timedelta
 
 from types import MethodType
@@ -195,10 +194,13 @@ class Server(Generic[SERVICE]):
         self._service: SERVICE = service
         self._server_task: Optional[asyncio.Task] = None
 
-    async def __server_task(self, port: int):
+    async def __server_task(self, port: int, queue: asyncio.Queue):
         try:
             with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
                 logger.info(f"Server started to listen on port {port}")
+                queue.put_nowait(True)
+                queue = None
+
                 while True:
                     await asyncio.sleep(0)
                     try:
@@ -211,6 +213,8 @@ class Server(Generic[SERVICE]):
                                         exc_info=True)
 
         finally:
+            if queue is not None:
+                queue.put_nowait(False)
             self._server_task = None
             await self._service.cleanup()
 
@@ -351,17 +355,17 @@ class Server(Generic[SERVICE]):
         """
         Start a server task
 
-        Will wait for a short time to check if the server closed immediately.
+        Will wait for the server to start correctly. For this a queue is used to signal if the server has started.
 
-        If the server closes immediately, the server task result is received and may raise the exception that caused the
-        server to close.
+        :raises any Exception: raised by the server task.
         """
-        task = asyncio.create_task(self.__server_task(port=port))
+        queue = asyncio.Queue()
+        task = asyncio.create_task(self.__server_task(port=port, queue=queue))
         self._server_task = task
-        await asyncio.sleep(0.1)
-        logger.debug("Checking if sever task failed early")
-        if task.done():
-            logger.warning("Server task finished early")
+        logger.debug("Waiting for server to start")
+        started = await queue.get()
+        if not started:
+            logger.warning("Server did not start correctly")
             task.result()
 
     async def await_close(self):
