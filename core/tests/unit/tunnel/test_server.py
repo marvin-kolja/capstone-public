@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, Mock
 
 import pytest
 from pydantic import BaseModel, IPvAnyAddress
@@ -555,3 +555,47 @@ class TestServer:
 
         mocked_socket.respond.assert_awaited_once_with(
             ErrorResponse(error_code=ServerErrorCode.MALFORMED_REQUEST.value))
+
+    @pytest.mark.asyncio
+    async def test_server_canceled_during_request_handling(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked server socket.
+
+        WHEN: Processing an incoming request.
+        AND: The server is canceled during request handling.
+
+        THEN: The server should respond with an internal server error.
+        AND: The server task should be removed.
+        AND: The service cleanup method should be called.
+        """
+
+        class DummyService(ServerMethodHandler):
+            @server_method
+            async def hello(self, name: str):
+                raise asyncio.CancelledError()  # Simulate cancellation
+
+            async def cleanup(self):
+                pass
+
+        dummy_service = DummyService()
+        server = Server(dummy_service)
+
+        with patch.object(dummy_service, 'cleanup', wraps=dummy_service.cleanup) as wrapped_dummy_service_cleanup:
+            with patch('core.tunnel.server.ServerSocket') as mock_socket:
+                mock_instance = AsyncMock(spec=ServerSocket)
+                mock_socket.return_value.__enter__.return_value = mock_instance
+
+                mock_instance.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+                mock_instance.respond.return_value = None
+
+                with pytest.raises(asyncio.CancelledError):
+                    # As we raise an asyncio.CancelledError immediately, this will raise the error
+                    await server.serve(port=port)
+
+                mock_instance.respond.assert_awaited_once()
+                assert mock_instance.respond.call_args[0][0].error_code == ServerErrorCode.INTERNAL.value
+
+                assert server._server_task is None
+                wrapped_dummy_service_cleanup.assert_awaited_once()
