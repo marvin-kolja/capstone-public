@@ -7,7 +7,7 @@ from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedErr
 
 from core.codec.socket_json_codec import ClientSocketMessageJSONCodec, ClientRequest, ErrorResponse
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
-from core.socket import ClientSocket
+from core.async_socket import ClientSocket
 from core.tunnel.server_exceptions import ServerErrorCode, InternalServerError, MalformedRequestError, NotFoundError, \
     TunnelServerErrorCode
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult

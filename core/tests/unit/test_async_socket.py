@@ -6,7 +6,7 @@ import pytest
 import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
-from core.socket import ClientSocket, ServerSocket, _timedelta_to_milliseconds
+from core.async_socket import ClientSocket, ServerSocket, _timedelta_to_milliseconds
 from core.codec.socket_json_codec import SocketMessageJSONCodec, ServerSocketMessageJSONCodec, \
     ClientSocketMessageJSONCodec, BaseMessage, SocketMessageFactory, SuccessResponse, ErrorResponse, HeartbeatRequest
 from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VALID_RESPONSES, INVALID_MESSAGE_DATA, \
@@ -442,7 +442,7 @@ class TestServerSocket:
 
         THEN: The socket should have the correct zmq.RCVTIMEO option set
         """
-        with patch("core.socket.Socket.receive"):
+        with patch("core.async_socket.Socket.receive"):
             await server_socket.receive(timeout=timeout)
 
             if timeout is None:

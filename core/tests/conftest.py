@@ -1,6 +1,6 @@
 import pytest
 
-from core.socket import ClientSocket, ServerSocket
+from core.async_socket import ClientSocket, ServerSocket
 
 
 def pytest_addoption(parser):

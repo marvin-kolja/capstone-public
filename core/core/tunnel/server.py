@@ -14,7 +14,7 @@ from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessRe
     ServerResponse
 from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
-from core.socket import ServerSocket
+from core.async_socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
     NotFoundError, InternalServerError, CoreServerError, ServerErrorCode, CriticalServerError

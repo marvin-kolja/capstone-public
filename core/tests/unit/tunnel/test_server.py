@@ -7,7 +7,7 @@ from pymobiledevice3.exceptions import DeviceNotFoundError
 
 from core.codec.socket_json_codec import SuccessResponse, ClientRequest, ErrorResponse
 from core.exceptions.socket import InvalidSocketMessage
-from core.socket import ServerSocket
+from core.async_socket import ServerSocket
 from core.tunnel.server import server_method, Server, ServerMethodHandler, check_server_method, bind_arguments, \
     TunnelConnectService
 from core.tunnel.server_exceptions import MalformedRequestError, NotFoundError, TunnelServerError, \
