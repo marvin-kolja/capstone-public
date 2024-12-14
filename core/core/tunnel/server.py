@@ -198,6 +198,7 @@ class Server(Generic[SERVICE]):
             with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
                 logger.info(f"Server started to listen on port {port}")
                 while True:
+                    await asyncio.sleep(0)
                     await self._process_incoming_request(server)
         finally:
             self._server_task = None
