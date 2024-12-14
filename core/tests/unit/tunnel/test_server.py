@@ -679,8 +679,6 @@ class TestServer:
                     # As we raise an asyncio.CancelledError immediately, this will raise the error
                     await server.serve(port=port)
 
-                mock_instance.respond.assert_awaited_once()
-                assert mock_instance.respond.call_args[0][0].error_code == ServerErrorCode.INTERNAL.value
-
+                assert not mock_instance.respond.called
                 assert server._server_task is None
                 wrapped_dummy_service_cleanup.assert_awaited_once()
