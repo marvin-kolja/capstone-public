@@ -206,7 +206,9 @@ class Server(Generic[SERVICE]):
 
     async def _process_incoming_request(self, server: ServerSocket):
         try:
+            logger.debug("Waiting for request from client")
             request = await server.receive(timeout=timedelta(seconds=360))
+            logger.debug(f"Received action request: {request.action}")
         except TimeoutError:
             logger.debug(f"Server request timeout")
             return
