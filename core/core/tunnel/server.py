@@ -211,6 +211,8 @@ class Server(Generic[SERVICE]):
             logger.debug(f"Server request timeout")
             return
 
+        cancelled_exception: Optional[asyncio.CancelledError] = None
+
         try:
             method = self._get_method(request.action)
             kwargs = self._bind_arguments(method, request.data)
@@ -219,6 +221,10 @@ class Server(Generic[SERVICE]):
         except CoreServerError as e:
             logger.error(f"Error handling request: {e.__class__.__name__}")
             response = ErrorResponse(error_code=e.error_code.value)
+        except asyncio.CancelledError as e:
+            logger.debug("Server task was cancelled while handling request")
+            cancelled_exception = e
+            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
         except BaseException as e:
             logger.critical(f"An unexpected error occurred while request handling: {e}", exc_info=True)
             response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
@@ -228,6 +234,9 @@ class Server(Generic[SERVICE]):
         except BaseException as e:
             logger.critical(f"Failed to send response: {e}", exc_info=True)
             await server.respond(ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
+        finally:
+            if cancelled_exception is not None:
+                raise cancelled_exception
 
     def _get_method(self, method_name: str) -> MethodType:
         """
