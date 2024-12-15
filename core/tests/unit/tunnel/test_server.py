@@ -686,6 +686,35 @@ class TestServer:
                 wrapped_dummy_service_cleanup.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_server_shuts_down_on_critical_error(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked `Server._process_incoming_request` method.
+
+        WHEN: A critical error is raised during request handling.
+
+        THEN: The server should stop gracefully.
+        """
+
+        class DummyService(ServerMethodHandler):
+            async def cleanup(self):
+                pass
+
+        dummy_service = DummyService()
+        server = Server(dummy_service)
+
+        with patch.object(dummy_service, 'cleanup', wraps=dummy_service.cleanup) as wrapped_dummy_service_cleanup:
+            with patch.object(server, '_process_incoming_request') as mock_process_incoming_request:
+                mock_process_incoming_request.side_effect = CriticalServerError(Exception("Critical error"))
+
+                await server.serve(port=port)
+                await server.await_close()
+
+                assert server._server_task is None
+                wrapped_dummy_service_cleanup.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_server_send_response_fails_twice(self, port):
         """
         GIVEN: A `Server` class
