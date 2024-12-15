@@ -379,9 +379,10 @@ class Server(Generic[SERVICE]):
         """
         try:
             logger.debug("Awaiting server task to close")
-            await self._server_task
+            task = self._server_task
+            await task
             logger.debug("Server task closed")
-            self._server_task.result()
+            task.result()
             logger.debug("Server task closed without errors")
         except asyncio.CancelledError:
             logger.debug("Server task was cancelled")
