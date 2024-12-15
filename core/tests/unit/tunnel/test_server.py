@@ -615,6 +615,40 @@ class TestServer:
             await server._process_incoming_request(mocked_socket)
 
     @pytest.mark.asyncio
+    async def test_server_unexpected_error_during_request_handling(self, port):
+        """
+        GIVEN: A `Server` instance
+        AND: A dummy service.
+        AND: A mocked `_await_request` method.
+
+        WHEN: An unexpected exception is raised during request handling.
+
+        THEN: The server should respond with an internal server error.
+        """
+
+        class DummyService(ServerMethodHandler):
+            @server_method
+            async def hello(self, name: str):
+                raise Exception("Unexpected error")
+
+            async def cleanup(self):
+                pass
+
+        server = Server(DummyService())
+
+        class DummyException(Exception):
+            pass
+
+        with patch.object(server, '_await_request') as mock_await_request:
+            mock_await_request.side_effect = DummyException
+            mocked_socket = AsyncMock(spec=ServerSocket)
+            mocked_socket.respond.return_value = None
+
+            await server._process_incoming_request(mocked_socket)
+
+            assert mocked_socket.respond.call_args[0][0].error_code == ServerErrorCode.INTERNAL.value
+
+    @pytest.mark.asyncio
     async def test_process_incoming_request_fails(self, port):
         """
         GIVEN: A `Server` instance
