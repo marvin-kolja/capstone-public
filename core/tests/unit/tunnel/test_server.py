@@ -654,7 +654,7 @@ class TestServer:
         WHEN: Processing an incoming request.
         AND: The server is canceled during request handling.
 
-        THEN: The server should respond with an internal server error.
+        THEN: The server should not respond.
         AND: The server task should be removed.
         AND: The service cleanup method should be called.
         """

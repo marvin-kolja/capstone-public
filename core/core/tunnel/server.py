@@ -210,8 +210,10 @@ class Server(Generic[SERVICE]):
                         logger.debug("Server task was cancelled while handling request")
                         raise
                     except CriticalServerError as e:
-                        logger.critical(f"Critical server error occurred while handling request: {e.error}",
-                                        exc_info=True)
+                        logger.critical(
+                            f"Stopping server because critical server error occurred while handling request: {e.error}",
+                            exc_info=True)
+                        break
 
         finally:
             if queue is not None:
@@ -249,7 +251,7 @@ class Server(Generic[SERVICE]):
             raise
         except BaseException as e:
             logger.critical(f"Unexpected error handling request: {e}", exc_info=True)
-            raise CriticalServerError(e)
+            response = ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
         finally:
             if response is not None:
                 await self._send_response(server, response)
