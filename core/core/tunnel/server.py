@@ -126,6 +126,7 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
             raise TunnelServerError(error_code=TunnelServerErrorCode.TUNNEL_ALREADY_EXISTS)
         except NoDeviceConnectedError:
             raise TunnelServerError(error_code=TunnelServerErrorCode.NO_DEVICE_CONNECTED)
+        # TODO: Handle not paired exception.
 
     @server_method
     async def stop_tunnel(self, udid: str) -> None:
