@@ -1,4 +1,5 @@
 import pytest
+from pymobiledevice3.lockdown import create_using_usbmux
 
 from core.async_socket import ClientSocket, ServerSocket
 
@@ -52,13 +53,17 @@ def device_udid():
 
     udid = None
     for device in list_devices(usbmux_address=None):
+        lockdown = create_using_usbmux(device.serial, autopair=False)
+        if not lockdown.paired:
+            continue
+
         udid = device.serial
         break
 
     if udid:
         return udid
 
-    raise pytest.exit("Failed to find a real device UDID", returncode=2)
+    raise pytest.exit("Failed to find a paired real device UDID", returncode=2)
 
 
 @pytest.fixture(scope="function")
