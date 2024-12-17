@@ -122,8 +122,11 @@ class TunnelClient(Client, TunnelConnectInterface):
     async def stop_tunnel(self, udid: str) -> None:
         await self._call_server('stop_tunnel', udid=udid)
 
-    async def get_tunnel(self, udid: str) -> TunnelResult:
-        data = await self._call_server('get_tunnel', udid=udid)
+    async def get_tunnel(self, udid: str) -> Optional[TunnelResult]:
+        try:
+            data = await self._call_server('get_tunnel', udid=udid)
+        except NotFoundError:
+            return None
         return TunnelResult(**data)
 
 
