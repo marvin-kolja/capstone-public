@@ -260,11 +260,11 @@ class TestTunnelClient:
         WHEN: The client tries to get a tunnel.
         AND: The server responds with a NOT_FOUND error.
 
-        THEN: The called method should raise a NotFoundError.
+        THEN: The called method should return None.
         """
         # Simulate a tunnel not found error
         tunnel_client_with_mocked_socket._socket.receive.return_value = ErrorResponse(
             error_code=ServerErrorCode.NOT_FOUND.value
         )
-        with pytest.raises(NotFoundError):
-            await tunnel_client_with_mocked_socket.get_tunnel(fake_udid)
+
+        assert await tunnel_client_with_mocked_socket.get_tunnel(fake_udid) is None

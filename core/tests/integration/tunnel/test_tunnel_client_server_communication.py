@@ -127,14 +127,13 @@ class TestTunnelClientServerCommunication:
 
         WHEN: `TunnelClient.stop_tunnel` is called
 
-        THEN: The tunnel task should be removed from the tunnel tasks
+        THEN: The get_tunnel method should return None
         """
         await tunnel_client.start_tunnel(device_udid)
 
         await tunnel_client.stop_tunnel(device_udid)
 
-        with pytest.raises(NotFoundError):
-            await tunnel_client.get_tunnel(device_udid)
+        assert await tunnel_client.get_tunnel(device_udid) is None
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
@@ -167,7 +166,6 @@ class TestTunnelClientServerCommunication:
 
         WHEN: `TunnelClient.get_tunnel` is called with a non-existing UDID
 
-        THEN: The function should raise a NotFoundError
+        THEN: The called method should return None.
         """
-        with pytest.raises(NotFoundError):
-            await tunnel_client.get_tunnel('invalid_udid')
+        assert await tunnel_client.get_tunnel('invalid_udid') is None
