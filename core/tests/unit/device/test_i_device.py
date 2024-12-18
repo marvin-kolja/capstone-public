@@ -401,12 +401,13 @@ class TestIDeviceDdiMounting:
         patched_i_device_mounter.unmount_image.assert_called_once()
 
 
-@pytest.mark.parametrize("paired,developer_mode_enabled,ddi_mounted", [(True, True, True)])
+@pytest.mark.parametrize("paired,developer_mode_enabled", [(True, True)])
 class TestIDeviceRSD:
 
     @pytest.mark.parametrize("product_version", ["17.0", "17.4", "18.0"])
+    @pytest.mark.parametrize("ddi_mounted", [True])
     async def test_establish_trusted_channel(self, i_device, ddi_mounted, patched_i_device_mounter, fake_tunnel_result,
-                                             mocked_client_socket, tunnel_client_with_mocked_socket):
+                                             mocked_client_socket, tunnel_client_with_mocked_socket, product_version):
         """
         GIVEN: An IDevice instance that is ready to establish a trusted channel.
 
@@ -428,6 +429,7 @@ class TestIDeviceRSD:
                 mock_rsd_connect.assert_awaited_once()
 
     @pytest.mark.parametrize("product_version", ["16.0"])
+    @pytest.mark.parametrize("ddi_mounted", [True])
     async def test_establish_trusted_channel_not_supported(self, i_device, product_version, ddi_mounted,
                                                            patched_i_device_mounter):
         """
@@ -441,3 +443,28 @@ class TestIDeviceRSD:
 
         with pytest.raises(RsdNotSupported):
             await i_device.establish_trusted_channel()
+
+    @pytest.mark.parametrize("product_version", ["17.0"])
+    def test_rsd_property_getter_none(self, i_device, product_version):
+        """
+        GIVEN: An IDevice instance.
+        AND: The `rsd` property is not set.
+
+        WHEN: The `rsd` property is accessed.
+
+        THEN: The `rsd` property should return None.
+        """
+        assert i_device.rsd is None
+
+    @pytest.mark.parametrize("product_version", ["16.0"])
+    def test_rsd_property_getter_not_supported(self, i_device, product_version):
+        """
+        GIVEN: An IDevice instance.
+        AND: The product version is < 17.0.
+
+        WHEN: The `rsd` property is accessed.
+
+        THEN: The `RsdNotSupported` exception should be raised.
+        """
+        with pytest.raises(RsdNotSupported):
+            _ = i_device.rsd
