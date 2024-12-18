@@ -73,3 +73,35 @@ class TestIDeviceManager:
             devices = device_manager.list_devices()
             assert len(devices) == 1
             assert device_manager._IDeviceManager__devices[udid] == i_device
+
+    def test_get_device_exists(self, device_manager, i_device, mock_usbmux_lockdown_client):
+        """
+        GIVEN: An `IDeviceManager` instance
+        AND: An existing `IDevice` stored in `device_manager`
+
+        WHEN: Getting the device by its udid.
+
+        THEN: Should return the corresponding `IDevice`
+        """
+        udid = i_device.lockdown_client.udid
+        device_manager._IDeviceManager__devices[udid] = i_device
+
+        with patch.object(device_manager, 'list_devices', return_value=[i_device]):
+            device = device_manager.get_device(udid)
+
+            assert isinstance(device, IDevice)
+            assert device == i_device
+
+def test_get_device_nonexistent(device_manager, fake_udid):
+    """
+    GIVEN: An `IDeviceManager` instance
+    AND: No devices is stored or browsed.
+
+    WHEN: Getting the device by its udid.
+
+    THEN: Should return `None`
+    """
+    with patch.object(device_manager, 'list_devices', return_value=[]):
+        device = device_manager.get_device(fake_udid)
+
+        assert device is None
