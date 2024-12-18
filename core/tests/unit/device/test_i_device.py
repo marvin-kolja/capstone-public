@@ -38,8 +38,7 @@ def patched_i_device_mounter(i_device):
         yield mock_mounter
 
 
-@pytest.mark.parametrize("developer_mode_enabled", [False])
-@pytest.mark.parametrize("product_version", ["18.0"])
+@pytest.mark.parametrize("developer_mode_enabled,product_version", [(False, "18.0")])
 class TestIDevicePairing:
     @pytest.mark.parametrize("paired", [True, False])
     class TestParametrized:
@@ -146,9 +145,15 @@ class TestIDevicePairing:
 
 
 class TestIDeviceDeveloperMode:
-    @pytest.mark.parametrize("paired", [True, False])
-    @pytest.mark.parametrize("developer_mode_enabled", [True, False])
-    @pytest.mark.parametrize("product_version", ["15.0", "16.0"])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled",
+                             [
+                                 (False, "15.0", None),
+                                 (True, "15.0", None),
+                                 (False, "16.0", None),
+                                 (True, "16.0", False),
+                                 (True, "16.0", True),
+                             ]
+                             )
     class TestParametrized:
         """
         GIVEN: Various conditions for developer mode and other states
@@ -202,9 +207,7 @@ class TestIDeviceDeveloperMode:
                     i_device.enable_developer_mode()
                     mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired", [True])
-    @pytest.mark.parametrize("developer_mode_enabled", [False])
-    @pytest.mark.parametrize("product_version", ["16.0"])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
     def test_enable_developer_mode_unexpected_error(self, i_device, mock_usbmux_lockdown_client, paired,
                                                     developer_mode_enabled, product_version):
         """
@@ -222,9 +225,7 @@ class TestIDeviceDeveloperMode:
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired", [True])
-    @pytest.mark.parametrize("developer_mode_enabled", [False])
-    @pytest.mark.parametrize("product_version", ["16.0"])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
     def test_enable_developer_mode_passcode_set_error(self, i_device, mock_usbmux_lockdown_client, paired,
                                                       developer_mode_enabled, product_version):
         """
@@ -241,9 +242,7 @@ class TestIDeviceDeveloperMode:
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired", [True])
-    @pytest.mark.parametrize("developer_mode_enabled", [False])
-    @pytest.mark.parametrize("product_version", ["16.0"])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
     def test_check_developer_mode_unexpected_error(self, i_device, mock_usbmux_lockdown_client, paired,
                                                    developer_mode_enabled, product_version):
         """
@@ -261,10 +260,17 @@ class TestIDeviceDeveloperMode:
 
 
 class TestIDeviceDdiMounting:
-    @pytest.mark.parametrize("paired", [True, False])
-    @pytest.mark.parametrize("developer_mode_enabled", [True, False])
-    @pytest.mark.parametrize("product_version", ["15.0", "16.0"])
-    @pytest.mark.parametrize("ddi_mounted", [True, False])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted",
+                             [
+                                 (False, "15.0", None, None),
+                                 (True, "15.0", None, None),
+                                 (True, "15.0", None, True),
+                                 (False, "16.0", None, None),
+                                 (True, "16.0", False, None),
+                                 (True, "16.0", True, False),
+                                 (True, "16.0", True, True),
+                             ]
+                             )
     class TestParametrized:
         """
         GIVEN: Various conditions for developer mode and other states
@@ -350,10 +356,8 @@ class TestIDeviceDdiMounting:
                 i_device.unmount_ddi()
                 patched_i_device_mounter.unmount_image.assert_called_once()
 
-    @pytest.mark.parametrize("paired", [True])
-    @pytest.mark.parametrize("developer_mode_enabled", [True])
-    @pytest.mark.parametrize("product_version", ["16.0"])
-    @pytest.mark.parametrize("ddi_mounted", [False])
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted", [(True, "16.0", True, False)])
     async def test_mount_ddi_unexpected_error(self, i_device, paired, developer_mode_enabled, product_version,
                                               ddi_mounted, patched_i_device_mounter):
         """
@@ -374,10 +378,7 @@ class TestIDeviceDdiMounting:
                 await i_device.mount_ddi()
             mock_auto_mount.assert_called_once()
 
-    @pytest.mark.parametrize("paired", [True])
-    @pytest.mark.parametrize("developer_mode_enabled", [True])
-    @pytest.mark.parametrize("product_version", ["16.0"])
-    @pytest.mark.parametrize("ddi_mounted", [True])
+    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted", [(True, "16.0", True, True)])
     def test_unmount_ddi_unexpected_error(self, i_device, paired, developer_mode_enabled, product_version, ddi_mounted,
                                           patched_i_device_mounter):
         """
@@ -400,9 +401,7 @@ class TestIDeviceDdiMounting:
         patched_i_device_mounter.unmount_image.assert_called_once()
 
 
-@pytest.mark.parametrize("paired", [True])
-@pytest.mark.parametrize("developer_mode_enabled", [True])
-@pytest.mark.parametrize("ddi_mounted", [True])
+@pytest.mark.parametrize("paired,developer_mode_enabled,ddi_mounted", [(True, True, True)])
 class TestIDeviceRSD:
 
     @pytest.mark.parametrize("product_version", ["17.0", "17.4", "18.0"])
