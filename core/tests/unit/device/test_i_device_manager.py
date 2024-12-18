@@ -48,7 +48,7 @@ class TestIDeviceManager:
 
             devices = device_manager.list_devices()
             assert len(devices) == 0
-            assert device_manager._IDeviceManager__devices is {}
+            assert not device_manager._IDeviceManager__devices
 
     def test_list_devices_skip_storing_existing_devices(self, device_manager, mock_usbmux_lockdown_client):
         """
