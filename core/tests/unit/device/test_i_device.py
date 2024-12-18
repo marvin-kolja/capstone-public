@@ -221,6 +221,24 @@ class TestIDeviceDeveloperMode:
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
+    @pytest.mark.parametrize("paired", [True])
+    @pytest.mark.parametrize("developer_mode_enabled", [False])
+    @pytest.mark.parametrize("product_version", ["16.0"])
+    def test_check_developer_mode_unexpected_error(self, i_device, mock_usbmux_lockdown_client, paired,
+                                                   developer_mode_enabled, product_version):
+        """
+        GIVEN: A device that is paired and has product version >= 16.0.
+
+        WHEN: check_developer_mode_enabled is called.
+        AND: An unexpected error occurs.
+
+        THEN: A `DeveloperModeError` exception should be raised.
+        """
+        type(mock_usbmux_lockdown_client).developer_mode_status = PropertyMock(side_effect=Exception)
+
+        with pytest.raises(DeveloperModeError):
+            i_device.check_developer_mode_enabled()
+
 
 class TestIDeviceDdiMounting:
     @pytest.mark.parametrize("paired", [True, False])
