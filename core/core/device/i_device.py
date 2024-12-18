@@ -238,8 +238,10 @@ class IDevice:
         """
         self.check_ddi_mounted()
 
-        # TODO: Handle exceptions
-        self._mounter.unmount_image(self._mounter.IMAGE_TYPE)
+        try:
+            self._mounter.unmount_image(self._mounter.IMAGE_TYPE)
+        except Exception as e:
+            raise device_exceptions.DdiMountingError from e
 
     async def establish_trusted_channel(self):
         """
