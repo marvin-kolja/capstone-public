@@ -1,48 +1,6 @@
 import asyncio
 
 import pytest
-from pymobiledevice3.remote.common import TunnelProtocol
-
-from pymobiledevice3.remote.tunnel_service import TunnelResult as pymobiledevice3TunnelResult
-
-from core.tunnel.tunnel_connect import TunnelResult
-
-
-@pytest.fixture
-def mocked_pymd3_tunnel_result(mocker):
-    """
-    A mocked `pymobiledevice3` TunnelResult` that can be used to simulate a tunnel result.
-    """
-    client = mocker.MagicMock()
-
-    async def wait_closed():
-        while not getattr(client, "closed", False):
-            await asyncio.sleep(0.1)
-
-    client.closed = False
-    client.close = mocker.AsyncMock(side_effect=lambda: setattr(client, "closed", True))
-    client.wait_closed = mocker.AsyncMock(side_effect=wait_closed)
-
-    return pymobiledevice3TunnelResult(
-        address="127.0.0.1",
-        port=1234,
-        protocol=TunnelProtocol.TCP,
-        interface="",
-        client=client
-    )
-
-
-@pytest.fixture
-def fake_tunnel_result(mocked_pymd3_tunnel_result):
-    """
-    A fake tunnel result that can be used to simulate a tunnel result.
-    """
-    tunnel_result = TunnelResult(
-        address=mocked_pymd3_tunnel_result.address,
-        port=mocked_pymd3_tunnel_result.port,
-        protocol=TunnelProtocol.TCP,
-    )
-    return tunnel_result
 
 
 @pytest.fixture

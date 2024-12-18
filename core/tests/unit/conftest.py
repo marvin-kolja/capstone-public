@@ -1,10 +1,17 @@
+import asyncio
+from datetime import timedelta
 from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 import zmq
 import zmq.asyncio
+from pymobiledevice3.remote.common import TunnelProtocol
+from pymobiledevice3.remote.tunnel_service import TunnelResult as pymobiledevice3TunnelResult
 
+from core.async_socket import ClientSocket
 from core.codec.socket_json_codec import SocketMessageJSONCodec
+from core.tunnel.client import get_tunnel_client
+from core.tunnel.interface import TunnelResult
 
 
 @pytest.fixture
@@ -60,3 +67,58 @@ def spy_socket_decode(mocker):
 @pytest.fixture(scope="function")
 def spy_socket_encode(mocker):
     return mocker.spy(SocketMessageJSONCodec, "encode_message")
+
+
+@pytest.fixture
+def mocked_pymd3_tunnel_result(mocker):
+    """
+    A mocked `pymobiledevice3` TunnelResult` that can be used to simulate a tunnel result.
+    """
+    client = mocker.MagicMock()
+
+    async def wait_closed():
+        while not getattr(client, "closed", False):
+            await asyncio.sleep(0.1)
+
+    client.closed = False
+    client.close = mocker.AsyncMock(side_effect=lambda: setattr(client, "closed", True))
+    client.wait_closed = mocker.AsyncMock(side_effect=wait_closed)
+
+    return pymobiledevice3TunnelResult(
+        address="127.0.0.1",
+        port=1234,
+        protocol=TunnelProtocol.TCP,
+        interface="",
+        client=client
+    )
+
+
+@pytest.fixture
+def fake_tunnel_result(mocked_pymd3_tunnel_result):
+    """
+    A fake tunnel result that can be used to simulate a tunnel result.
+    """
+    tunnel_result = TunnelResult(
+        address=mocked_pymd3_tunnel_result.address,
+        port=mocked_pymd3_tunnel_result.port,
+        protocol=TunnelProtocol.TCP,
+    )
+    return tunnel_result
+
+
+@pytest.fixture
+def mocked_client_socket():
+    with patch('core.tunnel.client.ClientSocket') as mock_socket:
+        mock_instance = AsyncMock(spec=ClientSocket)
+        mock_socket.return_value.__enter__.return_value = mock_instance
+        mock_socket.return_value.__exit__.return_value = None
+        yield mock_instance
+
+
+@pytest.fixture
+def tunnel_client_with_mocked_socket(mocked_client_socket, port):
+    """
+    A fixture to create a `TunnelClient` instance with a mocked `ClientSocket`.
+    """
+    with get_tunnel_client(port=port, timeout=timedelta(seconds=1)) as client:
+        yield client
