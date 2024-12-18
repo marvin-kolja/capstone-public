@@ -4,6 +4,7 @@ from packaging.version import Version
 from pymobiledevice3.lockdown import UsbmuxLockdownClient, LockdownClient
 from pymobiledevice3.lockdown_service_provider import LockdownServiceProvider
 from pymobiledevice3.remote.remote_service_discovery import RemoteServiceDiscoveryService
+from pymobiledevice3 import exceptions as pmd3_exceptions
 from pymobiledevice3.services.amfi import AmfiService
 from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterService, DeveloperDiskImageMounter, \
     PersonalizedImageMounter, auto_mount
@@ -95,8 +96,16 @@ class IDevice:
         :raises PasswordRequireError:
         :raises PairingError:
         """
-        # TODO: Handle exceptions
-        self._lockdown_client.pair()
+        try:
+            self._lockdown_client.pair()
+        except pmd3_exceptions.UserDeniedPairingError:
+            raise device_exceptions.UserDeniedPairing
+        except pmd3_exceptions.PasswordRequiredError:
+            raise device_exceptions.PasswordRequired
+        except pmd3_exceptions.PairingError as e:
+            raise device_exceptions.PairingError from e
+        except Exception as e:
+            raise device_exceptions.PairingError from e
 
     def unpair(self):
         """
