@@ -24,6 +24,13 @@ class IDeviceManager:
         """
         lockdown_clients = self._browse_lockdown_clients()
 
+        # Remove devices that are no longer discovered during browse
+        new_udid_list = [client.udid for client in lockdown_clients]
+        existing_udid_list = [udid for udid in self.__devices.keys()]
+        for udid in existing_udid_list:
+            if udid not in new_udid_list:
+                del self.__devices[udid]
+
         for lockdown_client in lockdown_clients:
             udid = lockdown_client.udid
 
