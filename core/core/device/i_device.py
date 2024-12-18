@@ -1,3 +1,5 @@
+import asyncio
+from datetime import timedelta
 from typing import Optional
 
 from packaging.version import Version
@@ -10,6 +12,7 @@ from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterServ
     PersonalizedImageMounter, auto_mount
 
 from core.exceptions import i_device as device_exceptions
+from core.tunnel.client import get_tunnel_client
 from core.tunnel.interface import TunnelResult
 
 
@@ -265,11 +268,21 @@ class IDevice:
         :raises TunnelAlreadyExistsError:
         :raises TunnelCreationFailure:
         """
-        # TODO: Check if ready to establish trusted channel
+        if not self.requires_tunnel_for_developer_tools:
+            raise device_exceptions.RsdNotSupported()
 
-        tunnel: Optional[TunnelResult] = None
+        self.check_ddi_mounted()
 
-        # TODO: Start or get the tunnel
+        with get_tunnel_client(port=49151, timeout=timedelta(seconds=10)) as client:
+            try:
+                tunnel = await client.get_tunnel(self.lockdown_service.udid)
+
+                if tunnel is None:
+                    tunnel = await client.start_tunnel(self.lockdown_service.udid)
+            except asyncio.TimeoutError:
+                raise
+            except Exception as e:
+                raise device_exceptions.TunnelCreationFailure from e
 
         if tunnel is None:
             raise device_exceptions.TunnelCreationFailure("Returned tunnel is None")
