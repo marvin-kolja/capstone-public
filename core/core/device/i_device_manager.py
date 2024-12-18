@@ -1,5 +1,5 @@
-from pymobiledevice3 import lockdown, usbmux, exceptions
-from pymobiledevice3.lockdown import LockdownClient
+from pymobiledevice3 import lockdown, usbmux
+from pymobiledevice3.lockdown import UsbmuxLockdownClient
 
 from core.device.i_device import IDevice
 
@@ -8,11 +8,13 @@ class IDeviceManager:
     def __init__(self):
         self.__devices: dict[str, IDevice] = {}
 
-    def _browse_lockdown_clients(self) -> list[LockdownClient]:
+    @staticmethod
+    def _browse_lockdown_clients() -> list[UsbmuxLockdownClient]:
         """
         Handles logic for browsing available devices as lockdown clients.
         """
-        raise NotImplementedError()
+        mux_devices = usbmux.list_devices(usbmux_address=None)
+        return [lockdown.create_using_usbmux(mux_device.serial, autopair=False) for mux_device in mux_devices]
 
     def list_devices(self) -> list[IDevice]:
         """
@@ -21,7 +23,11 @@ class IDeviceManager:
         Discovered devices are stored in memory and refreshed when this method is called again.
         """
         lockdown_clients = self._browse_lockdown_clients()
-        raise NotImplementedError
+
+        for lockdown_client in lockdown_clients:
+            self.__devices[lockdown_client.udid] = IDevice(lockdown_client=lockdown_client)
+
+        return list(self.__devices.values())
 
     def get_device(self, udid: str) -> IDevice:
         """
