@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 from packaging.version import Version
 from pymobiledevice3 import exceptions as pmd3_exceptions
+from pymobiledevice3.exceptions import DeviceHasPasscodeSetError
 from pymobiledevice3.lockdown import UsbmuxLockdownClient
 from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterService
 
@@ -10,7 +11,7 @@ from core.codec.socket_json_codec import SuccessResponse
 from core.device.i_device import IDevice
 from core.exceptions.i_device import PairingError, DeveloperModeNotEnabled, DeveloperModeNotSupported, \
     DeveloperModeAlreadyEnabled, DeviceNotPaired, UserDeniedPairing, PasswordRequired, DeveloperModeError, \
-    DdiNotMounted, DdiAlreadyMounted, DdiMountingError
+    DdiNotMounted, DdiAlreadyMounted, DdiMountingError, DeviceHasPasscodeSet
 
 
 @pytest.fixture()
@@ -218,6 +219,25 @@ class TestIDeviceDeveloperMode:
         with patch("core.device.i_device.AmfiService.enable_developer_mode",
                    side_effect=Exception) as mock_enable_developer_mode:
             with pytest.raises(DeveloperModeError):
+                i_device.enable_developer_mode()
+            mock_enable_developer_mode.assert_called_once()
+
+    @pytest.mark.parametrize("paired", [True])
+    @pytest.mark.parametrize("developer_mode_enabled", [False])
+    @pytest.mark.parametrize("product_version", ["16.0"])
+    def test_enable_developer_mode_passcode_set_error(self, i_device, mock_usbmux_lockdown_client, paired,
+                                                      developer_mode_enabled, product_version):
+        """
+        GIVEN: A device that is paired and has product version >= 16.0.
+
+        WHEN: enable_developer_mode is called.
+        AND: An error occurs because the device has a passcode set.
+
+        THEN: A `DeviceHasPasscodeSet` exception should be raised.
+        """
+        with patch("core.device.i_device.AmfiService.enable_developer_mode",
+                   side_effect=DeviceHasPasscodeSetError) as mock_enable_developer_mode:
+            with pytest.raises(DeviceHasPasscodeSet):
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
