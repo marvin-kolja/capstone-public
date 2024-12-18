@@ -13,7 +13,6 @@ from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterServ
 
 from core.exceptions import i_device as device_exceptions
 from core.tunnel.client import get_tunnel_client
-from core.tunnel.interface import TunnelResult
 
 
 class IDevice:
