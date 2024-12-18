@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pymobiledevice3 import lockdown, usbmux
 from pymobiledevice3.lockdown import UsbmuxLockdownClient
 
@@ -41,10 +43,13 @@ class IDeviceManager:
 
         return list(self.__devices.values())
 
-    def get_device(self, udid: str) -> IDevice:
+    def get_device(self, udid: str) -> Optional[IDevice]:
         """
         Get a device by its UDID using usbmux
 
-        This is a convenience method for calling `list_devices()` and searching if the udid is in the list.
+        This is a convenience method for calling `list_devices()` and searching if the udid is stored
         """
-        raise NotImplementedError
+        devices = self.list_devices()
+        for device in devices:
+            if device.lockdown_client.udid == udid:
+                return device
