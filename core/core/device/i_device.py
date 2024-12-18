@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import timedelta
 from typing import Optional
 
@@ -14,6 +15,8 @@ from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterServ
 from core.exceptions import i_device as device_exceptions
 from core.tunnel.client import get_tunnel_client
 
+logger = logging.getLogger(__name__)
+
 
 class IDevice:
     """
@@ -21,6 +24,7 @@ class IDevice:
     """
 
     def __init__(self, lockdown_client: UsbmuxLockdownClient):
+        logger.debug(f"Initializing IDevice with lockdown client {type(lockdown_client).__name__}")
         self._lockdown_client = lockdown_client
         self._rsd: Optional[RemoteServiceDiscoveryService] = None
 
@@ -35,7 +39,9 @@ class IDevice:
         documentation for more information.
         """
         if self._rsd is not None:
+            logger.debug(f"Returning rsd as lockdown service")
             return self._rsd
+        logger.debug(f"Returning {type(self._lockdown_client).__name__} as lockdown service")
         return self._lockdown_client
 
     @property
@@ -60,6 +66,8 @@ class IDevice:
         :raises RsdNotSupported: **Only available for >= iOS 17.0**
         """
         if not self.requires_tunnel_for_developer_tools:
+            logger.error(
+                f"Tried to get rsd on an unsupported device version {self.lockdown_client.product_version} < 17.0")
             raise device_exceptions.RsdNotSupported()
         return self._rsd
 
@@ -97,6 +105,7 @@ class IDevice:
         :raises PairingError:
         """
         try:
+            logger.debug(f"Pairing device {self.lockdown_client.udid}")
             self._lockdown_client.pair()
         except pmd3_exceptions.UserDeniedPairingError:
             raise device_exceptions.UserDeniedPairing
@@ -117,6 +126,7 @@ class IDevice:
         if not self.paired:
             raise device_exceptions.DeviceNotPaired
         try:
+            logger.debug(f"Unpairing device {self.lockdown_client.udid}")
             self._lockdown_client.unpair()
         except Exception as e:
             raise device_exceptions.PairingError from e
@@ -132,6 +142,8 @@ class IDevice:
         :raises DeviceNotPaired:
         """
         if not self.requires_developer_mode:
+            logger.error(
+                f"Tried to get developer for an unsupported device version {self.lockdown_client.product_version} < 16.0")
             raise device_exceptions.DeveloperModeNotSupported
         self.check_paired()
         try:
@@ -167,6 +179,7 @@ class IDevice:
         if self.developer_mode_enabled:
             raise device_exceptions.DeveloperModeAlreadyEnabled
         try:
+            logger.debug(f"Enabling Developer Mode for device {self.lockdown_client.udid}")
             AmfiService(self._lockdown_client).enable_developer_mode()
         except pmd3_exceptions.DeviceHasPasscodeSetError as e:
             raise device_exceptions.DeviceHasPasscodeSet from e
@@ -221,6 +234,7 @@ class IDevice:
             raise device_exceptions.DdiAlreadyMounted
 
         try:
+            logger.debug(f"Mounting Developer Disk Image for device {self.lockdown_client.udid}")
             await auto_mount(self.lockdown_service)
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
@@ -239,6 +253,7 @@ class IDevice:
         self.check_ddi_mounted()
 
         try:
+            logger.debug(f"Unmounting Developer Disk Image for device {self.lockdown_client.udid}")
             self._mounter.unmount_image(self._mounter.IMAGE_TYPE)
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
@@ -266,16 +281,21 @@ class IDevice:
         :raises TunnelCreationFailure:
         """
         if not self.requires_tunnel_for_developer_tools:
+            logger.error(
+                f"Tried to establish trusted tunnel for an unsupported device version {self.lockdown_client.product_version} < 17.0")
             raise device_exceptions.RsdNotSupported()
 
         self.check_ddi_mounted()
 
         with get_tunnel_client(port=49151, timeout=timedelta(seconds=10)) as client:
             try:
+                logger.debug(f"Checking if tunnel exist for device {self.lockdown_client.udid}")
                 tunnel = await client.get_tunnel(self.lockdown_service.udid)
 
                 if tunnel is None:
+                    logger.debug(f"Tunnel does not exist for device {self.lockdown_client.udid}, trying to start it")
                     tunnel = await client.start_tunnel(self.lockdown_service.udid)
+                logger.debug(f"Got tunnel {tunnel} for device {self.lockdown_client.udid}")
             except asyncio.TimeoutError:
                 raise
             except Exception as e:
@@ -284,7 +304,9 @@ class IDevice:
         if tunnel is None:
             raise device_exceptions.TunnelCreationFailure("Returned tunnel is None")
 
+        logger.debug(f"Creating rsd with tunnel for device {self.lockdown_client.udid}")
         rsd = RemoteServiceDiscoveryService((str(tunnel.address), tunnel.port))
+        logger.debug(f"Connecting to rsd service for device {self.lockdown_client.udid}")
         await rsd.connect()
 
         self._rsd = rsd
