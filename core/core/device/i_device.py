@@ -116,8 +116,10 @@ class IDevice:
         """
         if not self.paired:
             raise device_exceptions.DeviceNotPaired
-        # TODO: Handle exceptions
-        self._lockdown_client.unpair()
+        try:
+            self._lockdown_client.unpair()
+        except Exception as e:
+            raise device_exceptions.PairingError from e
 
     @property
     def developer_mode_enabled(self) -> bool:
