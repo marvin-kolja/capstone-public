@@ -11,7 +11,7 @@ from core.codec.socket_json_codec import SuccessResponse
 from core.device.i_device import IDevice
 from core.exceptions.i_device import PairingError, DeveloperModeNotEnabled, DeveloperModeNotSupported, \
     DeveloperModeAlreadyEnabled, DeviceNotPaired, UserDeniedPairing, PasswordRequired, DeveloperModeError, \
-    DdiNotMounted, DdiAlreadyMounted, DdiMountingError, DeviceHasPasscodeSet
+    DdiNotMounted, DdiAlreadyMounted, DdiMountingError, DeviceHasPasscodeSet, RsdNotSupported
 
 
 @pytest.fixture()
@@ -402,10 +402,10 @@ class TestIDeviceDdiMounting:
 
 @pytest.mark.parametrize("paired", [True])
 @pytest.mark.parametrize("developer_mode_enabled", [True])
-@pytest.mark.parametrize("product_version", ["17.0", "17.4", "18.0"])
 @pytest.mark.parametrize("ddi_mounted", [True])
 class TestIDeviceRSD:
 
+    @pytest.mark.parametrize("product_version", ["17.0", "17.4", "18.0"])
     async def test_establish_trusted_channel(self, i_device, ddi_mounted, patched_i_device_mounter, fake_tunnel_result,
                                              mocked_client_socket, tunnel_client_with_mocked_socket):
         """
@@ -427,3 +427,18 @@ class TestIDeviceRSD:
                 assert i_device.rsd.service.address == (str(fake_tunnel_result.address), fake_tunnel_result.port)
 
                 mock_rsd_connect.assert_awaited_once()
+
+    @pytest.mark.parametrize("product_version", ["16.0"])
+    async def test_establish_trusted_channel_not_supported(self, i_device, product_version, ddi_mounted,
+                                                           patched_i_device_mounter):
+        """
+        GIVEN: An IDevice instance with product version < 17.0.
+
+        WHEN: establish_trusted_channel is called
+
+        THEN: A `RsdNotSupported` exception should be raised.
+        """
+        patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
+
+        with pytest.raises(RsdNotSupported):
+            await i_device.establish_trusted_channel()
