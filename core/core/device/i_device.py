@@ -134,14 +134,16 @@ class IDevice:
         if not self.requires_developer_mode:
             raise device_exceptions.DeveloperModeNotSupported
         self.check_paired()
-        # TODO: Handle exceptions
-        return self._lockdown_client.developer_mode_status
+        try:
+            return self._lockdown_client.developer_mode_status
+        except Exception as e:
+            raise device_exceptions.DeveloperModeError from e
 
     def check_developer_mode_enabled(self):
         """
-        :raises DeveloperModeNotSupported:
-
         :raises DeveloperModeNotEnabled:
+
+        :raises DeveloperModeNotSupported:
         :raises DeveloperModeError:
 
         :raises DeviceNotPaired:
