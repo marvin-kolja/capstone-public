@@ -166,8 +166,12 @@ class IDevice:
         """
         if self.developer_mode_enabled:
             raise device_exceptions.DeveloperModeAlreadyEnabled
-        # TODO: Handle exceptions
-        AmfiService(self._lockdown_client).enable_developer_mode()
+        try:
+            AmfiService(self._lockdown_client).enable_developer_mode()
+        except pmd3_exceptions.DeviceHasPasscodeSetError as e:
+            raise device_exceptions.DeviceHasPasscodeSet from e
+        except Exception as e:
+            raise device_exceptions.DeveloperModeError from e
 
     @property
     def _mounter(self) -> MobileImageMounterService:
