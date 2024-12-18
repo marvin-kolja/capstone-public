@@ -56,14 +56,12 @@ class IDevice:
         For more information read:
         https://github.com/doronz88/pymobiledevice3/blob/master/misc/understanding_idevice_protocol_layers.md#remotexpc
 
-        The property is `None` if `create_rsd` has never been called.
+        The property is `None` if `establish_trusted_channel` has never been called.
 
-        **Only available for >= iOS 17.0**
-
-        :raises ValueError: If rsd is not set. Use `establish_trusted_channel` to set the `rsd` property.
+        :raises RsdNotSupported: **Only available for >= iOS 17.0**
         """
-        if self._rsd is None:
-            raise ValueError('RSD has not been set. Use establish_trusted_channel to set the rsd property')
+        if not self.requires_tunnel_for_developer_tools:
+            raise device_exceptions.RsdNotSupported()
         return self._rsd
 
     @property
@@ -71,7 +69,7 @@ class IDevice:
         """
         Check if the device OS requires a tunnel to access developer services.
         """
-        return Version(self.lockdown_service.product_version) >= Version('17.0')
+        return Version(self.lockdown_client.product_version) >= Version('17.0')
 
     @property
     def requires_developer_mode(self) -> bool:
