@@ -76,7 +76,7 @@ class IDevice:
         """
         Check if the device OS requires developer mode to be enabled in order to mount DDI.
         """
-        return Version(self.lockdown_service.product_version) >= Version('16.0')
+        return Version(self.lockdown_client.product_version) >= Version('16.0')
 
     @property
     def paired(self) -> bool:
