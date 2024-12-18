@@ -220,8 +220,10 @@ class IDevice:
         if self.ddi_mounted:
             raise device_exceptions.DdiAlreadyMounted
 
-        # TODO: Handle exceptions
-        await auto_mount(self.lockdown_service)
+        try:
+            await auto_mount(self.lockdown_service)
+        except Exception as e:
+            raise device_exceptions.DdiMountingError from e
 
     def unmount_ddi(self):
         """
