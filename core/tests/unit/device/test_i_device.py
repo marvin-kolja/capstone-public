@@ -70,17 +70,6 @@ class TestIDevicePairing:
 
             mock_usbmux_lockdown_client.pair.assert_called_once()
 
-        def test_pair_user_denied(self, i_device, mock_usbmux_lockdown_client):
-            """
-            WHEN: pair is called.
-            AND: The user denies the pairing request.
-
-            THEN: A `UserDeniedPairing` exception should be raised.
-            """
-            mock_usbmux_lockdown_client.pair.side_effect = pmd3_exceptions.UserDeniedPairingError
-            with pytest.raises(UserDeniedPairing):
-                i_device.pair()
-
         def test_unpair_behavior(self, i_device, paired, mock_usbmux_lockdown_client):
             """
             WHEN: unpair is called
@@ -97,6 +86,20 @@ class TestIDevicePairing:
                 with pytest.raises(DeviceNotPaired):
                     i_device.unpair()
                 mock_usbmux_lockdown_client.unpair.assert_not_called()
+
+    @pytest.mark.parametrize("paired", [False])
+    def test_pair_user_denied(self, i_device, mock_usbmux_lockdown_client, paired):
+        """
+        GIVEN: A device that is not paired.
+
+        WHEN: pair is called.
+        AND: The user denies the pairing request.
+
+        THEN: A `UserDeniedPairing` exception should be raised.
+        """
+        mock_usbmux_lockdown_client.pair.side_effect = pmd3_exceptions.UserDeniedPairingError
+        with pytest.raises(UserDeniedPairing):
+            i_device.pair()
 
     @pytest.mark.parametrize("paired", [False])
     def test_pair_password_required(self, i_device, mock_usbmux_lockdown_client, paired):
