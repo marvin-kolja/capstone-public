@@ -25,7 +25,12 @@ class IDeviceManager:
         lockdown_clients = self._browse_lockdown_clients()
 
         for lockdown_client in lockdown_clients:
-            self.__devices[lockdown_client.udid] = IDevice(lockdown_client=lockdown_client)
+            udid = lockdown_client.udid
+
+            if udid in self.__devices:
+                continue
+
+            self.__devices[udid] = IDevice(lockdown_client=lockdown_client)
 
         return list(self.__devices.values())
 
