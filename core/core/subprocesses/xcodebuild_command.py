@@ -149,6 +149,9 @@ class XcodeBuildCommand(ProcessCommand):
         return get_args(self.ACTION_TYPE)
 
     def parse(self) -> [str]:
+        if self.action not in self.valid_actions:
+            raise CommandError(f"Invalid action: {self.action}, must be one of {self.valid_actions}")
+
         command = ["xcodebuild"]
 
         if self.action is not None:
