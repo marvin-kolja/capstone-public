@@ -71,3 +71,11 @@ class RsdNotSupported(CoreException):
 class TunnelCreationFailure(CoreException):
     """ Unable to start a tunnel to the device """
     pass
+
+class AppInstallError(CoreException):
+    """ Error when unable to install app """
+    pass
+
+class AppUninstallError(CoreException):
+    """ Errors related to uninstalling the device """
+    pass
