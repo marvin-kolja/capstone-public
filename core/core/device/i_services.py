@@ -5,7 +5,7 @@ from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from core.device.i_device import IDevice
 from core.device.services_protocol import ServicesProtocol
-from core.exceptions.i_device import AppInstallError
+from core.exceptions.i_device import AppInstallError, AppUninstallError
 
 logger = logging.getLogger(__name__)
 
@@ -35,4 +35,17 @@ class IServices(ServicesProtocol):
             raise AppInstallError from e
 
     def uninstall_app(self, bundle_id: str, progress_callback: Callable[[str], None] = None):
-        raise NotImplementedError
+        """
+        Uninstall app from device.
+
+        :param bundle_id: Bundle ID to uninstall.
+        :param progress_callback: Function to call with uninstall progress.
+
+        :raises AppUninstallError: If app uninstallation fails.
+        """
+        try:
+            logger.debug(f"Uninstalling app from device using bundle_id: {bundle_id}")
+            self._installer.uninstall(bundle_id, handler=progress_callback)
+        except Exception as e:
+            logger.error(f"Failed to uninstall app from device using bundle_id: {bundle_id}, error: {e}")
+            raise AppUninstallError from e
