@@ -124,6 +124,28 @@ class XcodeBuildOptions:
     def only_testing(value: str):
         return XcodeBuildOptionWithValue(XcodeBuildOptions.__get_option_name(XcodeBuildOptions.only_testing), value)
 
+def _valid_option_names():
+    option_names = []
+
+    for attr_name in dir(XcodeBuildOptions):
+        if attr_name.startswith("__"):
+            # Ignore pythons private attributes
+            continue
+        if attr_name.startswith("_XcodeBuildOptions__"):
+            # Ignore user defined private attributes
+            continue
+
+        attr = getattr(XcodeBuildOptions, attr_name)
+        if not callable(attr):
+            continue
+
+        xcode_option_name = getattr(attr, "__xcode_build_option__", None)
+        if xcode_option_name is None:
+            continue
+
+        option_names.append(xcode_option_name)
+
+    return option_names
 
 class XcodeBuildCommand(ProcessCommand):
     """
@@ -157,7 +179,12 @@ class XcodeBuildCommand(ProcessCommand):
         if self.action is not None:
             command.append(self.action)
 
+        valid_option_names = _valid_option_names()
+
         for option in self.options:
+            if option.name not in valid_option_names:
+                raise CommandError(f"Invalid option name: {option.name}, must be one of {valid_option_names}")
+
             if isinstance(option, XcodeBuildOptionWithValue):
                 command.extend([option.name, option.value])
             elif isinstance(option, XcodeBuildOption):
