@@ -1,7 +1,7 @@
 import functools
 from typing import Literal, get_args, Optional
 
-from core.subprocesses.process import ProcessCommand
+from core.subprocesses.process import ProcessCommand, CommandError
 
 
 class XcodeBuildOption:
@@ -149,4 +149,16 @@ class XcodeBuildCommand(ProcessCommand):
         return get_args(self.ACTION_TYPE)
 
     def parse(self) -> [str]:
-        raise NotImplementedError
+        command = ["xcodebuild"]
+
+        if self.action is not None:
+            command.append(self.action)
+
+        for option in self.options:
+            if isinstance(option, XcodeBuildOptionWithValue):
+                command.extend([option.name, option.value])
+            elif isinstance(option, XcodeBuildOption):
+                command.append(option.name)
+            else:
+                raise CommandError(f"Unknown option type: {type(option).__name__}")
+        return command
