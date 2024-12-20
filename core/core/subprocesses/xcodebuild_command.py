@@ -112,7 +112,7 @@ class XcodebuildOptions:
     @xcodebuild_option("-destination")
     def destination(value: Destination):
         destination_key_value_pairs = [
-            f"{key}={value}" for key, value in value.model_dump().items()
+            f"{key}={value}" for key, value in value.model_dump(exclude_none=True).items()
         ]
         destination_as_string = ",".join(destination_key_value_pairs)
         return XcodebuildOptionWithValue(
