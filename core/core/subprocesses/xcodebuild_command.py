@@ -1,7 +1,7 @@
 import functools
 from typing import Literal, get_args, Optional, Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 
 from core.subprocesses.process import ProcessCommand, CommandError
 
@@ -112,7 +112,8 @@ class XcodebuildOptions:
     @xcodebuild_option("-destination")
     def destination(value: Destination):
         destination_key_value_pairs = [
-            f"{key}={value}" for key, value in value.model_dump(exclude_none=True).items()
+            f"{key}={value}"
+            for key, value in value.model_dump(exclude_none=True).items()
         ]
         destination_as_string = ",".join(destination_key_value_pairs)
         return XcodebuildOptionWithValue(
@@ -170,6 +171,49 @@ class XcodebuildOptions:
     def only_testing(value: str):
         return XcodebuildOptionWithValue(
             XcodebuildOptions.__get_option_name(XcodebuildOptions.only_testing), value
+        )
+
+    @staticmethod
+    @xcodebuild_option("-enumerate-tests")
+    def enumerate_tests():
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.enumerate_tests),
+        )
+
+    @staticmethod
+    @xcodebuild_option("-test-enumeration-style")
+    def test_enumeration_style(value: str):
+        """
+        :param value: "hierarchical", "flat"
+        """
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.test_enumeration_style
+            ),
+            value,
+        )
+
+    @staticmethod
+    @xcodebuild_option("-test-enumeration-format")
+    def test_enumeration_format(value: str):
+        """
+        :param value: "text", "json"
+        """
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.test_enumeration_format
+            ),
+            value,
+        )
+
+    @staticmethod
+    @xcodebuild_option("-test-enumeration-output-path")
+    def test_enumeration_output_path(value: str):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.test_enumeration_output_path
+            ),
+            value,
         )
 
 
