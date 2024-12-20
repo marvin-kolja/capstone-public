@@ -3,41 +3,41 @@ import inspect
 import pytest
 
 from core.subprocesses.process import CommandError
-from core.subprocesses.xcodebuild_command import XcodeBuildOptions, XcodeBuildOption, XcodeBuildOptionWithValue, \
-    XcodeBuildCommand
+from core.subprocesses.xcodebuild_command import XcodebuildOptions, XcodebuildOption, XcodebuildOptionWithValue, \
+    XcodebuildCommand
 
 
-def xcode_build_options_attributes():
+def xcodebuild_options_attributes():
     attributes = []
 
-    for attr_name in dir(XcodeBuildOptions):
+    for attr_name in dir(XcodebuildOptions):
         if attr_name.startswith("__"):
             # Ignore pythons private attributes
             continue
-        if attr_name.startswith("_XcodeBuildOptions__"):
+        if attr_name.startswith("_XcodebuildOptions__"):
             # Ignore user defined private attributes
             continue
-        attr = getattr(XcodeBuildOptions, attr_name)
+        attr = getattr(XcodebuildOptions, attr_name)
         attributes.append(attr)
 
     return attributes
 
 
-@pytest.mark.parametrize("attr", xcode_build_options_attributes())
+@pytest.mark.parametrize("attr", xcodebuild_options_attributes())
 class TestXcodebuildOptions:
-    def test_all_methods_are_xcode_option_decorated(self, attr):
+    def test_all_methods_are_xcodebuild_option_decorated(self, attr):
         """
-        GIVEN: A `XcodeBuildOptions` attribute
+        GIVEN: A `XcodebuildOptions` attribute
 
         THEN: The attribute must be a callable
-        AND: Must be decorated with `@xcode_option`.
+        AND: Must be decorated with `@xcodebuild_option`.
         """
         assert callable(attr)
-        assert hasattr(attr, '__xcode_build_option__')
+        assert hasattr(attr, '__xcodebuild_option__')
 
     def test_all_methods_signature(self, attr):
         """
-        GIVEN: A `XcodeBuildOptions` attribute
+        GIVEN: A `XcodebuildOptions` attribute
 
         WHEN: checking getting the signature on that attribute
 
@@ -49,14 +49,14 @@ class TestXcodebuildOptions:
         for param_name in params_sig.keys():
             assert param_name == "value"
 
-    def test_returned_value_is_correct_xcode_option(self, attr):
+    def test_returned_value_is_correct_xcodebuild_option(self, attr):
         """
-        GIVEN: A `XcodeBuildOptions` attribute
+        GIVEN: A `XcodebuildOptions` attribute
 
         WHEN: Calling the attribute
 
-        THEN: The return value should be a valid `XcodeBuildOption`
-        AND: The option name must match the `xcode_option` decorator name value
+        THEN: The return value should be a valid `XcodebuildOption`
+        AND: The option name must match the `xcodebuild_option` decorator name value
         """
         params_sig = inspect.signature(attr).parameters
 
@@ -64,50 +64,50 @@ class TestXcodebuildOptions:
 
         if value_param_sig is None:
             option = attr()
-            assert isinstance(option, XcodeBuildOption)
+            assert isinstance(option, XcodebuildOption)
         elif value_param_sig.annotation == str:
             option = attr("Some String")
-            assert isinstance(option, XcodeBuildOptionWithValue)
+            assert isinstance(option, XcodebuildOptionWithValue)
         elif value_param_sig.annotation == dict:
             option = attr({"Key": "Value"})
-            assert isinstance(option, XcodeBuildOptionWithValue)
+            assert isinstance(option, XcodebuildOptionWithValue)
         else:
             pytest.fail("Unexpected value type")
 
-        assert option.name == attr.__xcode_build_option__
+        assert option.name == attr.__xcodebuild_option__
 
 
-class TestXcodeBuildCommand:
-    def test_invalid_xcode_build_option(self):
+class TestXcodebuildCommand:
+    def test_invalid_xcodebuild_option(self):
         """
-        GIVEN: A `XcodeBuildCommand` with an invalid `XcodeBuildOption`
+        GIVEN: A `XcodebuildCommand` with an invalid `XcodebuildOption`
 
         WHEN: parsing the command
 
         THEN: A `CommandError` should be raised
         """
-        invalid_option = XcodeBuildOption("-invalid")
-        command = XcodeBuildCommand(action="build", options=[invalid_option])
+        invalid_option = XcodebuildOption("-invalid")
+        command = XcodebuildCommand(action="build", options=[invalid_option])
 
         with pytest.raises(CommandError):
             command.parse()
 
     def test_invalid_action(self):
         """
-        GIVEN: A `XcodeBuildCommand` with an invalid action
+        GIVEN: A `XcodebuildCommand` with an invalid action
 
         WHEN: parsing the command
 
         THEN: A `CommandError` should be raised
         """
-        command = XcodeBuildCommand(action="invalid")
+        command = XcodebuildCommand(action="invalid")
 
         with pytest.raises(CommandError):
             command.parse()
 
     def test_parsing_works_correctly(self):
         """
-        GIVEN: A `XcodeBuildCommand` with a valid action and options
+        GIVEN: A `XcodebuildCommand` with a valid action and options
 
         WHEN: parsing the command
 
@@ -115,8 +115,8 @@ class TestXcodeBuildCommand:
         """
         expected_parsed_command = ["xcodebuild", "build", "-quiet", "-project", "/tmp/project"]
 
-        command = XcodeBuildCommand(action="build",
-                                    options=[XcodeBuildOptions.quiet(), XcodeBuildOptions.project("/tmp/project")])
+        command = XcodebuildCommand(action="build",
+                                    options=[XcodebuildOptions.quiet(), XcodebuildOptions.project("/tmp/project")])
 
         parsed_command = command.parse()
 
