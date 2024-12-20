@@ -8,6 +8,7 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildOption,
     XcodebuildOptionWithValue,
     XcodebuildCommand,
+    Destination,
 )
 
 
@@ -72,11 +73,11 @@ class TestXcodebuildOptions:
         elif value_param_sig.annotation == str:
             option = attr("Some String")
             assert isinstance(option, XcodebuildOptionWithValue)
-        elif value_param_sig.annotation == dict:
-            option = attr({"Key": "Value"})
+        elif value_param_sig.annotation == Destination:
+            option = attr(Destination(platform="iOS"))
             assert isinstance(option, XcodebuildOptionWithValue)
         else:
-            pytest.fail("Unexpected value type")
+            pytest.fail(f"Unexpected value type {value_param_sig.annotation}")
 
         assert option.name == attr.__xcodebuild_option__
 

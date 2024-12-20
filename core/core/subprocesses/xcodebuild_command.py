@@ -1,5 +1,7 @@
 import functools
-from typing import Literal, get_args, Optional
+from typing import Literal, get_args, Optional, Self
+
+from pydantic import BaseModel, model_validator
 
 from core.subprocesses.process import ProcessCommand, CommandError
 
@@ -39,6 +41,22 @@ def xcodebuild_option(option_name: str):
         return wrapper
 
     return decorator
+
+
+class Destination(BaseModel):
+    platform: str
+
+
+class IOSDestination(Destination):
+    platform: Literal["iOS"]
+    id: str
+    name: str
+
+    @model_validator(mode="after")
+    def verify_id_or_name(self) -> Self:
+        if (self.id and self.name) or (not self.id and not self.name):
+            raise ValueError("Expected id or name, but not both.")
+        return self
 
 
 class XcodebuildOptions:
@@ -92,8 +110,10 @@ class XcodebuildOptions:
 
     @staticmethod
     @xcodebuild_option("-destination")
-    def destination(value: dict):
-        destination_key_value_pairs = [f"{key}={value}" for key, value in value.items()]
+    def destination(value: Destination):
+        destination_key_value_pairs = [
+            f"{key}={value}" for key, value in value.model_dump().items()
+        ]
         destination_as_string = ",".join(destination_key_value_pairs)
         return XcodebuildOptionWithValue(
             XcodebuildOptions.__get_option_name(XcodebuildOptions.destination),
