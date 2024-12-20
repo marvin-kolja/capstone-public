@@ -48,9 +48,9 @@ class Destination(BaseModel):
 
 
 class IOSDestination(Destination):
-    platform: Literal["iOS"]
-    id: str
-    name: str
+    platform: Literal["iOS"] = "iOS"
+    id: Optional[str] = None
+    name: Optional[str] = None
 
     @model_validator(mode="after")
     def verify_id_or_name(self) -> Self:
