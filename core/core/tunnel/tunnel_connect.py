@@ -6,7 +6,10 @@ from typing import Optional
 from pymobiledevice3.exceptions import PyMobileDevice3Exception
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.remote.common import TunnelProtocol
-from pymobiledevice3.remote.tunnel_service import TunnelResult as pymobiledevice3TunnelResult, CoreDeviceTunnelProxy
+from pymobiledevice3.remote.tunnel_service import (
+    TunnelResult as pymobiledevice3TunnelResult,
+    CoreDeviceTunnelProxy,
+)
 from pymobiledevice3.tunneld import TunneldCore, TunnelTask
 
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
@@ -27,21 +30,27 @@ class TunnelConnect(TunnelConnectInterface):
     def __init__(self):
         self._tunnel_manager: TunneldCore = TunneldCore()
 
-    def _start_usbmux_tcp_tunnel_task(self, udid: str, queue: asyncio.Queue) -> asyncio.Task:
+    def _start_usbmux_tcp_tunnel_task(
+        self, udid: str, queue: asyncio.Queue
+    ) -> asyncio.Task:
         logger.debug(f"Starting tunnel task for device {udid}")
         lockdown_client = create_using_usbmux(udid)
         logger.debug(f"Created lockdown client for device {udid}")
         service = CoreDeviceTunnelProxy(lockdown_client)
         logger.debug(f"Created tunnel service for device {udid}")
         task = asyncio.create_task(
-            self._tunnel_manager.start_tunnel_task(udid, service, protocol=TunnelProtocol.TCP,
-                                                   queue=queue),
-            name=f'start-tunnel-task-{udid}')
+            self._tunnel_manager.start_tunnel_task(
+                udid, service, protocol=TunnelProtocol.TCP, queue=queue
+            ),
+            name=f"start-tunnel-task-{udid}",
+        )
         logger.debug(f"Created tunnel task for device {udid}")
         return task
 
     @staticmethod
-    def _parse_pymobiledevice3_tunnel_result(tunnel_result: pymobiledevice3TunnelResult) -> TunnelResult:
+    def _parse_pymobiledevice3_tunnel_result(
+        tunnel_result: pymobiledevice3TunnelResult,
+    ) -> TunnelResult:
         return TunnelResult(
             address=tunnel_result.address,
             port=tunnel_result.port,
@@ -75,11 +84,16 @@ class TunnelConnect(TunnelConnectInterface):
                 logger.debug(f"Tunnel task for device {udid} was cancelled")
                 pass
             except asyncio.InvalidStateError as e:
-                logger.critical(f"Tunnel task result is not available. This should not happen. {e}", exc_info=True)
+                logger.critical(
+                    f"Tunnel task result is not available. This should not happen. {e}",
+                    exc_info=True,
+                )
                 raise e
         except PyMobileDevice3Exception as e:
-            logger.error(f"Failed with pymobiledevice3 exception to start tunnel for device {udid}: {e}",
-                         exc_info=True)
+            logger.error(
+                f"Failed with pymobiledevice3 exception to start tunnel for device {udid}: {e}",
+                exc_info=True,
+            )
             # TODO: Wrap PyMobileDevice3Exception in a custom exception
             raise e
 
@@ -142,5 +156,6 @@ class TunnelConnect(TunnelConnectInterface):
             # The task should remove itself from the tunnel tasks on completion. However, it did occur that it may not.
             if udid in self._tunnel_manager.tunnel_tasks:
                 logger.warning(
-                    f"Tunnel task for device {udid} did not remove itself from the tunnel tasks, removing manually")
+                    f"Tunnel task for device {udid} did not remove itself from the tunnel tasks, removing manually"
+                )
                 self._tunnel_manager.tunnel_tasks.pop(udid, None)

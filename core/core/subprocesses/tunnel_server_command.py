@@ -12,7 +12,12 @@ class TunnelServerCommand(ProcessCommand):
         self.__log_level = log_level
 
     def parse(self) -> [str]:
-        command = ["python", "-m", "core.subprocesses.tunnel_server_executable", str(self.__port)]
+        command = [
+            "python",
+            "-m",
+            "core.subprocesses.tunnel_server_executable",
+            str(self.__port),
+        ]
         if self.__log_level:
             return command + ["--log-level", self.__log_level]
         return command

@@ -8,6 +8,7 @@ class XcodebuildOption:
     """
     A xcodebuild build option that does not require a value
     """
+
     def __init__(self, name: str):
         self.name = name
 
@@ -16,6 +17,7 @@ class XcodebuildOptionWithValue(XcodebuildOption):
     """
     A xcodebuild option that requires a value
     """
+
     def __init__(self, name: str, value: str):
         super().__init__(name)
         if not isinstance(value, str):
@@ -56,73 +58,100 @@ class XcodebuildOptions:
     @staticmethod
     @xcodebuild_option("-quiet")
     def quiet():
-        return XcodebuildOption(XcodebuildOptions.__get_option_name(XcodebuildOptions.quiet))
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.quiet)
+        )
 
     @staticmethod
     @xcodebuild_option("-project")
     def project(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.project), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.project), value
+        )
 
     @staticmethod
     @xcodebuild_option("-workspace")
     def workspace(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.workspace), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.workspace), value
+        )
 
     @staticmethod
     @xcodebuild_option("-scheme")
     def scheme(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.scheme), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.scheme), value
+        )
 
     @staticmethod
     @xcodebuild_option("-target")
     def target(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.target), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.target), value
+        )
 
     @staticmethod
     @xcodebuild_option("-destination")
     def destination(value: dict):
         destination_key_value_pairs = [f"{key}={value}" for key, value in value.items()]
         destination_as_string = ",".join(destination_key_value_pairs)
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.destination),
-                                         destination_as_string)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.destination),
+            destination_as_string,
+        )
 
     @staticmethod
     @xcodebuild_option("-destination-timeout")
     def destination_timeout(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.destination_timeout),
-                                         value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.destination_timeout),
+            value,
+        )
 
     @staticmethod
     @xcodebuild_option("-derivedDataPath")
     def derived_data_path(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.derived_data_path),
-                                         value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.derived_data_path),
+            value,
+        )
 
     @staticmethod
     @xcodebuild_option("-resultBundlePath")
     def result_bundle_path(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.result_bundle_path),
-                                         value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.result_bundle_path),
+            value,
+        )
 
     @staticmethod
     @xcodebuild_option("-list")
     def list():
-        return XcodebuildOption(XcodebuildOptions.__get_option_name(XcodebuildOptions.list))
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.list)
+        )
 
     @staticmethod
     @xcodebuild_option("-xctestrun")
     def xctestrun(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.xctestrun), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.xctestrun), value
+        )
 
     @staticmethod
     @xcodebuild_option("-skip-testing")
     def skip_testing(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.skip_testing), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.skip_testing), value
+        )
 
     @staticmethod
     @xcodebuild_option("-only-testing")
     def only_testing(value: str):
-        return XcodebuildOptionWithValue(XcodebuildOptions.__get_option_name(XcodebuildOptions.only_testing), value)
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.only_testing), value
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -147,17 +176,20 @@ def _valid_option_names():
 
     return option_names
 
+
 class XcodebuildCommand(ProcessCommand):
     """
     A command parser for `xcodebuild`
     """
 
-    ACTION_TYPE = Literal["build", "build-for-testing", "clean", "test-without-building", None]
+    ACTION_TYPE = Literal[
+        "build", "build-for-testing", "clean", "test-without-building", None
+    ]
 
     def __init__(
-            self,
-            action: ACTION_TYPE,
-            options: Optional[list[XcodebuildOption]] = None,
+        self,
+        action: ACTION_TYPE,
+        options: Optional[list[XcodebuildOption]] = None,
     ):
         """
         :param action: The main action to execute. Can be `None` as not every command requires an action.
@@ -174,7 +206,9 @@ class XcodebuildCommand(ProcessCommand):
         command = ["xcodebuild"]
 
         if self.action not in self.valid_actions:
-            raise CommandError(f"Invalid action: {self.action}, must be one of {self.valid_actions}")
+            raise CommandError(
+                f"Invalid action: {self.action}, must be one of {self.valid_actions}"
+            )
 
         if self.action is not None:
             command.append(self.action)
@@ -183,7 +217,9 @@ class XcodebuildCommand(ProcessCommand):
 
         for option in self.options:
             if option.name not in valid_option_names:
-                raise CommandError(f"Invalid option name: {option.name}, must be one of {valid_option_names}")
+                raise CommandError(
+                    f"Invalid option name: {option.name}, must be one of {valid_option_names}"
+                )
 
             if isinstance(option, XcodebuildOptionWithValue):
                 command.extend([option.name, option.value])

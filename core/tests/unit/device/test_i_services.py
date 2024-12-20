@@ -14,11 +14,15 @@ def services(i_device):
 
 @pytest.fixture
 def mock_installer(services):
-    with patch.object(type(services), '_installer', MagicMock(spec=InstallationProxyService)) as mock:
+    with patch.object(
+        type(services), "_installer", MagicMock(spec=InstallationProxyService)
+    ) as mock:
         yield mock
 
 
-@pytest.mark.parametrize('paired,developer_mode_enabled,product_version', [(True, True, '18.0')])
+@pytest.mark.parametrize(
+    "paired,developer_mode_enabled,product_version", [(True, True, "18.0")]
+)
 class TestIServicesInstallation:
     def test_install_exception(self, services, mock_installer):
         """

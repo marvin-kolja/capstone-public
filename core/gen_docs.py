@@ -11,7 +11,9 @@ from pathlib import Path
 from pdoc import _render_template, import_module
 
 
-def generate_docs_and_central_index(modules_to_process: list[str], doc_output_dir: Path) -> None:
+def generate_docs_and_central_index(
+    modules_to_process: list[str], doc_output_dir: Path
+) -> None:
     """Method to generate a doc folder with central `index.html`
 
     :param modules_to_process: List of modules to process
@@ -26,8 +28,14 @@ def generate_docs_and_central_index(modules_to_process: list[str], doc_output_di
 
     # Create a single base `index.html`
     with open(Path(doc_output_dir, "index.html"), "w", encoding="utf-8") as index:
-        index.write(_render_template("/html.mako",
-                                     modules=sorted((module.__name__, inspect.getdoc(module)) for module in modules)))
+        index.write(
+            _render_template(
+                "/html.mako",
+                modules=sorted(
+                    (module.__name__, inspect.getdoc(module)) for module in modules
+                ),
+            )
+        )
 
 
 if __name__ == "__main__":

@@ -116,7 +116,9 @@ class TestSocket:
         THEN: The client should receive the exact same response as the one sent by the server
         """
 
-        async def client_receive_message(request: ClientRequest, response: ServerResponse):
+        async def client_receive_message(
+            request: ClientRequest, response: ServerResponse
+        ):
             with ClientSocket(port=port) as client_socket:
                 await client_socket.send(request)
                 # We need to wait to make sure the message is sent and received by the server
@@ -139,7 +141,9 @@ class TestSocket:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("socket_type", ["client", "server"])
     @pytest.mark.parametrize("timeout", TIMEOUTS)
-    async def test_server_receive_timeout(self, socket_type, client_socket, server_socket, timeout):
+    async def test_server_receive_timeout(
+        self, socket_type, client_socket, server_socket, timeout
+    ):
         """
         GIVEN: A server or client socket
         AND: A timeout
@@ -150,8 +154,9 @@ class TestSocket:
         THEN: A TimeoutError should be raised
         AND: The time passed should be equal or greater to the timeout
         """
+
         def _assert_time_passed(start: float, end: float):
-            """ Assert that the time passed between two points is equal or greater to the given timeout """
+            """Assert that the time passed between two points is equal or greater to the given timeout"""
             elapsed_time = end - start
             if timeout is None:
                 assert elapsed_time >= 0.1

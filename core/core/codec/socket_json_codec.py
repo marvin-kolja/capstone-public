@@ -68,7 +68,6 @@ class SuccessResponse(ServerResponse):
 
 
 class SocketMessageFactory:
-
     @staticmethod
     def parse_message_data(message_data: dict) -> Union[ClientRequest, ServerResponse]:
         """
@@ -109,7 +108,9 @@ class SocketMessageFactory:
             raise InvalidSocketMessage
 
 
-class SocketMessageJSONCodec(CodecProtocol[BaseMessage, BaseMessage], Generic[E_INPUT, D_OUTPUT]):
+class SocketMessageJSONCodec(
+    CodecProtocol[BaseMessage, BaseMessage], Generic[E_INPUT, D_OUTPUT]
+):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         """
@@ -152,7 +153,9 @@ def check_server_response(message: BaseMessage) -> ServerResponse:
     return message
 
 
-class ClientSocketMessageJSONCodec(SocketMessageJSONCodec[ClientRequest, ServerResponse]):
+class ClientSocketMessageJSONCodec(
+    SocketMessageJSONCodec[ClientRequest, ServerResponse]
+):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         return SocketMessageJSONCodec.encode_message(check_client_request(message))
@@ -163,7 +166,9 @@ class ClientSocketMessageJSONCodec(SocketMessageJSONCodec[ClientRequest, ServerR
         return check_server_response(decoded_message)
 
 
-class ServerSocketMessageJSONCodec(SocketMessageJSONCodec[ServerResponse, ClientRequest]):
+class ServerSocketMessageJSONCodec(
+    SocketMessageJSONCodec[ServerResponse, ClientRequest]
+):
     @staticmethod
     def encode_message(message: BaseMessage) -> bytes:
         return SocketMessageJSONCodec.encode_message(check_server_response(message))

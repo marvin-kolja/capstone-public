@@ -25,15 +25,15 @@ class ProcessCommand(ABC):
 
 
 class ProcessError(Exception):
-    """ Base class for all exceptions process related. """
+    """Base class for all exceptions process related."""
 
 
 class CommandError(ProcessError):
-    """ Raised when the command is invalid. """
+    """Raised when the command is invalid."""
 
 
 class ProcessAlreadyRunningError(ProcessError):
-    """ Raised when trying to start a process that is already running. """
+    """Raised when trying to start a process that is already running."""
 
 
 class Process:
@@ -54,7 +54,9 @@ class Process:
         :param command: The command to be executed by the process.
         """
         if not isinstance(command, ProcessCommand):
-            logger.critical(f"Provided command is not an instance of ProcessCommand: {command.__class__.__name__}")
+            logger.critical(
+                f"Provided command is not an instance of ProcessCommand: {command.__class__.__name__}"
+            )
             raise CommandError()
         self.__command = command
         self.__process: Optional[subprocess.Process] = None
@@ -150,6 +152,6 @@ class Process:
 
     @staticmethod
     def _send_signal(pid: int, sig: signal.Signals):
-        """ Uses the `os.kill` to send a signal to the process group. """
+        """Uses the `os.kill` to send a signal to the process group."""
         logger.debug(f"Sending {sig} to process with PID: {pid}")
         os.kill(pid, sig)

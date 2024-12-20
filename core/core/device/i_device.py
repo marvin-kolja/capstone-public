@@ -6,11 +6,17 @@ from typing import Optional
 from packaging.version import Version
 from pymobiledevice3.lockdown import UsbmuxLockdownClient, LockdownClient
 from pymobiledevice3.lockdown_service_provider import LockdownServiceProvider
-from pymobiledevice3.remote.remote_service_discovery import RemoteServiceDiscoveryService
+from pymobiledevice3.remote.remote_service_discovery import (
+    RemoteServiceDiscoveryService,
+)
 from pymobiledevice3 import exceptions as pmd3_exceptions
 from pymobiledevice3.services.amfi import AmfiService
-from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterService, DeveloperDiskImageMounter, \
-    PersonalizedImageMounter, auto_mount
+from pymobiledevice3.services.mobile_image_mounter import (
+    MobileImageMounterService,
+    DeveloperDiskImageMounter,
+    PersonalizedImageMounter,
+    auto_mount,
+)
 
 from core.exceptions import i_device as device_exceptions
 from core.tunnel.client import get_tunnel_client
@@ -24,7 +30,9 @@ class IDevice:
     """
 
     def __init__(self, lockdown_client: UsbmuxLockdownClient):
-        logger.debug(f"Initializing IDevice with lockdown client {type(lockdown_client).__name__}")
+        logger.debug(
+            f"Initializing IDevice with lockdown client {type(lockdown_client).__name__}"
+        )
         self._lockdown_client = lockdown_client
         self._rsd: Optional[RemoteServiceDiscoveryService] = None
 
@@ -41,7 +49,9 @@ class IDevice:
         if self._rsd is not None:
             logger.debug(f"Returning rsd as lockdown service")
             return self._rsd
-        logger.debug(f"Returning {type(self._lockdown_client).__name__} as lockdown service")
+        logger.debug(
+            f"Returning {type(self._lockdown_client).__name__} as lockdown service"
+        )
         return self._lockdown_client
 
     @property
@@ -67,7 +77,8 @@ class IDevice:
         """
         if not self.requires_tunnel_for_developer_tools:
             logger.error(
-                f"Tried to get rsd on an unsupported device version {self.lockdown_client.product_version} < 17.0")
+                f"Tried to get rsd on an unsupported device version {self.lockdown_client.product_version} < 17.0"
+            )
             raise device_exceptions.RsdNotSupported()
         return self._rsd
 
@@ -76,14 +87,14 @@ class IDevice:
         """
         Check if the device OS requires a tunnel to access developer services.
         """
-        return Version(self.lockdown_client.product_version) >= Version('17.0')
+        return Version(self.lockdown_client.product_version) >= Version("17.0")
 
     @property
     def requires_developer_mode(self) -> bool:
         """
         Check if the device OS requires developer mode to be enabled in order to mount DDI.
         """
-        return Version(self.lockdown_client.product_version) >= Version('16.0')
+        return Version(self.lockdown_client.product_version) >= Version("16.0")
 
     @property
     def paired(self) -> bool:
@@ -143,7 +154,8 @@ class IDevice:
         """
         if not self.requires_developer_mode:
             logger.error(
-                f"Tried to get developer for an unsupported device version {self.lockdown_client.product_version} < 16.0")
+                f"Tried to get developer for an unsupported device version {self.lockdown_client.product_version} < 16.0"
+            )
             raise device_exceptions.DeveloperModeNotSupported
         self.check_paired()
         try:
@@ -179,7 +191,9 @@ class IDevice:
         if self.developer_mode_enabled:
             raise device_exceptions.DeveloperModeAlreadyEnabled
         try:
-            logger.debug(f"Enabling Developer Mode for device {self.lockdown_client.udid}")
+            logger.debug(
+                f"Enabling Developer Mode for device {self.lockdown_client.udid}"
+            )
             AmfiService(self._lockdown_client).enable_developer_mode()
         except pmd3_exceptions.DeviceHasPasscodeSetError as e:
             raise device_exceptions.DeviceHasPasscodeSet from e
@@ -188,7 +202,7 @@ class IDevice:
 
     @property
     def _mounter(self) -> MobileImageMounterService:
-        if Version(self.lockdown_service.product_version) < Version('17.0'):
+        if Version(self.lockdown_service.product_version) < Version("17.0"):
             return DeveloperDiskImageMounter(self.lockdown_service)
         return PersonalizedImageMounter(self.lockdown_service)
 
@@ -234,7 +248,9 @@ class IDevice:
             raise device_exceptions.DdiAlreadyMounted
 
         try:
-            logger.debug(f"Mounting Developer Disk Image for device {self.lockdown_client.udid}")
+            logger.debug(
+                f"Mounting Developer Disk Image for device {self.lockdown_client.udid}"
+            )
             await auto_mount(self.lockdown_service)
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
@@ -253,7 +269,9 @@ class IDevice:
         self.check_ddi_mounted()
 
         try:
-            logger.debug(f"Unmounting Developer Disk Image for device {self.lockdown_client.udid}")
+            logger.debug(
+                f"Unmounting Developer Disk Image for device {self.lockdown_client.udid}"
+            )
             self._mounter.unmount_image(self._mounter.IMAGE_TYPE)
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
@@ -282,20 +300,27 @@ class IDevice:
         """
         if not self.requires_tunnel_for_developer_tools:
             logger.error(
-                f"Tried to establish trusted tunnel for an unsupported device version {self.lockdown_client.product_version} < 17.0")
+                f"Tried to establish trusted tunnel for an unsupported device version {self.lockdown_client.product_version} < 17.0"
+            )
             raise device_exceptions.RsdNotSupported()
 
         self.check_ddi_mounted()
 
         with get_tunnel_client(port=49151, timeout=timedelta(seconds=10)) as client:
             try:
-                logger.debug(f"Checking if tunnel exist for device {self.lockdown_client.udid}")
+                logger.debug(
+                    f"Checking if tunnel exist for device {self.lockdown_client.udid}"
+                )
                 tunnel = await client.get_tunnel(self.lockdown_service.udid)
 
                 if tunnel is None:
-                    logger.debug(f"Tunnel does not exist for device {self.lockdown_client.udid}, trying to start it")
+                    logger.debug(
+                        f"Tunnel does not exist for device {self.lockdown_client.udid}, trying to start it"
+                    )
                     tunnel = await client.start_tunnel(self.lockdown_service.udid)
-                logger.debug(f"Got tunnel {tunnel} for device {self.lockdown_client.udid}")
+                logger.debug(
+                    f"Got tunnel {tunnel} for device {self.lockdown_client.udid}"
+                )
             except asyncio.TimeoutError:
                 raise
             except Exception as e:
@@ -306,7 +331,9 @@ class IDevice:
 
         logger.debug(f"Creating rsd with tunnel for device {self.lockdown_client.udid}")
         rsd = RemoteServiceDiscoveryService((str(tunnel.address), tunnel.port))
-        logger.debug(f"Connecting to rsd service for device {self.lockdown_client.udid}")
+        logger.debug(
+            f"Connecting to rsd service for device {self.lockdown_client.udid}"
+        )
         await rsd.connect()
 
         self._rsd = rsd

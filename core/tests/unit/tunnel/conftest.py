@@ -4,7 +4,9 @@ import pytest
 
 
 @pytest.fixture
-async def mock_tunnel_connect__start_usbmux_tcp_tunnel_task(mocker, mocked_pymd3_tunnel_result):
+async def mock_tunnel_connect__start_usbmux_tcp_tunnel_task(
+    mocker, mocked_pymd3_tunnel_result
+):
     """
     A mock for the `_start_usbmux_tcp_tunnel_task` method that can be used to simulate a tunnel task.
     """
@@ -34,11 +36,15 @@ async def mock_tunnel_connect__start_usbmux_tcp_tunnel_task(mocker, mocked_pymd3
             if udid in self._tunnel_manager.tunnel_tasks:
                 self._tunnel_manager.tunnel_tasks.pop(udid)
 
-    def start_tcp_tunnel_using_usbmux(self, udid: str, queue: asyncio.Queue) -> asyncio.Task:
+    def start_tcp_tunnel_using_usbmux(
+        self, udid: str, queue: asyncio.Queue
+    ) -> asyncio.Task:
         task = asyncio.create_task(
-            start_tunnel_task(self, udid, queue),
-            name=f'start-tunnel-task-{udid}')
+            start_tunnel_task(self, udid, queue), name=f"start-tunnel-task-{udid}"
+        )
         return task
 
-    mocker.patch("core.tunnel.tunnel_connect.TunnelConnect._start_usbmux_tcp_tunnel_task",
-                 start_tcp_tunnel_using_usbmux)
+    mocker.patch(
+        "core.tunnel.tunnel_connect.TunnelConnect._start_usbmux_tcp_tunnel_task",
+        start_tcp_tunnel_using_usbmux,
+    )

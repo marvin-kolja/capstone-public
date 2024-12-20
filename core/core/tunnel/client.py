@@ -5,17 +5,28 @@ from typing import Optional
 
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
-from core.codec.socket_json_codec import ClientSocketMessageJSONCodec, ClientRequest, ErrorResponse
+from core.codec.socket_json_codec import (
+    ClientSocketMessageJSONCodec,
+    ClientRequest,
+    ErrorResponse,
+)
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.async_socket import ClientSocket
-from core.tunnel.server_exceptions import ServerErrorCode, InternalServerError, MalformedRequestError, NotFoundError, \
-    TunnelServerErrorCode
+from core.tunnel.server_exceptions import (
+    ServerErrorCode,
+    InternalServerError,
+    MalformedRequestError,
+    NotFoundError,
+    TunnelServerErrorCode,
+)
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
 
 logger = logging.getLogger(__name__)
 
 
-def get_error_from_context(request: ClientRequest, error_response: ErrorResponse) -> Exception:
+def get_error_from_context(
+    request: ClientRequest, error_response: ErrorResponse
+) -> Exception:
     """
     Parses the error response and returns the appropriate error. The request is used to get the data that caused the
     error.
@@ -35,7 +46,7 @@ def get_error_from_context(request: ClientRequest, error_response: ErrorResponse
     elif error_code == ServerErrorCode.NOT_FOUND:
         return NotFoundError()
     elif error_code == TunnelServerErrorCode.DEVICE_NOT_FOUND:
-        udid = request.data.get('udid')
+        udid = request.data.get("udid")
         return DeviceNotFoundError(udid=udid)
     elif error_code == TunnelServerErrorCode.NO_DEVICE_CONNECTED:
         return NoDeviceConnectedError()
@@ -69,7 +80,9 @@ class Client:
 
     def __enter__(self):
         logger.debug(f"Entering {self.__class__.__name__} context manager")
-        self._socket = ClientSocket(port=self._port, codec=ClientSocketMessageJSONCodec()).__enter__()
+        self._socket = ClientSocket(
+            port=self._port, codec=ClientSocketMessageJSONCodec()
+        ).__enter__()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -94,9 +107,14 @@ class Client:
         response = await self._socket.receive(timeout=self._timeout)
 
         if isinstance(response, ErrorResponse):
-            logger.error(f"Received error response from server", extra={'response': response.model_dump()})
+            logger.error(
+                f"Received error response from server",
+                extra={"response": response.model_dump()},
+            )
             raise get_error_from_context(request, response)
-        logger.debug(f"Received response from server", extra={'response': response.model_dump()})
+        logger.debug(
+            f"Received response from server", extra={"response": response.model_dump()}
+        )
         return response.data
 
 
@@ -116,15 +134,15 @@ class TunnelClient(Client, TunnelConnectInterface):
         :raises DeviceNotFoundError: If the device with the UDID is not found.
         :raises NoDeviceConnectedError: If no device is connected.
         """
-        data = await self._call_server('start_tunnel', udid=udid)
+        data = await self._call_server("start_tunnel", udid=udid)
         return TunnelResult(**data)
 
     async def stop_tunnel(self, udid: str) -> None:
-        await self._call_server('stop_tunnel', udid=udid)
+        await self._call_server("stop_tunnel", udid=udid)
 
     async def get_tunnel(self, udid: str) -> Optional[TunnelResult]:
         try:
-            data = await self._call_server('get_tunnel', udid=udid)
+            data = await self._call_server("get_tunnel", udid=udid)
         except NotFoundError:
             return None
         return TunnelResult(**data)

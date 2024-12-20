@@ -6,8 +6,13 @@ from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedErr
 from core.codec.socket_json_codec import ClientRequest, ErrorResponse, SuccessResponse
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.tunnel.client import get_error_from_context, Client
-from core.tunnel.server_exceptions import ServerErrorCode, TunnelServerErrorCode, InternalServerError, \
-    MalformedRequestError, NotFoundError
+from core.tunnel.server_exceptions import (
+    ServerErrorCode,
+    TunnelServerErrorCode,
+    InternalServerError,
+    MalformedRequestError,
+    NotFoundError,
+)
 
 exception_map = [
     (ServerErrorCode.INTERNAL, InternalServerError),
@@ -41,7 +46,6 @@ def unknown_error_codes():
 
 
 class TestGetErrorFromContext:
-
     def test_known_error_codes(self, error_code_and_exception):
         """
         GIVEN: An error code
@@ -52,7 +56,7 @@ class TestGetErrorFromContext:
         THEN: The expected exception is returned.
         """
         error_code, expected_exception = error_code_and_exception
-        request = ClientRequest(action='dummy', data={'udid': 'dummy'})
+        request = ClientRequest(action="dummy", data={"udid": "dummy"})
         error_response = ErrorResponse(error_code=error_code.value)
 
         exception = get_error_from_context(request, error_response)
@@ -67,7 +71,7 @@ class TestGetErrorFromContext:
 
         THEN: A ValueError is raised.
         """
-        request = ClientRequest(action='dummy')
+        request = ClientRequest(action="dummy")
         for unknown_error_code in unknown_error_codes:
             error_response = ErrorResponse(error_code=unknown_error_code)
             with pytest.raises(ValueError):
@@ -75,7 +79,6 @@ class TestGetErrorFromContext:
 
 
 class TestClient:
-
     def test_context_manager(self, mocked_client_socket):
         """
         GIVEN: A `Client` instance.
@@ -110,12 +113,14 @@ class TestClient:
 
         THEN: The client should receive a success response from the server.
         """
-        expected_result = {'key': 'value'}
+        expected_result = {"key": "value"}
         # Simulate a successful response from the server
-        mocked_client_socket.receive.return_value = SuccessResponse(data=expected_result)
+        mocked_client_socket.receive.return_value = SuccessResponse(
+            data=expected_result
+        )
 
         with Client(port=port, timeout=timedelta(seconds=5)) as client:
-            result = await client._call_server('some_action', param='test')
+            result = await client._call_server("some_action", param="test")
 
         assert result == expected_result
         mocked_client_socket.send.assert_awaited_once()
@@ -133,16 +138,20 @@ class TestClient:
         THEN: The client should receive an error response from the server.
         """
         # The server will respond with a NOT_FOUND error
-        mocked_client_socket.receive.return_value = ErrorResponse(error_code=ServerErrorCode.NOT_FOUND.value)
+        mocked_client_socket.receive.return_value = ErrorResponse(
+            error_code=ServerErrorCode.NOT_FOUND.value
+        )
         with Client(port=port, timeout=timedelta(seconds=5)) as client:
             print(client._socket)
             with pytest.raises(NotFoundError):
-                await client._call_server('invalid_action', param='test')
+                await client._call_server("invalid_action", param="test")
 
 
 class TestTunnelClient:
     @pytest.mark.asyncio
-    async def test_start_tunnel_success(self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid):
+    async def test_start_tunnel_success(
+        self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.
@@ -154,13 +163,16 @@ class TestTunnelClient:
         """
         # Simulate a successful tunnel creation
         tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse(
-            data=fake_tunnel_result.model_dump(mode='json'))
+            data=fake_tunnel_result.model_dump(mode="json")
+        )
 
         result = await tunnel_client_with_mocked_socket.start_tunnel(fake_udid)
         assert result == fake_tunnel_result
 
     @pytest.mark.asyncio
-    async def test_start_tunnel_tunnel_already_exists(self, tunnel_client_with_mocked_socket, fake_udid):
+    async def test_start_tunnel_tunnel_already_exists(
+        self, tunnel_client_with_mocked_socket, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.
@@ -178,7 +190,9 @@ class TestTunnelClient:
             await tunnel_client_with_mocked_socket.start_tunnel(fake_udid)
 
     @pytest.mark.asyncio
-    async def test_stop_tunnel_success(self, tunnel_client_with_mocked_socket, fake_udid):
+    async def test_stop_tunnel_success(
+        self, tunnel_client_with_mocked_socket, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.
@@ -189,14 +203,18 @@ class TestTunnelClient:
         THEN: The called method should return None.
         """
         # Simulate a successful server response for stopping a tunnel
-        tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse()
+        tunnel_client_with_mocked_socket._socket.receive.return_value = (
+            SuccessResponse()
+        )
 
         result = await tunnel_client_with_mocked_socket.stop_tunnel(fake_udid)
 
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_stop_tunnel_device_not_found(self, tunnel_client_with_mocked_socket, fake_udid):
+    async def test_stop_tunnel_device_not_found(
+        self, tunnel_client_with_mocked_socket, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.
@@ -214,7 +232,9 @@ class TestTunnelClient:
             await tunnel_client_with_mocked_socket.stop_tunnel(fake_udid)
 
     @pytest.mark.asyncio
-    async def test_get_tunnel_success(self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid):
+    async def test_get_tunnel_success(
+        self, tunnel_client_with_mocked_socket, fake_tunnel_result, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.
@@ -226,14 +246,17 @@ class TestTunnelClient:
         """
         # Simulate a successful tunnel retrieval
         tunnel_client_with_mocked_socket._socket.receive.return_value = SuccessResponse(
-            data=fake_tunnel_result.model_dump(mode='json'))
+            data=fake_tunnel_result.model_dump(mode="json")
+        )
 
         result = await tunnel_client_with_mocked_socket.get_tunnel(fake_udid)
 
         assert result == fake_tunnel_result
 
     @pytest.mark.asyncio
-    async def test_get_tunnel_not_found(self, tunnel_client_with_mocked_socket, fake_udid):
+    async def test_get_tunnel_not_found(
+        self, tunnel_client_with_mocked_socket, fake_udid
+    ):
         """
         GIVEN: A `TunnelClient` instance.
         AND: A mocked `ClientSocket` instance.

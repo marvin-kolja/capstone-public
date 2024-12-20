@@ -12,9 +12,10 @@ def device_manager():
     return IDeviceManager()
 
 
-@pytest.mark.parametrize("paired,developer_mode_enabled,product_version", [(True, True, "18.0")])
+@pytest.mark.parametrize(
+    "paired,developer_mode_enabled,product_version", [(True, True, "18.0")]
+)
 class TestIDeviceManager:
-
     def test_list_devices(self, device_manager, mock_usbmux_lockdown_client):
         """
         GIVEN: An `IDeviceManager` instance
@@ -23,7 +24,11 @@ class TestIDeviceManager:
 
         THEN: Should return a list of `IDevice`
         """
-        with patch.object(device_manager, '_browse_lockdown_clients', return_value=[mock_usbmux_lockdown_client]):
+        with patch.object(
+            device_manager,
+            "_browse_lockdown_clients",
+            return_value=[mock_usbmux_lockdown_client],
+        ):
             devices = device_manager.list_devices()
             assert len(devices) > 0
             assert isinstance(devices[0], IDevice)
@@ -43,14 +48,16 @@ class TestIDeviceManager:
             i_device.lockdown_client.udid: i_device,
         }
 
-        with patch.object(device_manager, '_browse_lockdown_clients', return_value=[]):
+        with patch.object(device_manager, "_browse_lockdown_clients", return_value=[]):
             # Simulate that devices is no longer found.
 
             devices = device_manager.list_devices()
             assert len(devices) == 0
             assert not device_manager._IDeviceManager__devices
 
-    def test_list_devices_skip_storing_existing_devices(self, device_manager, i_device, mock_usbmux_lockdown_client):
+    def test_list_devices_skip_storing_existing_devices(
+        self, device_manager, i_device, mock_usbmux_lockdown_client
+    ):
         """
         GIVEN: An `IDeviceManager` instance
         AND: An existing `IDevice` stored in `device_manager`
@@ -69,12 +76,18 @@ class TestIDeviceManager:
         another_mocked_lockdown_client = MagicMock(spec=UsbmuxLockdownClient)
         another_mocked_lockdown_client.udid = udid
 
-        with patch.object(device_manager, '_browse_lockdown_clients', return_value=[another_mocked_lockdown_client]):
+        with patch.object(
+            device_manager,
+            "_browse_lockdown_clients",
+            return_value=[another_mocked_lockdown_client],
+        ):
             devices = device_manager.list_devices()
             assert len(devices) == 1
             assert device_manager._IDeviceManager__devices[udid] == i_device
 
-    def test_get_device_exists(self, device_manager, i_device, mock_usbmux_lockdown_client):
+    def test_get_device_exists(
+        self, device_manager, i_device, mock_usbmux_lockdown_client
+    ):
         """
         GIVEN: An `IDeviceManager` instance
         AND: An existing `IDevice` stored in `device_manager`
@@ -86,11 +99,12 @@ class TestIDeviceManager:
         udid = i_device.lockdown_client.udid
         device_manager._IDeviceManager__devices[udid] = i_device
 
-        with patch.object(device_manager, 'list_devices', return_value=[i_device]):
+        with patch.object(device_manager, "list_devices", return_value=[i_device]):
             device = device_manager.get_device(udid)
 
             assert isinstance(device, IDevice)
             assert device == i_device
+
 
 def test_get_device_nonexistent(device_manager, fake_udid):
     """
@@ -101,7 +115,7 @@ def test_get_device_nonexistent(device_manager, fake_udid):
 
     THEN: Should return `None`
     """
-    with patch.object(device_manager, 'list_devices', return_value=[]):
+    with patch.object(device_manager, "list_devices", return_value=[]):
         device = device_manager.get_device(fake_udid)
 
         assert device is None

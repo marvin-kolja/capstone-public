@@ -6,7 +6,9 @@ import pytest
 import zmq
 import zmq.asyncio
 from pymobiledevice3.remote.common import TunnelProtocol
-from pymobiledevice3.remote.tunnel_service import TunnelResult as pymobiledevice3TunnelResult
+from pymobiledevice3.remote.tunnel_service import (
+    TunnelResult as pymobiledevice3TunnelResult,
+)
 
 from core.async_socket import ClientSocket
 from core.codec.socket_json_codec import SocketMessageJSONCodec
@@ -32,9 +34,7 @@ def mock_zmq_context(request, magic_mock_socket):
 
         mock_socket.send_multipart = AsyncMock(return_value=None)
 
-        mock_socket.recv_multipart = AsyncMock(
-            return_value=request.param
-        )
+        mock_socket.recv_multipart = AsyncMock(return_value=request.param)
 
         yield mock_socket
 
@@ -43,7 +43,9 @@ def mock_zmq_context(request, magic_mock_socket):
 def mock_zmq_poller(magic_mock_socket):
     with patch("zmq.asyncio.Poller") as mock_poll:
         mock_poller_instance = MagicMock()
-        mock_poller_instance.poll = AsyncMock(return_value=[(magic_mock_socket, zmq.POLLIN)])
+        mock_poller_instance.poll = AsyncMock(
+            return_value=[(magic_mock_socket, zmq.POLLIN)]
+        )
         mock_poll.return_value = mock_poller_instance
 
         yield mock_poller_instance
@@ -89,7 +91,7 @@ def mocked_pymd3_tunnel_result(mocker):
         port=1234,
         protocol=TunnelProtocol.TCP,
         interface="",
-        client=client
+        client=client,
     )
 
 
@@ -108,7 +110,7 @@ def fake_tunnel_result(mocked_pymd3_tunnel_result):
 
 @pytest.fixture
 def mocked_client_socket():
-    with patch('core.tunnel.client.ClientSocket') as mock_socket:
+    with patch("core.tunnel.client.ClientSocket") as mock_socket:
         mock_instance = AsyncMock(spec=ClientSocket)
         mock_socket.return_value.__enter__.return_value = mock_instance
         mock_socket.return_value.__exit__.return_value = None

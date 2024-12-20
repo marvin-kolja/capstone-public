@@ -21,8 +21,10 @@ class IDeviceManager:
         logger.debug("Browsing for Usbmux devices")
         mux_devices = usbmux.list_devices(usbmux_address=None)
         logger.debug(f"Found {len(mux_devices)} Usbmux devices")
-        lockdown_clients = [lockdown.create_using_usbmux(mux_device.serial, autopair=False) for mux_device in
-                            mux_devices]
+        lockdown_clients = [
+            lockdown.create_using_usbmux(mux_device.serial, autopair=False)
+            for mux_device in mux_devices
+        ]
         logger.debug(f"Created {len(lockdown_clients)} lockdown clients")
         return lockdown_clients
 
@@ -38,7 +40,9 @@ class IDeviceManager:
         new_udid_list = [client.udid for client in lockdown_clients]
         existing_udid_list = [udid for udid in self.__devices.keys()]
         for udid in existing_udid_list:
-            logger.debug(f"Checking if IDevice with {udid} is stale and requires removal")
+            logger.debug(
+                f"Checking if IDevice with {udid} is stale and requires removal"
+            )
             if udid not in new_udid_list:
                 logger.debug(f"Removing {udid} from devices list")
                 del self.__devices[udid]

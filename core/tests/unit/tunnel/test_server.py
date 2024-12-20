@@ -8,10 +8,23 @@ from pymobiledevice3.exceptions import DeviceNotFoundError
 from core.codec.socket_json_codec import SuccessResponse, ClientRequest, ErrorResponse
 from core.exceptions.socket import InvalidSocketMessage
 from core.async_socket import ServerSocket
-from core.tunnel.server import server_method, Server, ServerMethodHandler, check_server_method, bind_arguments, \
-    TunnelConnectService
-from core.tunnel.server_exceptions import MalformedRequestError, NotFoundError, TunnelServerError, \
-    TunnelServerErrorCode, InternalServerError, ServerErrorCode, CriticalServerError
+from core.tunnel.server import (
+    server_method,
+    Server,
+    ServerMethodHandler,
+    check_server_method,
+    bind_arguments,
+    TunnelConnectService,
+)
+from core.tunnel.server_exceptions import (
+    MalformedRequestError,
+    NotFoundError,
+    TunnelServerError,
+    TunnelServerErrorCode,
+    InternalServerError,
+    ServerErrorCode,
+    CriticalServerError,
+)
 from core.tunnel.tunnel_connect import TunnelConnect
 
 
@@ -71,7 +84,7 @@ def test_bind_arguments_valid():
 
     THEN: The function should return the correct arguments.
     """
-    data = {'arg1': 'test', 'arg2': 1}
+    data = {"arg1": "test", "arg2": 1}
 
     @server_method
     async def dummy_method(arg1: str, arg2: int = 2):
@@ -91,7 +104,7 @@ def test_bind_arguments_invalid():
 
     THEN: The function should raise a TypeError.
     """
-    data = {'arg3': 2, 'arg1': 'test'}
+    data = {"arg3": 2, "arg1": "test"}
 
     @server_method
     async def dummy_method(arg1: str, arg2: int):
@@ -333,7 +346,7 @@ class TestServer:
         s = Server(DummyService())
         method = s._get_method("add")
         with pytest.raises(MalformedRequestError):
-            s._bind_arguments(method, {'x': 1})
+            s._bind_arguments(method, {"x": 1})
 
     @pytest.mark.asyncio
     async def test_call_method_sync(self):
@@ -345,7 +358,7 @@ class TestServer:
 
         THEN: The method should return the correct result.
         """
-        input_data = {'name': 'Alice'}
+        input_data = {"name": "Alice"}
         expected_result = "Hello Alice"
 
         class DummyService(ServerMethodHandler):
@@ -368,7 +381,7 @@ class TestServer:
 
         THEN: The method should return the correct result.
         """
-        input_data = {'name': 'Alice'}
+        input_data = {"name": "Alice"}
         expected_result = "Hello Alice"
 
         class DummyService(ServerMethodHandler):
@@ -460,7 +473,7 @@ class TestServer:
         class DummyException(Exception):
             pass
 
-        with patch('core.tunnel.server.ServerSocket') as mocked_socket:
+        with patch("core.tunnel.server.ServerSocket") as mocked_socket:
             mocked_socket.return_value.__enter__.side_effect = DummyException
 
             with pytest.raises(DummyException):
@@ -484,7 +497,7 @@ class TestServer:
         mock_service = AsyncMock(spec=ServerMethodHandler)
         server = Server(mock_service)
 
-        with patch('core.tunnel.server.ServerSocket') as mock_socket:
+        with patch("core.tunnel.server.ServerSocket") as mock_socket:
             mock_instance = AsyncMock()
             mock_socket.return_value.__enter__.return_value = mock_instance
             mock_instance.receive.side_effect = asyncio.TimeoutError
@@ -521,12 +534,16 @@ class TestServer:
         server = Server(DummyService())
 
         mocked_socket = AsyncMock(spec=ServerSocket)
-        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.receive.return_value = ClientRequest(
+            action="hello", data={"name": "Alice"}
+        )
         mocked_socket.respond.return_value = None
 
         await server._process_incoming_request(mocked_socket)
 
-        mocked_socket.respond.assert_awaited_once_with(SuccessResponse(data={"hello": "Alice"}))
+        mocked_socket.respond.assert_awaited_once_with(
+            SuccessResponse(data={"hello": "Alice"})
+        )
 
     @pytest.mark.asyncio
     async def test_process_incoming_request_server_error(self, port):
@@ -549,16 +566,21 @@ class TestServer:
         server = Server(DummyService())
 
         mocked_socket = AsyncMock(spec=ServerSocket)
-        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.receive.return_value = ClientRequest(
+            action="hello", data={"name": "Alice"}
+        )
         mocked_socket.respond.return_value = None
 
         await server._process_incoming_request(mocked_socket)
 
         mocked_socket.respond.assert_awaited_once_with(
-            ErrorResponse(error_code=ServerErrorCode.MALFORMED_REQUEST.value))
+            ErrorResponse(error_code=ServerErrorCode.MALFORMED_REQUEST.value)
+        )
 
     @pytest.mark.asyncio
-    async def test_process_incoming_request_receive_raises_invalid_socket_message(self, port):
+    async def test_process_incoming_request_receive_raises_invalid_socket_message(
+        self, port
+    ):
         """
         GIVEN: A `Server` instance
         AND: A dummy service.
@@ -581,11 +603,16 @@ class TestServer:
 
         await server._process_incoming_request(mocked_socket)
 
-        assert mocked_socket.respond.call_args[0][0].error_code == ServerErrorCode.MALFORMED_REQUEST.value
+        assert (
+            mocked_socket.respond.call_args[0][0].error_code
+            == ServerErrorCode.MALFORMED_REQUEST.value
+        )
         mocked_socket.respond.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_process_incoming_request_receive_raises_unexpected_exception(self, port):
+    async def test_process_incoming_request_receive_raises_unexpected_exception(
+        self, port
+    ):
         """
         GIVEN: A `Server` instance
         AND: A dummy service.
@@ -639,14 +666,17 @@ class TestServer:
         class DummyException(Exception):
             pass
 
-        with patch.object(server, '_await_request') as mock_await_request:
+        with patch.object(server, "_await_request") as mock_await_request:
             mock_await_request.side_effect = DummyException
             mocked_socket = AsyncMock(spec=ServerSocket)
             mocked_socket.respond.return_value = None
 
             await server._process_incoming_request(mocked_socket)
 
-            assert mocked_socket.respond.call_args[0][0].error_code == ServerErrorCode.INTERNAL.value
+            assert (
+                mocked_socket.respond.call_args[0][0].error_code
+                == ServerErrorCode.INTERNAL.value
+            )
 
     @pytest.mark.asyncio
     async def test_process_incoming_request_fails(self, port):
@@ -672,7 +702,9 @@ class TestServer:
             pass
 
         mocked_socket = AsyncMock(spec=ServerSocket)
-        mocked_socket.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+        mocked_socket.receive.return_value = ClientRequest(
+            action="hello", data={"name": "Alice"}
+        )
         mocked_socket.respond.side_effect = DummyException
 
         with pytest.raises(CriticalServerError):
@@ -704,12 +736,16 @@ class TestServer:
         dummy_service = DummyService()
         server = Server(dummy_service)
 
-        with patch.object(dummy_service, 'cleanup', wraps=dummy_service.cleanup) as wrapped_dummy_service_cleanup:
-            with patch('core.tunnel.server.ServerSocket') as mock_socket:
+        with patch.object(
+            dummy_service, "cleanup", wraps=dummy_service.cleanup
+        ) as wrapped_dummy_service_cleanup:
+            with patch("core.tunnel.server.ServerSocket") as mock_socket:
                 mock_instance = AsyncMock(spec=ServerSocket)
                 mock_socket.return_value.__enter__.return_value = mock_instance
 
-                mock_instance.receive.return_value = ClientRequest(action="hello", data={"name": "Alice"})
+                mock_instance.receive.return_value = ClientRequest(
+                    action="hello", data={"name": "Alice"}
+                )
                 mock_instance.respond.return_value = None
 
                 await server.serve(port=port)
@@ -738,9 +774,15 @@ class TestServer:
         dummy_service = DummyService()
         server = Server(dummy_service)
 
-        with patch.object(dummy_service, 'cleanup', wraps=dummy_service.cleanup) as wrapped_dummy_service_cleanup:
-            with patch.object(server, '_process_incoming_request') as mock_process_incoming_request:
-                mock_process_incoming_request.side_effect = CriticalServerError(Exception("Critical error"))
+        with patch.object(
+            dummy_service, "cleanup", wraps=dummy_service.cleanup
+        ) as wrapped_dummy_service_cleanup:
+            with patch.object(
+                server, "_process_incoming_request"
+            ) as mock_process_incoming_request:
+                mock_process_incoming_request.side_effect = CriticalServerError(
+                    Exception("Critical error")
+                )
 
                 await server.serve(port=port)
                 await server.await_close()
@@ -769,7 +811,9 @@ class TestServer:
         mocket_socket.respond.side_effect = DummyException
 
         with pytest.raises(CriticalServerError):
-            await Server._send_response(mocket_socket, SuccessResponse(data={"hello": "Alice"}))
+            await Server._send_response(
+                mocket_socket, SuccessResponse(data={"hello": "Alice"})
+            )
         assert mocket_socket.respond.await_count == 2
 
     @pytest.mark.asyncio
@@ -793,5 +837,7 @@ class TestServer:
         mocket_socket.respond.side_effect = DummyException
 
         with pytest.raises(CriticalServerError):
-            await Server._send_response(mocket_socket, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
+            await Server._send_response(
+                mocket_socket, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+            )
         assert mocket_socket.respond.await_count == 1

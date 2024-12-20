@@ -7,10 +7,24 @@ import zmq
 
 from core.exceptions.socket import InvalidSocketMessage
 from core.async_socket import ClientSocket, ServerSocket, _timedelta_to_milliseconds
-from core.codec.socket_json_codec import SocketMessageJSONCodec, ServerSocketMessageJSONCodec, \
-    ClientSocketMessageJSONCodec, BaseMessage, SocketMessageFactory, SuccessResponse, ErrorResponse, HeartbeatRequest
-from tests.test_data.socket_test_data import VALID_MESSAGES, VALID_REQUESTS, VALID_RESPONSES, INVALID_MESSAGE_DATA, \
-    INVALID_TIMESTAMPS, TIMEOUTS
+from core.codec.socket_json_codec import (
+    SocketMessageJSONCodec,
+    ServerSocketMessageJSONCodec,
+    ClientSocketMessageJSONCodec,
+    BaseMessage,
+    SocketMessageFactory,
+    SuccessResponse,
+    ErrorResponse,
+    HeartbeatRequest,
+)
+from tests.test_data.socket_test_data import (
+    VALID_MESSAGES,
+    VALID_REQUESTS,
+    VALID_RESPONSES,
+    INVALID_MESSAGE_DATA,
+    INVALID_TIMESTAMPS,
+    TIMEOUTS,
+)
 
 
 class TestMessage:
@@ -70,11 +84,11 @@ class TestSocketMessageCodec:
         b'{"message_type": "request"}',
         b'{"message_type": "response"}',
         b'["message_type": "response"]',
-        b'I am a string',
-        b'0',
+        b"I am a string",
+        b"0",
         # Not UTF-8 encoded bytes
         bytes(1),
-        (1234).to_bytes(2, 'big'),
+        (1234).to_bytes(2, "big"),
         bytes([0x01, 0x02, 0x03, 0x04]),
         # Invalid JSON
         b'{"message_type": "response"',
@@ -114,10 +128,13 @@ behavior_map = {
 }
 
 
-@pytest.mark.parametrize("codec_class,role", [
-    (ServerSocketMessageJSONCodec, "server"),
-    (ClientSocketMessageJSONCodec, "client")
-])
+@pytest.mark.parametrize(
+    "codec_class,role",
+    [
+        (ServerSocketMessageJSONCodec, "server"),
+        (ClientSocketMessageJSONCodec, "client"),
+    ],
+)
 class TestDecoding:
     def test_decode_success_type(self, codec_class, role, spy_socket_decode):
         """
@@ -160,10 +177,13 @@ class TestDecoding:
         assert spy_socket_decode.call_count == len(messages)
 
 
-@pytest.mark.parametrize("codec_class,role", [
-    (ServerSocketMessageJSONCodec, "server"),
-    (ClientSocketMessageJSONCodec, "client")
-])
+@pytest.mark.parametrize(
+    "codec_class,role",
+    [
+        (ServerSocketMessageJSONCodec, "server"),
+        (ClientSocketMessageJSONCodec, "client"),
+    ],
+)
 class TestEncoding:
     def test_encode_success_type(self, codec_class, role, spy_socket_encode):
         """
@@ -241,11 +261,13 @@ class TestSocketMessageFactory:
         """
         for invalid_timestamp in INVALID_TIMESTAMPS:
             with pytest.raises(InvalidSocketMessage):
-                SocketMessageFactory.parse_message_data({
-                    "message_type": "request",
-                    "action": "heartbeat",
-                    "timestamp": invalid_timestamp,
-                })
+                SocketMessageFactory.parse_message_data(
+                    {
+                        "message_type": "request",
+                        "action": "heartbeat",
+                        "timestamp": invalid_timestamp,
+                    }
+                )
 
     def test_missing_fields(self):
         """
@@ -256,10 +278,12 @@ class TestSocketMessageFactory:
         THEN: An InvalidSocketMessage exception should be raised for each
         """
         with pytest.raises(InvalidSocketMessage):
-            SocketMessageFactory.parse_message_data({
-                "message_type": "request",
-                "timestamp": "2021-01-01T00:00:00",
-            })
+            SocketMessageFactory.parse_message_data(
+                {
+                    "message_type": "request",
+                    "timestamp": "2021-01-01T00:00:00",
+                }
+            )
 
 
 class TestClientSocket:
@@ -303,7 +327,9 @@ class TestClientSocket:
             c.close()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
+    @pytest.mark.parametrize(
+        "mock_zmq_context", [[success_response.encode()]], indirect=True
+    )
     @pytest.mark.parametrize("client_request", VALID_REQUESTS)
     async def test_send(self, mock_zmq_context, client_socket, client_request):
         """
@@ -321,7 +347,9 @@ class TestClientSocket:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode()]], indirect=True)
+    @pytest.mark.parametrize(
+        "mock_zmq_context", [[success_response.encode()]], indirect=True
+    )
     async def test_receive(self, mock_zmq_context, mock_zmq_poller, client_socket):
         """
         GIVEN: A client socket with a mocked receive response and poller
@@ -338,9 +366,14 @@ class TestClientSocket:
         mock_zmq_poller.poll.assert_called_once_with(100)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[success_response.encode(), success_response.encode()]],
-                             indirect=True)
-    async def test_receive_two_message_parts(self, mock_zmq_context, mock_zmq_poller, client_socket):
+    @pytest.mark.parametrize(
+        "mock_zmq_context",
+        [[success_response.encode(), success_response.encode()]],
+        indirect=True,
+    )
+    async def test_receive_two_message_parts(
+        self, mock_zmq_context, mock_zmq_poller, client_socket
+    ):
         """
         GIVEN: A client socket with a mocked receive method
 
@@ -414,7 +447,9 @@ class TestServerSocket:
         def assertions():
             assert server._socket is not None
             assert server._socket.closed is False
-            socket_port = server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
+            socket_port = (
+                server._socket.getsockopt(zmq.LAST_ENDPOINT).decode().split(":")[-1]
+            )
             if port is None:
                 assert socket_port == str(server.port)
             else:
@@ -453,7 +488,9 @@ class TestServerSocket:
             assert server_socket._socket.getsockopt(zmq.RCVTIMEO) == expected
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
+    @pytest.mark.parametrize(
+        "mock_zmq_context", [[heartbeat_request.encode()]], indirect=True
+    )
     async def test_receive(self, mock_zmq_context, server_socket):
         """
         GIVEN: A server socket with a mocked receive method
@@ -468,8 +505,11 @@ class TestServerSocket:
         assert request == self.heartbeat_request
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode(), heartbeat_request.encode()]],
-                             indirect=True)
+    @pytest.mark.parametrize(
+        "mock_zmq_context",
+        [[heartbeat_request.encode(), heartbeat_request.encode()]],
+        indirect=True,
+    )
     async def test_receive_two_message_parts(self, mock_zmq_context, server_socket):
         """
         GIVEN: A server socket with a mocked receive method
@@ -482,7 +522,9 @@ class TestServerSocket:
             await server_socket.receive()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_zmq_context", [[heartbeat_request.encode()]], indirect=True)
+    @pytest.mark.parametrize(
+        "mock_zmq_context", [[heartbeat_request.encode()]], indirect=True
+    )
     async def test_respond(self, mock_zmq_context, server_socket):
         """
         GIVEN: A server socket with a mocked send method

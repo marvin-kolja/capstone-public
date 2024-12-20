@@ -24,11 +24,13 @@ class TestTunnelClientServerCommunication:
         THEN: The client should raise a TimeoutError
         """
         with pytest.raises(TimeoutError):
-            await tunnel_client.start_tunnel('udid')
+            await tunnel_client.start_tunnel("udid")
 
     @pytest.mark.asyncio
     @pytest.mark.real_device
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_malformed_requests(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
@@ -39,13 +41,17 @@ class TestTunnelClientServerCommunication:
         THEN: The server should raise an MalformedRequestError
         """
         with pytest.raises(MalformedRequestError):
-            await tunnel_client._call_server('start_tunnel', udid=100)
+            await tunnel_client._call_server("start_tunnel", udid=100)
 
         with pytest.raises(MalformedRequestError):
-            await tunnel_client._call_server('start_tunnel', udid=device_udid, invalid_key='invalid_value')
+            await tunnel_client._call_server(
+                "start_tunnel", udid=device_udid, invalid_key="invalid_value"
+            )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_calling_invalid_method(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
@@ -56,12 +62,14 @@ class TestTunnelClientServerCommunication:
         THEN: The server should raise an NotFoundError
         """
         with pytest.raises(NotFoundError):
-            await tunnel_client._call_server('invalid_method')
+            await tunnel_client._call_server("invalid_method")
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_start_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
@@ -81,7 +89,9 @@ class TestTunnelClientServerCommunication:
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_start_tunnel_no_device(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
@@ -92,13 +102,17 @@ class TestTunnelClientServerCommunication:
         THEN: The function should raise a DeviceNotFoundError
         """
         with pytest.raises(DeviceNotFoundError):
-            await tunnel_client.start_tunnel('invalid_udid')
+            await tunnel_client.start_tunnel("invalid_udid")
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
-    async def test_start_tunnel_already_started(self, server, tunnel_client, device_udid):
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
+    async def test_start_tunnel_already_started(
+        self, server, tunnel_client, device_udid
+    ):
         """
         GIVEN: A TunnelServer running
         AND: A TunnelClient instance
@@ -117,7 +131,9 @@ class TestTunnelClientServerCommunication:
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_stop_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
@@ -138,7 +154,9 @@ class TestTunnelClientServerCommunication:
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
     @pytest.mark.real_device
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_get_tunnel(self, server, tunnel_client, device_udid):
         """
         GIVEN: A TunnelServer running
@@ -158,7 +176,9 @@ class TestTunnelClientServerCommunication:
         assert tunnel_result == started_tunnel
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True)
+    @pytest.mark.parametrize(
+        "server", ["tunnel_server", "tunnel_server_subprocess"], indirect=True
+    )
     async def test_get_non_existing_tunnel(self, server, tunnel_client):
         """
         GIVEN: A TunnelServer running
@@ -168,4 +188,4 @@ class TestTunnelClientServerCommunication:
 
         THEN: The called method should return None.
         """
-        assert await tunnel_client.get_tunnel('invalid_udid') is None
+        assert await tunnel_client.get_tunnel("invalid_udid") is None

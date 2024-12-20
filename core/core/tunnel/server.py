@@ -10,14 +10,27 @@ from typing import Optional, TypeVar, Generic
 from pydantic import BaseModel
 from pymobiledevice3.exceptions import DeviceNotFoundError, NoDeviceConnectedError
 
-from core.codec.socket_json_codec import ServerSocketMessageJSONCodec, SuccessResponse, ErrorResponse, ClientRequest, \
-    ServerResponse
+from core.codec.socket_json_codec import (
+    ServerSocketMessageJSONCodec,
+    SuccessResponse,
+    ErrorResponse,
+    ClientRequest,
+    ServerResponse,
+)
 from core.exceptions.socket import InvalidSocketMessage
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.async_socket import ServerSocket
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
-from core.tunnel.server_exceptions import MalformedRequestError, TunnelServerError, TunnelServerErrorCode, \
-    NotFoundError, InternalServerError, CoreServerError, ServerErrorCode, CriticalServerError
+from core.tunnel.server_exceptions import (
+    MalformedRequestError,
+    TunnelServerError,
+    TunnelServerErrorCode,
+    NotFoundError,
+    InternalServerError,
+    CoreServerError,
+    ServerErrorCode,
+    CriticalServerError,
+)
 from core.tunnel.tunnel_connect import TunnelConnect
 
 logger = logging.getLogger(__name__)
@@ -39,10 +52,10 @@ def check_server_method(func) -> MethodType:
     if not isinstance(func, MethodType):
         logger.warning(f"Server method is not a method: {type(func)}")
         raise TypeError
-    if not hasattr(func, '__server__'):
+    if not hasattr(func, "__server__"):
         logger.warning(f"Server method does not have __server__ attribute")
         raise AttributeError
-    if not hasattr(func, '__signature__'):
+    if not hasattr(func, "__signature__"):
         logger.warning(f"Server method does not have __signature__ attribute")
         raise AttributeError
     return func
@@ -123,9 +136,13 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
         except DeviceNotFoundError:
             raise TunnelServerError(error_code=TunnelServerErrorCode.DEVICE_NOT_FOUND)
         except TunnelAlreadyExistsError:
-            raise TunnelServerError(error_code=TunnelServerErrorCode.TUNNEL_ALREADY_EXISTS)
+            raise TunnelServerError(
+                error_code=TunnelServerErrorCode.TUNNEL_ALREADY_EXISTS
+            )
         except NoDeviceConnectedError:
-            raise TunnelServerError(error_code=TunnelServerErrorCode.NO_DEVICE_CONNECTED)
+            raise TunnelServerError(
+                error_code=TunnelServerErrorCode.NO_DEVICE_CONNECTED
+            )
         # TODO: Handle not paired exception.
 
     @server_method
@@ -178,7 +195,7 @@ class TunnelConnectService(ServerMethodHandler, TunnelConnectInterface):
         await self.tunnel_connect.close()
 
 
-SERVICE = TypeVar('SERVICE', bound=ServerMethodHandler)
+SERVICE = TypeVar("SERVICE", bound=ServerMethodHandler)
 
 
 class Server(Generic[SERVICE]):
@@ -197,7 +214,9 @@ class Server(Generic[SERVICE]):
 
     async def __server_task(self, port: int, queue: asyncio.Queue):
         try:
-            with ServerSocket(port=port, codec=ServerSocketMessageJSONCodec()) as server:
+            with ServerSocket(
+                port=port, codec=ServerSocketMessageJSONCodec()
+            ) as server:
                 logger.info(f"Server started to listen on port {port}")
                 queue.put_nowait(True)
                 queue = None
@@ -212,7 +231,8 @@ class Server(Generic[SERVICE]):
                     except CriticalServerError as e:
                         logger.critical(
                             f"Stopping server because critical server error occurred while handling request: {e.error}",
-                            exc_info=True)
+                            exc_info=True,
+                        )
                         break
 
         finally:
@@ -302,7 +322,9 @@ class Server(Generic[SERVICE]):
                 if response.error_code == ServerErrorCode.INTERNAL.value:
                     raise CriticalServerError(e)
             logger.info(f"Trying to send internal server error response")
-            await Server._send_response(server, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value))
+            await Server._send_response(
+                server, ErrorResponse(error_code=ServerErrorCode.INTERNAL.value)
+            )
 
     def _get_method(self, method_name: str) -> MethodType:
         """
@@ -347,11 +369,13 @@ class Server(Generic[SERVICE]):
         if result is None:
             return SuccessResponse()
         if isinstance(result, BaseModel):
-            return SuccessResponse(data=result.model_dump(mode='json'))
+            return SuccessResponse(data=result.model_dump(mode="json"))
         if isinstance(result, dict):
             return SuccessResponse(data=result)
         else:
-            logger.critical(f"Response data does not follow the expected types: {result.__class__.__name__}")
+            logger.critical(
+                f"Response data does not follow the expected types: {result.__class__.__name__}"
+            )
             raise InternalServerError()
 
     async def serve(self, port: int):

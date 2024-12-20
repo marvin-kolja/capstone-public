@@ -1,7 +1,12 @@
 import sys
 from datetime import timedelta
 
-from core.codec.socket_json_codec import ClientRequest, HeartbeatRequest, ErrorResponse, SuccessResponse
+from core.codec.socket_json_codec import (
+    ClientRequest,
+    HeartbeatRequest,
+    ErrorResponse,
+    SuccessResponse,
+)
 
 INVALID_TIMESTAMPS = [
     # Invalid timestamp
@@ -9,7 +14,7 @@ INVALID_TIMESTAMPS = [
     # Invalid Unix timestamp
     123.456,
     # Out of range Unix timestamp
-    sys.maxsize
+    sys.maxsize,
 ]
 
 VALID_REQUESTS = [
@@ -19,8 +24,7 @@ VALID_REQUESTS = [
             "some_string": "Hello, World!",
             "some_int": 42,
             "some_float": 3.14,
-        }
-
+        },
     ),
     ClientRequest(
         action="some_action",
@@ -31,7 +35,7 @@ VALID_REQUESTS = [
         },
         timestamp=1612137600000,
     ),
-    HeartbeatRequest()
+    HeartbeatRequest(),
 ]
 
 VALID_RESPONSES = [
@@ -50,8 +54,7 @@ VALID_RESPONSES = [
             "some_string": "Hello, World!",
             "some_int": 42,
             "some_float": 3.14,
-        }
-
+        },
     ),
     SuccessResponse(
         message="Hello, World!",

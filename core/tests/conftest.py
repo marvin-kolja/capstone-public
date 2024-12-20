@@ -6,7 +6,10 @@ from core.async_socket import ClientSocket, ServerSocket
 
 def pytest_addoption(parser):
     parser.addoption(
-        '--device', action='store_true', default=False, help='Run tests that require a real device',
+        "--device",
+        action="store_true",
+        default=False,
+        help="Run tests that require a real device",
     )
 
 

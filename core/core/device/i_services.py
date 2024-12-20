@@ -18,7 +18,9 @@ class IServices(ServicesProtocol):
     def _installer(self) -> InstallationProxyService:
         return InstallationProxyService(lockdown=self.__device.lockdown_service)
 
-    def install_app(self, app_path: str, progress_callback: Callable[[str], None] = None):
+    def install_app(
+        self, app_path: str, progress_callback: Callable[[str], None] = None
+    ):
         """
         Install app onto device.
 
@@ -31,10 +33,14 @@ class IServices(ServicesProtocol):
             logger.debug(f"Installing app onto device using path: {app_path}")
             self._installer.install(app_path, handler=progress_callback)
         except Exception as e:
-            logger.error(f"Failed to install app onto device using path: {app_path}, error: {e}")
+            logger.error(
+                f"Failed to install app onto device using path: {app_path}, error: {e}"
+            )
             raise AppInstallError from e
 
-    def uninstall_app(self, bundle_id: str, progress_callback: Callable[[str], None] = None):
+    def uninstall_app(
+        self, bundle_id: str, progress_callback: Callable[[str], None] = None
+    ):
         """
         Uninstall app from device.
 
@@ -47,5 +53,7 @@ class IServices(ServicesProtocol):
             logger.debug(f"Uninstalling app from device using bundle_id: {bundle_id}")
             self._installer.uninstall(bundle_id, handler=progress_callback)
         except Exception as e:
-            logger.error(f"Failed to uninstall app from device using bundle_id: {bundle_id}, error: {e}")
+            logger.error(
+                f"Failed to uninstall app from device using bundle_id: {bundle_id}, error: {e}"
+            )
             raise AppUninstallError from e

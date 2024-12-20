@@ -14,9 +14,7 @@ async def run_server(port: int):
 
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(
-            sig, lambda: server.stop()
-        )
+        loop.add_signal_handler(sig, lambda: server.stop())
 
     await server.serve(port)
     await server.await_close()
@@ -25,16 +23,18 @@ async def run_server(port: int):
 def main():
     parser = argparse.ArgumentParser(description="Run a tunnel server executable")
     parser.add_argument("port", type=int, help="The port to listen on")
-    parser.add_argument("--log-level", type=str, default="INFO", help="The logging level")
+    parser.add_argument(
+        "--log-level", type=str, default="INFO", help="The logging level"
+    )
     args = parser.parse_args()
 
     levels = {
-        'critical': logging.CRITICAL,
-        'error': logging.ERROR,
-        'warn': logging.WARNING,
-        'warning': logging.WARNING,
-        'info': logging.INFO,
-        'debug': logging.DEBUG
+        "critical": logging.CRITICAL,
+        "error": logging.ERROR,
+        "warn": logging.WARNING,
+        "warning": logging.WARNING,
+        "info": logging.INFO,
+        "debug": logging.DEBUG,
     }
 
     logging.basicConfig(level=levels[args.log_level.lower()])

@@ -5,15 +5,18 @@ from typing import Optional, Generic
 import zmq.asyncio
 
 from core.codec.codec_protocol import E_INPUT, D_OUTPUT, CodecProtocol
-from core.codec.socket_json_codec import ClientSocketMessageJSONCodec, ServerSocketMessageJSONCodec
+from core.codec.socket_json_codec import (
+    ClientSocketMessageJSONCodec,
+    ServerSocketMessageJSONCodec,
+)
 from core.exceptions.socket import InvalidSocketMessage
 
 logger = logging.getLogger(__name__)
 
 
 class Socket(Generic[E_INPUT, D_OUTPUT]):
-    _address = '127.0.0.1'
-    _protocol = 'tcp'
+    _address = "127.0.0.1"
+    _protocol = "tcp"
 
     def __init__(self, codec: CodecProtocol[E_INPUT, D_OUTPUT]):
         if not isinstance(codec, CodecProtocol):
@@ -34,7 +37,9 @@ class Socket(Generic[E_INPUT, D_OUTPUT]):
         message = await self._socket.recv_multipart()
         logger.debug(f"Received multipart message with {len(message)} parts")
         if len(message) != 1:
-            logger.error(f"Received message does not have exactly one part ({len(message)} parts)")
+            logger.error(
+                f"Received message does not have exactly one part ({len(message)} parts)"
+            )
             raise InvalidSocketMessage()
         return self._codec.decode_message(message[0])
 
@@ -52,13 +57,17 @@ def _timedelta_to_milliseconds(delta: timedelta) -> int:
 
 
 class ClientSocket(Socket[E_INPUT, D_OUTPUT]):
-    def __init__(self, port: int, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None):
+    def __init__(
+        self, port: int, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None
+    ):
         """
         :param port:
         :param codec: The codec to use to encode/decode messages (default: ClientSocketMessageJSONCodec)
         """
         if codec is None:
-            logger.debug("No codec provided, using default ClientSocketMessageJSONCodec")
+            logger.debug(
+                "No codec provided, using default ClientSocketMessageJSONCodec"
+            )
             codec = ClientSocketMessageJSONCodec()
         super().__init__(codec=codec)
         self._port = port
@@ -96,14 +105,19 @@ class ClientSocket(Socket[E_INPUT, D_OUTPUT]):
 
 
 class ServerSocket(Socket[E_INPUT, D_OUTPUT]):
-
-    def __init__(self, port: Optional[int] = None, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None):
+    def __init__(
+        self,
+        port: Optional[int] = None,
+        codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None,
+    ):
         """
         :param port:
         :param codec: The codec to use to encode/decode messages (default: ServerSocketMessageJSONCodec)
         """
         if codec is None:
-            logger.debug("No codec provided, using default ServerSocketMessageJSONCodec")
+            logger.debug(
+                "No codec provided, using default ServerSocketMessageJSONCodec"
+            )
             codec = ServerSocketMessageJSONCodec()
         super().__init__(codec=codec)
         self.__port: Optional[int] = port

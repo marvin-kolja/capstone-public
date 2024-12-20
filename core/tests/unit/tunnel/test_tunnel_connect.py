@@ -8,8 +8,13 @@ class TestTunnelConnect:
     Test cases for TunnelConnect class
     """
 
-    async def test_start_tunnel(self, tunnel_connect, fake_udid, mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
-                                mocked_pymd3_tunnel_result):
+    async def test_start_tunnel(
+        self,
+        tunnel_connect,
+        fake_udid,
+        mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
+        mocked_pymd3_tunnel_result,
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A simulated UDID
@@ -32,8 +37,12 @@ class TestTunnelConnect:
         assert not tunnel_task.task.done()
         assert tunnel_task.tunnel == mocked_pymd3_tunnel_result
 
-    async def test_start_tunnel_already_started(self, tunnel_connect, fake_udid,
-                                                mock_tunnel_connect__start_usbmux_tcp_tunnel_task):
+    async def test_start_tunnel_already_started(
+        self,
+        tunnel_connect,
+        fake_udid,
+        mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A simulated UDID
@@ -48,7 +57,12 @@ class TestTunnelConnect:
         with pytest.raises(TunnelAlreadyExistsError):
             await tunnel_connect.start_tunnel(fake_udid)
 
-    async def test_stop_tunnel(self, tunnel_connect, fake_udid, mock_tunnel_connect__start_usbmux_tcp_tunnel_task):
+    async def test_stop_tunnel(
+        self,
+        tunnel_connect,
+        fake_udid,
+        mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A started mocked tunnel task
@@ -74,7 +88,12 @@ class TestTunnelConnect:
         """
         await tunnel_connect.stop_tunnel(fake_udid)
 
-    async def test_get_tunnel(self, tunnel_connect, fake_udid, mock_tunnel_connect__start_usbmux_tcp_tunnel_task):
+    async def test_get_tunnel(
+        self,
+        tunnel_connect,
+        fake_udid,
+        mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A started mocked tunnel task
@@ -103,7 +122,12 @@ class TestTunnelConnect:
 
         assert tunnel_result is None
 
-    async def test_close(self, tunnel_connect, fake_udid, mock_tunnel_connect__start_usbmux_tcp_tunnel_task):
+    async def test_close(
+        self,
+        tunnel_connect,
+        fake_udid,
+        mock_tunnel_connect__start_usbmux_tcp_tunnel_task,
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A started mocked tunnel task

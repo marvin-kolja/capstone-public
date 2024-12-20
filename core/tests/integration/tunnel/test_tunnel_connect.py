@@ -60,7 +60,9 @@ class TestTunnelConnect:
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
     @pytest.mark.asyncio
-    async def test_stop_tunnel_on_already_cancelled_task(self, tunnel_connect, device_udid):
+    async def test_stop_tunnel_on_already_cancelled_task(
+        self, tunnel_connect, device_udid
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A started tunnel task
@@ -82,7 +84,9 @@ class TestTunnelConnect:
         assert device_udid not in tunnel_connect._tunnel_manager.tunnel_tasks
 
     @pytest.mark.asyncio
-    async def test_stop_tunnel_on_already_cancelling_task(self, tunnel_connect, device_udid):
+    async def test_stop_tunnel_on_already_cancelling_task(
+        self, tunnel_connect, device_udid
+    ):
         """
         GIVEN: A TunnelConnect instance
         AND: A started tunnel task
@@ -94,7 +98,9 @@ class TestTunnelConnect:
         """
         await tunnel_connect.start_tunnel(device_udid)
         tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancel()
-        assert tunnel_connect._tunnel_manager.tunnel_tasks[device_udid].task.cancelling()
+        assert tunnel_connect._tunnel_manager.tunnel_tasks[
+            device_udid
+        ].task.cancelling()
 
         await tunnel_connect.stop_tunnel(device_udid)
 

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-E_INPUT = TypeVar('E_INPUT')
-D_OUTPUT = TypeVar('D_OUTPUT')
+E_INPUT = TypeVar("E_INPUT")
+D_OUTPUT = TypeVar("D_OUTPUT")
 
 
 class CodecProtocol(ABC, Generic[E_INPUT, D_OUTPUT]):

@@ -4,7 +4,12 @@ from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 
-from core.subprocesses.process import CommandError, Process, ProcessCommand, ProcessAlreadyRunningError
+from core.subprocesses.process import (
+    CommandError,
+    Process,
+    ProcessCommand,
+    ProcessAlreadyRunningError,
+)
 
 
 @pytest.fixture
@@ -71,7 +76,9 @@ class TestProcess:
         AND: The `asyncio.create_subprocess_exec` should be called
         AND: The subprocess process should be stored in the instance
         """
-        with patch.object(process.command, "parse", wraps=process.command.parse) as spied_parse:
+        with patch.object(
+            process.command, "parse", wraps=process.command.parse
+        ) as spied_parse:
             await process.execute()
 
             spied_parse.assert_called_once()
@@ -96,13 +103,11 @@ class TestProcess:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "method_name, sig",
-        [
-            ("terminate", signal.SIGTERM),
-            ("kill", signal.SIGKILL)
-        ]
+        "method_name, sig", [("terminate", signal.SIGTERM), ("kill", signal.SIGKILL)]
     )
-    async def test_stopping(self, mock_asyncio_process, mock_os_kill, process, method_name, sig):
+    async def test_stopping(
+        self, mock_asyncio_process, mock_os_kill, process, method_name, sig
+    ):
         """
         GIVEN: A Process instance
         AND: A subprocess process that is running
@@ -120,7 +125,9 @@ class TestProcess:
         mock_os_kill.assert_called_once_with(mock_asyncio_process.pid, sig)
 
     @pytest.mark.asyncio
-    async def test_atexist_handler_registered(self, mock_asyncio_create_subprocess_exec, mock_asyncio_process, process):
+    async def test_atexist_handler_registered(
+        self, mock_asyncio_create_subprocess_exec, mock_asyncio_process, process
+    ):
         """
         GIVEN: A Process instance
 
@@ -155,14 +162,11 @@ class TestProcess:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "returncode, expected",
-        [
-            (-1, True),
-            (0, False),
-            (1, True)
-        ]
+        "returncode, expected", [(-1, True), (0, False), (1, True)]
     )
-    async def test_failed_property(self, returncode, expected, mock_asyncio_process, process):
+    async def test_failed_property(
+        self, returncode, expected, mock_asyncio_process, process
+    ):
         """
         GIVEN: A process instance
         AND: The subprocess process has terminated with a returncode

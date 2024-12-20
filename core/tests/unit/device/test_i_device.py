@@ -8,14 +8,28 @@ from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterServ
 
 from core.codec.socket_json_codec import SuccessResponse
 from core.device.i_device import IDevice
-from core.exceptions.i_device import PairingError, DeveloperModeNotEnabled, DeveloperModeNotSupported, \
-    DeveloperModeAlreadyEnabled, DeviceNotPaired, UserDeniedPairing, PasswordRequired, DeveloperModeError, \
-    DdiNotMounted, DdiAlreadyMounted, DdiMountingError, DeviceHasPasscodeSet, RsdNotSupported
+from core.exceptions.i_device import (
+    PairingError,
+    DeveloperModeNotEnabled,
+    DeveloperModeNotSupported,
+    DeveloperModeAlreadyEnabled,
+    DeviceNotPaired,
+    UserDeniedPairing,
+    PasswordRequired,
+    DeveloperModeError,
+    DdiNotMounted,
+    DdiAlreadyMounted,
+    DdiMountingError,
+    DeviceHasPasscodeSet,
+    RsdNotSupported,
+)
 
 
 @pytest.fixture()
 def patched_i_device_mounter(i_device):
-    with patch.object(IDevice, "_mounter", MagicMock(spec=MobileImageMounterService)) as mock_mounter:
+    with patch.object(
+        IDevice, "_mounter", MagicMock(spec=MobileImageMounterService)
+    ) as mock_mounter:
         yield mock_mounter
 
 
@@ -78,12 +92,16 @@ class TestIDevicePairing:
 
         THEN: A `UserDeniedPairing` exception should be raised.
         """
-        mock_usbmux_lockdown_client.pair.side_effect = pmd3_exceptions.UserDeniedPairingError
+        mock_usbmux_lockdown_client.pair.side_effect = (
+            pmd3_exceptions.UserDeniedPairingError
+        )
         with pytest.raises(UserDeniedPairing):
             i_device.pair()
 
     @pytest.mark.parametrize("paired", [False])
-    def test_pair_password_required(self, i_device, mock_usbmux_lockdown_client, paired):
+    def test_pair_password_required(
+        self, i_device, mock_usbmux_lockdown_client, paired
+    ):
         """
         GIVEN: A device that is not paired.
 
@@ -92,7 +110,9 @@ class TestIDevicePairing:
 
         THEN: A `PasswordRequired` exception should be raised.
         """
-        mock_usbmux_lockdown_client.pair.side_effect = pmd3_exceptions.PasswordRequiredError
+        mock_usbmux_lockdown_client.pair.side_effect = (
+            pmd3_exceptions.PasswordRequiredError
+        )
         with pytest.raises(PasswordRequired):
             i_device.pair()
 
@@ -126,21 +146,24 @@ class TestIDevicePairing:
 
 
 class TestIDeviceDeveloperMode:
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled",
-                             [
-                                 (False, "15.0", None),
-                                 (True, "15.0", None),
-                                 (False, "16.0", None),
-                                 (True, "16.0", False),
-                                 (True, "16.0", True),
-                             ]
-                             )
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled",
+        [
+            (False, "15.0", None),
+            (True, "15.0", None),
+            (False, "16.0", None),
+            (True, "16.0", False),
+            (True, "16.0", True),
+        ],
+    )
     class TestParametrized:
         """
         GIVEN: Various conditions for developer mode and other states
         """
 
-        def test_check_developer_mode(self, i_device, mock_usbmux_lockdown_client, paired, developer_mode_enabled):
+        def test_check_developer_mode(
+            self, i_device, mock_usbmux_lockdown_client, paired, developer_mode_enabled
+        ):
             """
             WHEN: check_developer_mode_enabled is called
 
@@ -162,7 +185,9 @@ class TestIDeviceDeveloperMode:
             else:
                 i_device.check_developer_mode_enabled()
 
-        def test_enable_developer_mode(self, i_device, mock_usbmux_lockdown_client, paired, developer_mode_enabled):
+        def test_enable_developer_mode(
+            self, i_device, mock_usbmux_lockdown_client, paired, developer_mode_enabled
+        ):
             """
             WHEN: enable_developer_mode is called
 
@@ -173,9 +198,13 @@ class TestIDeviceDeveloperMode:
                 - Else, no exception is raised
                     - And `AmfiService.enable_developer_mode` should be called.
             """
-            with patch("core.device.i_device.AmfiService.enable_developer_mode",
-                       return_value=None) as mock_enable_developer_mode:
-                if Version(mock_usbmux_lockdown_client.product_version) < Version("16.0"):
+            with patch(
+                "core.device.i_device.AmfiService.enable_developer_mode",
+                return_value=None,
+            ) as mock_enable_developer_mode:
+                if Version(mock_usbmux_lockdown_client.product_version) < Version(
+                    "16.0"
+                ):
                     with pytest.raises(DeveloperModeNotSupported):
                         i_device.enable_developer_mode()
                 elif not paired:
@@ -188,9 +217,17 @@ class TestIDeviceDeveloperMode:
                     i_device.enable_developer_mode()
                     mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
-    def test_enable_developer_mode_unexpected_error(self, i_device, mock_usbmux_lockdown_client, paired,
-                                                    developer_mode_enabled, product_version):
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled", [(True, "16.0", False)]
+    )
+    def test_enable_developer_mode_unexpected_error(
+        self,
+        i_device,
+        mock_usbmux_lockdown_client,
+        paired,
+        developer_mode_enabled,
+        product_version,
+    ):
         """
         GIVEN: A device that is paired and has product version >= 16.0.
 
@@ -200,15 +237,25 @@ class TestIDeviceDeveloperMode:
         THEN: A `DeveloperModeError` exception should be raised.
         AND: `AmfiService.enable_developer_mode` should be called.
         """
-        with patch("core.device.i_device.AmfiService.enable_developer_mode",
-                   side_effect=Exception) as mock_enable_developer_mode:
+        with patch(
+            "core.device.i_device.AmfiService.enable_developer_mode",
+            side_effect=Exception,
+        ) as mock_enable_developer_mode:
             with pytest.raises(DeveloperModeError):
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
-    def test_enable_developer_mode_passcode_set_error(self, i_device, mock_usbmux_lockdown_client, paired,
-                                                      developer_mode_enabled, product_version):
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled", [(True, "16.0", False)]
+    )
+    def test_enable_developer_mode_passcode_set_error(
+        self,
+        i_device,
+        mock_usbmux_lockdown_client,
+        paired,
+        developer_mode_enabled,
+        product_version,
+    ):
         """
         GIVEN: A device that is paired and has product version >= 16.0.
 
@@ -217,15 +264,25 @@ class TestIDeviceDeveloperMode:
 
         THEN: A `DeviceHasPasscodeSet` exception should be raised.
         """
-        with patch("core.device.i_device.AmfiService.enable_developer_mode",
-                   side_effect=DeviceHasPasscodeSetError) as mock_enable_developer_mode:
+        with patch(
+            "core.device.i_device.AmfiService.enable_developer_mode",
+            side_effect=DeviceHasPasscodeSetError,
+        ) as mock_enable_developer_mode:
             with pytest.raises(DeviceHasPasscodeSet):
                 i_device.enable_developer_mode()
             mock_enable_developer_mode.assert_called_once()
 
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled", [(True, "16.0", False)])
-    def test_check_developer_mode_unexpected_error(self, i_device, mock_usbmux_lockdown_client, paired,
-                                                   developer_mode_enabled, product_version):
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled", [(True, "16.0", False)]
+    )
+    def test_check_developer_mode_unexpected_error(
+        self,
+        i_device,
+        mock_usbmux_lockdown_client,
+        paired,
+        developer_mode_enabled,
+        product_version,
+    ):
         """
         GIVEN: A device that is paired and has product version >= 16.0.
 
@@ -234,31 +291,41 @@ class TestIDeviceDeveloperMode:
 
         THEN: A `DeveloperModeError` exception should be raised.
         """
-        type(mock_usbmux_lockdown_client).developer_mode_status = PropertyMock(side_effect=Exception)
+        type(mock_usbmux_lockdown_client).developer_mode_status = PropertyMock(
+            side_effect=Exception
+        )
 
         with pytest.raises(DeveloperModeError):
             i_device.check_developer_mode_enabled()
 
 
 class TestIDeviceDdiMounting:
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted",
-                             [
-                                 (False, "15.0", None, None),
-                                 (True, "15.0", None, None),
-                                 (True, "15.0", None, True),
-                                 (False, "16.0", None, None),
-                                 (True, "16.0", False, None),
-                                 (True, "16.0", True, False),
-                                 (True, "16.0", True, True),
-                             ]
-                             )
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted",
+        [
+            (False, "15.0", None, None),
+            (True, "15.0", None, None),
+            (True, "15.0", None, True),
+            (False, "16.0", None, None),
+            (True, "16.0", False, None),
+            (True, "16.0", True, False),
+            (True, "16.0", True, True),
+        ],
+    )
     class TestParametrized:
         """
         GIVEN: Various conditions for developer mode and other states
         """
 
-        def test_check_ddi_mounted(self, i_device, paired, developer_mode_enabled, product_version, ddi_mounted,
-                                   patched_i_device_mounter):
+        def test_check_ddi_mounted(
+            self,
+            i_device,
+            paired,
+            developer_mode_enabled,
+            product_version,
+            ddi_mounted,
+            patched_i_device_mounter,
+        ):
             """
             WHEN: check_ddi_mounted is called
 
@@ -273,7 +340,9 @@ class TestIDeviceDdiMounting:
             if not paired:
                 with pytest.raises(DeviceNotPaired):
                     i_device.check_ddi_mounted()
-            elif not developer_mode_enabled and Version(product_version) >= Version("16.0"):
+            elif not developer_mode_enabled and Version(product_version) >= Version(
+                "16.0"
+            ):
                 with pytest.raises(DeveloperModeNotEnabled):
                     i_device.check_ddi_mounted()
             elif not ddi_mounted:
@@ -283,8 +352,15 @@ class TestIDeviceDdiMounting:
                 i_device.check_ddi_mounted()
 
         @pytest.mark.asyncio
-        async def test_mount_ddi(self, i_device, paired, developer_mode_enabled, product_version, ddi_mounted,
-                                 patched_i_device_mounter):
+        async def test_mount_ddi(
+            self,
+            i_device,
+            paired,
+            developer_mode_enabled,
+            product_version,
+            ddi_mounted,
+            patched_i_device_mounter,
+        ):
             """
             WHEN: mount_ddi is called
 
@@ -295,13 +371,17 @@ class TestIDeviceDdiMounting:
                 - Else, no exception is raised.
                     - And `MobileImageMounterService.mount_image` should be called.
             """
-            with patch("core.device.i_device.auto_mount", return_value=None) as mock_auto_mount:
+            with patch(
+                "core.device.i_device.auto_mount", return_value=None
+            ) as mock_auto_mount:
                 patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
 
                 if not paired:
                     with pytest.raises(DeviceNotPaired):
                         await i_device.mount_ddi()
-                elif not developer_mode_enabled and Version(product_version) >= Version("16.0"):
+                elif not developer_mode_enabled and Version(product_version) >= Version(
+                    "16.0"
+                ):
                     with pytest.raises(DeveloperModeNotEnabled):
                         await i_device.mount_ddi()
                 elif ddi_mounted:
@@ -311,8 +391,15 @@ class TestIDeviceDdiMounting:
                     await i_device.mount_ddi()
                     mock_auto_mount.assert_called_once()
 
-        def test_unmount_ddi(self, i_device, paired, developer_mode_enabled, product_version, ddi_mounted,
-                             patched_i_device_mounter):
+        def test_unmount_ddi(
+            self,
+            i_device,
+            paired,
+            developer_mode_enabled,
+            product_version,
+            ddi_mounted,
+            patched_i_device_mounter,
+        ):
             """
             WHEN: unmount_ddi is called
 
@@ -327,7 +414,9 @@ class TestIDeviceDdiMounting:
             if not paired:
                 with pytest.raises(DeviceNotPaired):
                     i_device.unmount_ddi()
-            elif not developer_mode_enabled and Version(product_version) >= Version("16.0"):
+            elif not developer_mode_enabled and Version(product_version) >= Version(
+                "16.0"
+            ):
                 with pytest.raises(DeveloperModeNotEnabled):
                     i_device.unmount_ddi()
             elif not ddi_mounted:
@@ -338,9 +427,19 @@ class TestIDeviceDdiMounting:
                 patched_i_device_mounter.unmount_image.assert_called_once()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted", [(True, "16.0", True, False)])
-    async def test_mount_ddi_unexpected_error(self, i_device, paired, developer_mode_enabled, product_version,
-                                              ddi_mounted, patched_i_device_mounter):
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted",
+        [(True, "16.0", True, False)],
+    )
+    async def test_mount_ddi_unexpected_error(
+        self,
+        i_device,
+        paired,
+        developer_mode_enabled,
+        product_version,
+        ddi_mounted,
+        patched_i_device_mounter,
+    ):
         """
         GIVEN: A device that is paired
         AND: Has developer mode enabled
@@ -352,16 +451,28 @@ class TestIDeviceDdiMounting:
         THEN: A `DdiMountingError` exception should be raised.
         AND: `MobileImageMounterService.mount_image` should be called.
         """
-        with patch("core.device.i_device.auto_mount", side_effect=Exception) as mock_auto_mount:
+        with patch(
+            "core.device.i_device.auto_mount", side_effect=Exception
+        ) as mock_auto_mount:
             patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
 
             with pytest.raises(DdiMountingError):
                 await i_device.mount_ddi()
             mock_auto_mount.assert_called_once()
 
-    @pytest.mark.parametrize("paired,product_version,developer_mode_enabled,ddi_mounted", [(True, "16.0", True, True)])
-    def test_unmount_ddi_unexpected_error(self, i_device, paired, developer_mode_enabled, product_version, ddi_mounted,
-                                          patched_i_device_mounter):
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted",
+        [(True, "16.0", True, True)],
+    )
+    def test_unmount_ddi_unexpected_error(
+        self,
+        i_device,
+        paired,
+        developer_mode_enabled,
+        product_version,
+        ddi_mounted,
+        patched_i_device_mounter,
+    ):
         """
         GIVEN: A device that is paired
         AND: Has developer mode enabled
@@ -384,11 +495,18 @@ class TestIDeviceDdiMounting:
 
 @pytest.mark.parametrize("paired,developer_mode_enabled", [(True, True)])
 class TestIDeviceRSD:
-
     @pytest.mark.parametrize("product_version", ["17.0", "17.4", "18.0"])
     @pytest.mark.parametrize("ddi_mounted", [True])
-    async def test_establish_trusted_channel(self, i_device, ddi_mounted, patched_i_device_mounter, fake_tunnel_result,
-                                             mocked_client_socket, tunnel_client_with_mocked_socket, product_version):
+    async def test_establish_trusted_channel(
+        self,
+        i_device,
+        ddi_mounted,
+        patched_i_device_mounter,
+        fake_tunnel_result,
+        mocked_client_socket,
+        tunnel_client_with_mocked_socket,
+        product_version,
+    ):
         """
         GIVEN: An IDevice instance that is ready to establish a trusted channel.
 
@@ -396,23 +514,32 @@ class TestIDeviceRSD:
 
         THEN: The `TunnelClient.start_tunnel` method should be called.
         """
-        with patch("core.device.i_device.RemoteServiceDiscoveryService.connect") as mock_rsd_connect:
+        with patch(
+            "core.device.i_device.RemoteServiceDiscoveryService.connect"
+        ) as mock_rsd_connect:
             with patch("core.device.i_device.get_tunnel_client") as mock_client:
-                mock_client.return_value.__enter__.return_value = tunnel_client_with_mocked_socket
+                mock_client.return_value.__enter__.return_value = (
+                    tunnel_client_with_mocked_socket
+                )
                 mocked_client_socket.receive.return_value = SuccessResponse(
-                    data=fake_tunnel_result.model_dump(mode='json'))
+                    data=fake_tunnel_result.model_dump(mode="json")
+                )
                 patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
 
                 await i_device.establish_trusted_channel()
 
-                assert i_device.rsd.service.address == (str(fake_tunnel_result.address), fake_tunnel_result.port)
+                assert i_device.rsd.service.address == (
+                    str(fake_tunnel_result.address),
+                    fake_tunnel_result.port,
+                )
 
                 mock_rsd_connect.assert_awaited_once()
 
     @pytest.mark.parametrize("product_version", ["16.0"])
     @pytest.mark.parametrize("ddi_mounted", [True])
-    async def test_establish_trusted_channel_not_supported(self, i_device, product_version, ddi_mounted,
-                                                           patched_i_device_mounter):
+    async def test_establish_trusted_channel_not_supported(
+        self, i_device, product_version, ddi_mounted, patched_i_device_mounter
+    ):
         """
         GIVEN: An IDevice instance with product version < 17.0.
 

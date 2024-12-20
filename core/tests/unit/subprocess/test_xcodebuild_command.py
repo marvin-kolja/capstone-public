@@ -3,8 +3,12 @@ import inspect
 import pytest
 
 from core.subprocesses.process import CommandError
-from core.subprocesses.xcodebuild_command import XcodebuildOptions, XcodebuildOption, XcodebuildOptionWithValue, \
-    XcodebuildCommand
+from core.subprocesses.xcodebuild_command import (
+    XcodebuildOptions,
+    XcodebuildOption,
+    XcodebuildOptionWithValue,
+    XcodebuildCommand,
+)
 
 
 def xcodebuild_options_attributes():
@@ -33,7 +37,7 @@ class TestXcodebuildOptions:
         AND: Must be decorated with `@xcodebuild_option`.
         """
         assert callable(attr)
-        assert hasattr(attr, '__xcodebuild_option__')
+        assert hasattr(attr, "__xcodebuild_option__")
 
     def test_all_methods_signature(self, attr):
         """
@@ -113,10 +117,21 @@ class TestXcodebuildCommand:
 
         THEN: The returned list of str should be correct
         """
-        expected_parsed_command = ["xcodebuild", "build", "-quiet", "-project", "/tmp/project"]
+        expected_parsed_command = [
+            "xcodebuild",
+            "build",
+            "-quiet",
+            "-project",
+            "/tmp/project",
+        ]
 
-        command = XcodebuildCommand(action="build",
-                                    options=[XcodebuildOptions.quiet(), XcodebuildOptions.project("/tmp/project")])
+        command = XcodebuildCommand(
+            action="build",
+            options=[
+                XcodebuildOptions.quiet(),
+                XcodebuildOptions.project("/tmp/project"),
+            ],
+        )
 
         parsed_command = command.parse()
 

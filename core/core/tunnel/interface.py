@@ -8,6 +8,7 @@ class TunnelResult(BaseModel):
     """
     A class to represent a tunnel connection result.
     """
+
     address: IPvAnyAddress
     port: int
     protocol: TunnelProtocol

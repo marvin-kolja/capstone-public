@@ -40,7 +40,7 @@ class TunnelServerError(CoreServerError):
 
 
 class CriticalServerError(Exception):
-    """ A critical server error that the server cannot handle """
+    """A critical server error that the server cannot handle"""
 
     def __init__(self, error: BaseException):
         self.error = error
