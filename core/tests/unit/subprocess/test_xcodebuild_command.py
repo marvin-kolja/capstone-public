@@ -9,6 +9,8 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildOptionWithValue,
     XcodebuildCommand,
     Destination,
+    XcodebuildTestCommand,
+    IOSDestination,
 )
 
 
@@ -137,3 +139,40 @@ class TestXcodebuildCommand:
         parsed_command = command.parse()
 
         assert expected_parsed_command == parsed_command
+
+
+class TestXcodebuildTestCommand:
+    def test_parse_returns_correct_command(self, fake_udid):
+        """
+        GIVEN: A `XcodebuildTestCommand` with correct arguments
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+        expected_command = [
+            "xcodebuild",
+            "test-without-building",
+            "-xctestrun",
+            "/tmp/project",
+            "-scheme",
+            "Release",
+            "-destination",
+            f"platform=iOS,id={fake_udid}",
+            "-only-testing",
+            "test1",
+            "-skip-testing",
+            "test2",
+        ]
+
+        command = XcodebuildTestCommand(
+            xctestrun="/tmp/project",
+            scheme="Release",
+            destination=IOSDestination(id=fake_udid),
+            only_testing="test1",
+            skip_testing="test2",
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command

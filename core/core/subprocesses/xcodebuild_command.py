@@ -248,3 +248,36 @@ class XcodebuildCommand(ProcessCommand):
             else:
                 raise CommandError(f"Unknown option type: {type(option).__name__}")
         return command
+
+
+class XcodebuildTestCommand(XcodebuildCommand):
+    """
+    A convenience command parser for the `xcodebuild test-without-building` command.
+    """
+
+    def __init__(
+        self,
+        xctestrun: str,
+        scheme: str,
+        destination: IOSDestination,
+        only_testing: Optional[str] = None,
+        skip_testing: Optional[str] = None,
+    ):
+        """
+        :param xctestrun: Path to the xctestrun bundle.
+        :param scheme: The scheme the xctestrun was built with.
+        :param destination: On which device to run the test.
+        :param only_testing: Test identifier of the only test that should be executed.
+        :param skip_testing: Test identifier of the test that should be skipped.
+        """
+        options = [
+            XcodebuildOptions.xctestrun(xctestrun),
+            XcodebuildOptions.scheme(scheme),
+            XcodebuildOptions.destination(destination),
+        ]
+        if only_testing:
+            options.append(XcodebuildOptions.only_testing(only_testing))
+        if skip_testing:
+            options.append(XcodebuildOptions.skip_testing(skip_testing))
+
+        super().__init__(action="test-without-building", options=options)
