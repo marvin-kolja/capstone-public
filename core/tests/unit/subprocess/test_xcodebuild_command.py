@@ -11,6 +11,7 @@ from core.subprocesses.xcodebuild_command import (
     Destination,
     XcodebuildTestCommand,
     IOSDestination,
+    XcodebuildTestEnumerationCommand,
 )
 
 
@@ -171,6 +172,47 @@ class TestXcodebuildTestCommand:
             destination=IOSDestination(id=fake_udid),
             only_testing="test1",
             skip_testing="test2",
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command
+
+
+class TestXcodebuildTestEnumerationCommand:
+    def test_parse_returns_correct_command(self, fake_udid):
+        """
+        GIVEN: A `XcodebuildTestEnumerationCommand` with correct arguments
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+        expected_command = [
+            "xcodebuild",
+            "test-without-building",
+            "-xctestrun",
+            "/tmp/project",
+            "-scheme",
+            "Release",
+            "-destination",
+            f"platform=iOS,id={fake_udid}",
+            "-enumerate-tests",
+            "-test-enumeration-style",
+            "flat",
+            "-test-enumeration-format",
+            "json",
+            "-test-enumeration-output-path",
+            "/tmp/test_enumeration.json",
+        ]
+
+        command = XcodebuildTestEnumerationCommand(
+            xctestrun="/tmp/project",
+            scheme="Release",
+            destination=IOSDestination(id=fake_udid),
+            enumeration_style="flat",
+            enumeration_format="json",
+            output_path="/tmp/test_enumeration.json",
         )
 
         parsed_command = command.parse()

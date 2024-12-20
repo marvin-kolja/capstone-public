@@ -325,3 +325,32 @@ class XcodebuildTestCommand(XcodebuildCommand):
             options.append(XcodebuildOptions.skip_testing(skip_testing))
 
         super().__init__(action="test-without-building", options=options)
+
+
+class XcodebuildTestEnumerationCommand(XcodebuildCommand):
+    """
+    A convenience command parser for enumerating over tests using the `xcodebuild test-without-building` as a base.
+    """
+
+    def __init__(
+        self,
+        xctestrun: str,
+        scheme: str,
+        destination: IOSDestination,
+        enumeration_style: Literal["hierarchical", "flat"] = "flat",
+        enumeration_format: Literal["text", "json"] = "json",
+        output_path: Optional[str] = None,
+    ):
+        options = [
+            XcodebuildOptions.xctestrun(xctestrun),
+            XcodebuildOptions.scheme(scheme),
+            XcodebuildOptions.destination(destination),
+            XcodebuildOptions.enumerate_tests(),
+            XcodebuildOptions.test_enumeration_style(enumeration_style),
+            XcodebuildOptions.test_enumeration_format(enumeration_format),
+        ]
+
+        if output_path is not None:
+            options.append(XcodebuildOptions.test_enumeration_output_path(output_path))
+
+        super().__init__(action="test-without-building", options=options)
