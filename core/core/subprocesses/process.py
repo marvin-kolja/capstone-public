@@ -82,7 +82,7 @@ class Process:
     @property
     def failed(self) -> bool:
         if self.terminated:
-            return self.__process.returncode != 0
+            return self.returncode != 0
         return False
 
     async def execute(self, cwd: Optional[str] = None):
