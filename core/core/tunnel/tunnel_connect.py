@@ -10,7 +10,7 @@ from pymobiledevice3.remote.tunnel_service import (
     TunnelResult as pymobiledevice3TunnelResult,
     CoreDeviceTunnelProxy,
 )
-from pymobiledevice3.tunneld import TunneldCore, TunnelTask
+from pymobiledevice3.tunneld.server import TunneldCore, TunnelTask
 
 from core.exceptions.tunnel_connect import TunnelAlreadyExistsError
 from core.tunnel.interface import TunnelConnectInterface, TunnelResult
