@@ -195,6 +195,8 @@ class TestXcodebuildTestEnumerationCommand:
             "/tmp/project",
             "-destination",
             f"platform=iOS,id={fake_udid}",
+            "-destination-timeout",
+            "1",
             "-enumerate-tests",
             "-test-enumeration-style",
             "flat",

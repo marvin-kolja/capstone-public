@@ -343,6 +343,7 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
             XcodebuildOptions.destination(destination),
+            XcodebuildOptions.destination_timeout("1"),
             XcodebuildOptions.enumerate_tests(),
             XcodebuildOptions.test_enumeration_style(enumeration_style),
             XcodebuildOptions.test_enumeration_format(enumeration_format),
