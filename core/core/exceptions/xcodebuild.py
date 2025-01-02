@@ -5,6 +5,10 @@ __all__ = [
 ]
 
 class XcodebuildException(CoreException):
+    """
+    Raised when the xcodebuild command process fails.
+    """
+
     stderr: list[str]
     stdout: list[str]
     return_code: int
