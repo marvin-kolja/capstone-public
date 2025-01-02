@@ -193,8 +193,6 @@ class TestXcodebuildTestEnumerationCommand:
             "test-without-building",
             "-xctestrun",
             "/tmp/project",
-            "-scheme",
-            "Release",
             "-destination",
             f"platform=iOS,id={fake_udid}",
             "-enumerate-tests",
@@ -208,7 +206,6 @@ class TestXcodebuildTestEnumerationCommand:
 
         command = XcodebuildTestEnumerationCommand(
             xctestrun="/tmp/project",
-            scheme="Release",
             destination=IOSDestination(id=fake_udid),
             enumeration_style="flat",
             enumeration_format="json",

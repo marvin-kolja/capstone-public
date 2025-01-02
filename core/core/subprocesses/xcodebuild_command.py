@@ -335,7 +335,6 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
     def __init__(
         self,
         xctestrun: str,
-        scheme: str,
         destination: IOSDestination,
         enumeration_style: Literal["hierarchical", "flat"] = "flat",
         enumeration_format: Literal["text", "json"] = "json",
@@ -343,7 +342,6 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
     ):
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
-            XcodebuildOptions.scheme(scheme),
             XcodebuildOptions.destination(destination),
             XcodebuildOptions.enumerate_tests(),
             XcodebuildOptions.test_enumeration_style(enumeration_style),
