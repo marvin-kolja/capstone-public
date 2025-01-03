@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xcodebuild import XcodebuildException
-from core.exceptions.xctestrun import ListEnumerationFailure
+from core.exceptions.xctest import ListEnumerationFailure
 from core.subprocesses.xcodebuild import Xcodebuild
 from core.subprocesses.xcodebuild_command import (
     IOSDestination,
@@ -18,22 +18,22 @@ from core.subprocesses.xcodebuild_command import (
 logger = logging.getLogger(__name__)
 
 
-class Xctest(BaseModel):
+class XctestEntry(BaseModel):
     """
-    Single xcode test
+    Single xctest
     """
 
     identifier: str
 
 
-class Xctests(BaseModel):
+class XctestOverview(BaseModel):
     """
     Values from test enumeration result
     """
 
     testPlan: str
-    disabledTests: list[Xctest]
-    enabledTests: list[Xctest]
+    disabledTests: list[XctestEntry]
+    enabledTests: list[XctestEntry]
 
 
 class TestEnumerationResult(BaseModel):
@@ -42,12 +42,12 @@ class TestEnumerationResult(BaseModel):
     """
 
     errors: list[str]
-    values: list[Xctests]
+    values: list[XctestOverview]
 
 
-class Xctestrun:
+class Xctest:
     """
-    Interactions with the xctestrun file such as listing the tests or executing them.
+    This class is responsible for interactions with xcode testing, such as listing and running tests.
     """
 
     @staticmethod
@@ -100,7 +100,7 @@ class Xctestrun:
             raise InvalidFileContent from e
 
     @staticmethod
-    async def list_tests(xctestrun_path: str, destination: IOSDestination) -> Xctests:
+    async def list_tests(xctestrun_path: str, destination: IOSDestination) -> XctestOverview:
         """
         Gets the list of tests using the xctestrun file. The xctestrun file contains the testing bundle path and testing
         host path. These are then installed on the target device, and it is checked which tests the testing bundle
@@ -119,7 +119,7 @@ class Xctestrun:
         :raises: `ListTestsFailure` when the command succeeds, but the result contains errors.
         """
         logger.debug(f"Getting list of tests for {xctestrun_path}")
-        with Xctestrun._temporary_file_path("test_enumeration.json") as tmp_file:
+        with Xctest._temporary_file_path("test_enumeration.json") as tmp_file:
             logger.debug(f"Starting test enumeration with output file: {tmp_file}")
 
             command = XcodebuildTestEnumerationCommand(
@@ -142,8 +142,8 @@ class Xctestrun:
                 f"Trying to read the result of the test enumeration from file {tmp_file}"
             )
 
-            file_content = Xctestrun._read_file(tmp_file)
-            result = Xctestrun._parse_test_enumeration_result(file_content)
+            file_content = Xctest._read_file(tmp_file)
+            result = Xctest._parse_test_enumeration_result(file_content)
 
             if result.errors:
                 logger.error("Process finished, but there are errors in the result")

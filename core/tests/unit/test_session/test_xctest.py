@@ -6,12 +6,12 @@ import pytest
 
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xcodebuild import XcodebuildException
-from core.exceptions.xctestrun import ListEnumerationFailure
+from core.exceptions.xctest import ListEnumerationFailure
 from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     IOSDestination,
 )
-from core.test_session.xctestrun import Xctestrun, Xctests
+from core.test_session.xctest import Xctest, XctestOverview
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def fake_tmp_file():
 @pytest.fixture
 def mock_xcodebuild_run():
     with patch(
-        "core.test_session.xctestrun.Xcodebuild.run", return_value=([], [])
+        "core.test_session.xctest.Xcodebuild.run", return_value=([], [])
     ) as run_mock:
         yield run_mock
 
@@ -47,16 +47,14 @@ def success_test_enumeration_result():
 
 @pytest.fixture
 def mock_read_file(success_test_enumeration_result):
-    with patch("core.test_session.xctestrun.Xctestrun._read_file") as mock:
+    with patch("core.test_session.xctest.Xctest._read_file") as mock:
         mock.return_value = json.dumps(success_test_enumeration_result)
         yield mock
 
 
 @pytest.fixture
 def mock_temporary_file_path(fake_tmp_file):
-    with patch(
-        "core.test_session.xctestrun.Xctestrun._temporary_file_path"
-    ) as mock_context:
+    with patch("core.test_session.xctest.Xctest._temporary_file_path") as mock_context:
         mock_enter = MagicMock(return_value=fake_tmp_file)
         mock_context.return_value.__enter__ = mock_enter
         mock_context.return_value.__exit__ = MagicMock(return_value=None)
@@ -64,9 +62,9 @@ def mock_temporary_file_path(fake_tmp_file):
         yield mock_enter
 
 
-class TestXctestrunListTests:
+class TestXctestListTests:
     """
-    Test Xctestrun.list_tests method
+    Test Xctest.list_tests method
     """
 
     @pytest.mark.asyncio
@@ -79,7 +77,7 @@ class TestXctestrunListTests:
         fake_udid,
     ):
         """
-        GIVEN: A Xctestrun class
+        GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
 
@@ -90,7 +88,7 @@ class TestXctestrunListTests:
         with patch.object(
             XcodebuildTestEnumerationCommand, "__init__", return_value=None
         ) as mock_init:
-            await Xctestrun.list_tests(
+            await Xctest.list_tests(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
                     id=fake_udid,
@@ -115,7 +113,7 @@ class TestXctestrunListTests:
         fake_udid,
     ):
         """
-        GIVEN: A Xctestrun class
+        GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
 
@@ -123,14 +121,14 @@ class TestXctestrunListTests:
         """
         fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
 
-        result = await Xctestrun.list_tests(
+        result = await Xctest.list_tests(
             xctestrun_path=fake_xctestrun,
             destination=IOSDestination(
                 id=fake_udid,
             ),
         )
 
-        assert result == Xctests.model_validate(
+        assert result == XctestOverview.model_validate(
             success_test_enumeration_result.get("values")[0]
         )
 
@@ -144,7 +142,7 @@ class TestXctestrunListTests:
         fake_udid,
     ):
         """
-        GIVEN: A Xctestrun class
+        GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
         AND: The xcodebuild run fails and raises an `XcodebuildException`
@@ -158,7 +156,7 @@ class TestXctestrunListTests:
         )
 
         with pytest.raises(XcodebuildException) as e:
-            await Xctestrun.list_tests(
+            await Xctest.list_tests(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
                     id=fake_udid,
@@ -179,7 +177,7 @@ class TestXctestrunListTests:
         fake_udid,
     ):
         """
-        GIVEN: A Xctestrun class
+        GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
         AND: The xcodebuild run succeeds
@@ -197,7 +195,7 @@ class TestXctestrunListTests:
         )
 
         with pytest.raises(ListEnumerationFailure) as e:
-            await Xctestrun.list_tests(
+            await Xctest.list_tests(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
                     id=fake_udid,
@@ -218,7 +216,7 @@ class TestXctestrunListTests:
         fake_udid,
     ):
         """
-        GIVEN: A Xctestrun class
+        GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
         AND: The xcodebuild run succeeds
@@ -231,7 +229,7 @@ class TestXctestrunListTests:
         mock_read_file.return_value = "Invalid content"
 
         with pytest.raises(InvalidFileContent):
-            await Xctestrun.list_tests(
+            await Xctest.list_tests(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
                     id=fake_udid,

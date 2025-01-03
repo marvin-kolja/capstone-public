@@ -7,7 +7,7 @@ __all__ = [
 
 class ListEnumerationFailure(CoreException):
     """
-    Raised when the result of the test enumeration contains errors.
+    Raised when the result of the xcodebuild test enumeration contains errors.
     """
 
     stderr: list[str]
