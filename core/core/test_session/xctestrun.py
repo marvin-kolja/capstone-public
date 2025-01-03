@@ -96,9 +96,7 @@ class Xctestrun:
         try:
             return TestEnumerationResult.model_validate_json(file_content)
         except Exception as e:
-            logger.error(
-                f"Failed to validate the result of the test enumeration: {e}"
-            )
+            logger.error(f"Failed to validate the result of the test enumeration: {e}")
             raise InvalidFileContent from e
 
     @staticmethod
