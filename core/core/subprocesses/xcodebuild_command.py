@@ -302,7 +302,6 @@ class XcodebuildTestCommand(XcodebuildCommand):
     def __init__(
         self,
         xctestrun: str,
-        scheme: str,
         destination: IOSDestination,
         only_testing: Optional[list[str]] = None,
         skip_testing: Optional[list[str]] = None,
@@ -313,14 +312,12 @@ class XcodebuildTestCommand(XcodebuildCommand):
         `xcodebuild` (ref: `man xcodebuild`).**
 
         :param xctestrun: Path to the xctestrun bundle.
-        :param scheme: The scheme the xctestrun was built with.
         :param destination: On which device to run the test.
         :param only_testing: Test identifier of the only test that should be executed.
         :param skip_testing: Test identifier of the test that should be skipped.
         """
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
-            XcodebuildOptions.scheme(scheme),
             XcodebuildOptions.destination(destination),
         ]
         if only_testing:

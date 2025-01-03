@@ -156,8 +156,6 @@ class TestXcodebuildTestCommand:
             "test-without-building",
             "-xctestrun",
             "/tmp/project",
-            "-scheme",
-            "Release",
             "-destination",
             f"platform=iOS,id={fake_udid}",
             "-only-testing",
@@ -168,7 +166,6 @@ class TestXcodebuildTestCommand:
 
         command = XcodebuildTestCommand(
             xctestrun="/tmp/project",
-            scheme="Release",
             destination=IOSDestination(id=fake_udid),
             only_testing=["test1"],
             skip_testing=["test2"],
@@ -192,8 +189,6 @@ class TestXcodebuildTestCommand:
             "test-without-building",
             "-xctestrun",
             "/tmp/project",
-            "-scheme",
-            "Release",
             "-destination",
             f"platform=iOS,id={fake_udid}",
             "-only-testing",
@@ -208,7 +203,6 @@ class TestXcodebuildTestCommand:
 
         command = XcodebuildTestCommand(
             xctestrun="/tmp/project",
-            scheme="Release",
             destination=IOSDestination(id=fake_udid),
             only_testing=["test1", "test2"],
             skip_testing=["test3", "test4"],
