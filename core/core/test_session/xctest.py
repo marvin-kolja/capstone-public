@@ -4,7 +4,7 @@ import pathlib
 import tempfile
 from typing import Any, Generator, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, field_validator, model_validator
 
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
@@ -30,6 +30,20 @@ class XctestOverview(BaseModel):
     testPlan: str
     disabledTests: list[str]
     enabledTests: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_test_ids(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "enabledTests" in data:
+                data["enabledTests"] = [
+                    test["identifier"] for test in data["enabledTests"]
+                ]
+            if "disabledTests" in data:
+                data["disabledTests"] = [
+                    test["identifier"] for test in data["disabledTests"]
+                ]
+        return data
 
 
 class TestEnumerationResult(BaseModel):
