@@ -2,7 +2,7 @@ import contextlib
 import logging
 import pathlib
 import tempfile
-from typing import Any, Generator
+from typing import Any, Generator, Optional
 
 from pydantic import BaseModel, Field
 
@@ -13,6 +13,7 @@ from core.subprocesses.xcodebuild import Xcodebuild
 from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,
+    XcodebuildTestCommand,
 )
 
 logger = logging.getLogger(__name__)
@@ -160,3 +161,51 @@ class Xctest:
                 raise InvalidFileContent("Expected exactly one value in the result")
 
             return result.values[0]
+
+    @staticmethod
+    async def run_test(
+        xctestrun_path: str,
+        destination: IOSDestination,
+        only_testing: Optional[list[XctestEntry]] = None,
+        skip_testing: Optional[list[XctestEntry]] = None,
+    ) -> None:
+        """
+        Starts executing the tests using the xctestrun file. The xctestrun file contains the testing bundle path and
+        testing host path. These are then installed on the target device, and the tests are executed. This happens by
+        using the :class:`core.subprocesses.XcodebuildTestCommand` command.
+
+        *Note: This does not check if the destination is ready. If it's a physical device you may want to prepare it
+        before calling this method.*
+
+        :param xctestrun_path: The path to the xctestrun file
+        :param destination: The destination the test bundle and app is installed on.
+        :param only_testing: The tests to run, if empty all tests are run.
+        :param skip_testing: The tests to skip, if empty no tests are skipped.
+
+        :raises: `XcodebuildException` when the executed command fails.
+        """
+        logger.debug(f"Start execution of tests for {xctestrun_path}")
+
+        only_testing_identifiers = (
+            [test.identifier for test in only_testing] if only_testing else None
+        )
+        skip_testing_identifiers = (
+            [test.identifier for test in skip_testing] if skip_testing else None
+        )
+
+        command = XcodebuildTestCommand(
+            xctestrun=xctestrun_path,
+            destination=destination,
+            only_testing=only_testing_identifiers,
+            skip_testing=skip_testing_identifiers,
+        )
+
+        try:
+            await Xcodebuild.run(command=command)
+        except XcodebuildException as e:
+            logger.error(
+                f"Failed to run the test for {xctestrun_path} due to process failure with return code: {e.return_code}"
+            )
+            raise
+
+        logger.debug(f"Finished running tests for {xctestrun_path}")

@@ -10,8 +10,9 @@ from core.exceptions.xctest import ListEnumerationFailure
 from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     IOSDestination,
+    XcodebuildTestCommand,
 )
-from core.test_session.xctest import Xctest, XctestOverview
+from core.test_session.xctest import Xctest, XctestOverview, XctestEntry
 
 
 @pytest.fixture
@@ -235,3 +236,92 @@ class TestXctestListTests:
                     id=fake_udid,
                 ),
             )
+
+
+class TestXctestRunTest:
+    """
+    Test Xctest.run_test method
+    """
+
+    @pytest.mark.parametrize(
+        "only_testing_id, skip_testing_id",
+        [
+            (None, None),
+            (
+                "test1",
+                "test2",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_run_test_calls_test_command(
+        self,
+        mock_xcodebuild_run,
+        fake_udid,
+        only_testing_id,
+        skip_testing_id,
+    ):
+        """
+        GIVEN: A Xctest class
+
+        WHEN: calling `run_test`
+
+        THEN: A `XcodebuildTestCommand` should be created using the correct values.
+        """
+        fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
+
+        with patch.object(
+            XcodebuildTestCommand, "__init__", return_value=None
+        ) as mock_init:
+            await Xctest.run_test(
+                xctestrun_path=fake_xctestrun,
+                destination=IOSDestination(
+                    id=fake_udid,
+                ),
+                only_testing=[XctestEntry(identifier=only_testing_id)]
+                if only_testing_id
+                else None,
+                skip_testing=[XctestEntry(identifier=skip_testing_id)]
+                if skip_testing_id
+                else None,
+            )
+
+            mock_init.assert_called_once_with(
+                destination=IOSDestination(id=fake_udid),
+                xctestrun=fake_xctestrun,
+                only_testing=[only_testing_id] if only_testing_id else None,
+                skip_testing=[skip_testing_id] if skip_testing_id else None,
+            )
+
+    @pytest.mark.asyncio
+    async def test_run_test_xcodebuild_exception(
+        self,
+        mock_xcodebuild_run,
+        fake_udid,
+    ):
+        """
+        GIVEN: A Xctest class
+
+        WHEN: calling `run_test`
+        AND: The xcodebuild run fails and raises an `XcodebuildException`
+
+        THEN: A `XcodebuildException` should be raised.
+        AND: The exception should contain the stdout, stderr and return code of the process.
+        """
+        fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
+
+        mock_xcodebuild_run.side_effect = XcodebuildException(
+            stdout=["stdout"], stderr=["stderr"], return_code=1
+        )
+
+        with pytest.raises(XcodebuildException) as e:
+            await Xctest.run_test(
+                xctestrun_path=fake_xctestrun,
+                destination=IOSDestination(
+                    id=fake_udid,
+                ),
+            )
+
+        assert e.value.stdout == ["stdout"]
+        assert e.value.stderr == ["stderr"]
+        assert e.value.return_code == 1
