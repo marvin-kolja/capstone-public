@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xcodebuild import XcodebuildException
 from core.exceptions.xctestrun import ListEnumerationFailure
-from core.subprocesses.process import Process
+from core.subprocesses.xcodebuild import Xcodebuild
 from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,
@@ -130,19 +130,13 @@ class Xctestrun:
                 output_path=tmp_file.absolute().as_posix(),
             )
 
-            process = Process(command=command)
-            await process.execute()
-            stdout, stderr = await process.wait()
-
-            if process.failed:
+            try:
+                stdout, stderr = await Xcodebuild.run(command=command)
+            except XcodebuildException as e:
                 logger.error(
-                    f"Failed to get list of tests due to process failed with return code: {process.returncode}"
+                    f"Failed to get list of tests due to xcodebuild command failed: {e}"
                 )
-                raise XcodebuildException(
-                    stdout=stdout,
-                    stderr=stderr,
-                    return_code=process.returncode,
-                )
+                raise
 
             logger.debug(
                 f"Trying to read the result of the test enumeration from file {tmp_file}"
