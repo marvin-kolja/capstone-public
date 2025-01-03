@@ -36,6 +36,16 @@ class ProcessAlreadyRunningError(ProcessError):
     """Raised when trying to start a process that is already running."""
 
 
+class ProcessException(ProcessError):
+    """Raised when the process failed with a non-zero return code."""
+
+    def __init__(self, stdout: [str], stderr: [str], return_code: int):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.return_code = return_code
+        super().__init__(f"Process failed with return code: {return_code}")
+
+
 class Process:
     """
     A wrapper around the `asyncio.create_subprocess_exec` to make it easier to execute commands.
@@ -155,3 +165,30 @@ class Process:
         """Uses the `os.kill` to send a signal to the process group."""
         logger.debug(f"Sending {sig} to process with PID: {pid}")
         os.kill(pid, sig)
+
+
+async def async_run_process(
+    command: ProcessCommand,
+    cwd: Optional[str] = None,
+) -> tuple[[str], [str]]:
+    """
+    Convenience function to run a command using the `Process` class. It will create a new `Process` instance, execute
+    the command and wait for the process to finish.
+
+    :param command: The command to execute.
+    :param cwd: The working directory to execute the command in.
+
+    :return: The stdout and stderr of the command `(stdout, stderr)`.
+
+    :raises ProcessException: If the process failed with a non-zero return code.
+    """
+    process = Process(command=command)
+    await process.execute(cwd=cwd)
+    stdout, stderr = await process.wait()
+    if process.failed:
+        raise ProcessException(
+            stdout=stdout,
+            stderr=stderr,
+            return_code=process.returncode,
+        )
+    return stdout, stderr
