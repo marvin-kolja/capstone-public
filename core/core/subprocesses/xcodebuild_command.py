@@ -314,8 +314,8 @@ class XcodebuildTestCommand(XcodebuildCommand):
 
         :param xctestrun: Path to the xctestrun bundle.
         :param destination: On which device to run the test.
-        :param only_testing: Test identifier of the only test that should be executed.
-        :param skip_testing: Test identifier of the test that should be skipped.
+        :param only_testing: Test identifiers of the only tests that should be executed.
+        :param skip_testing: Test identifiers of the tests that should be skipped.
         :param result_bundle_path: Path where the xcodebuild results should be stored. Path **MUST NOT** exist, otherwise
             the xcodebuild command will fail.
         """
