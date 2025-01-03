@@ -97,7 +97,10 @@ class Xctest:
             raise InvalidFileContent from e
 
     @staticmethod
-    async def list_tests(xctestrun_path: str, destination: IOSDestination) -> XctestOverview:
+    async def list_tests(
+        xctestrun_path: str,
+        destination: IOSDestination,
+    ) -> XctestOverview:
         """
         Gets the list of tests using the xctestrun file. The xctestrun file contains the testing bundle path and testing
         host path. These are then installed on the target device, and it is checked which tests the testing bundle
