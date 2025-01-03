@@ -21,7 +21,9 @@ def fake_tmp_file():
 
 @pytest.fixture
 def mock_xcodebuild_run():
-    with patch("core.test_session.xctestrun.Xcodebuild.run", return_value=([], [])) as run_mock:
+    with patch(
+        "core.test_session.xctestrun.Xcodebuild.run", return_value=([], [])
+    ) as run_mock:
         yield run_mock
 
 
@@ -53,7 +55,7 @@ def mock_read_file(success_test_enumeration_result):
 @pytest.fixture
 def mock_temporary_file_path(fake_tmp_file):
     with patch(
-            "core.test_session.xctestrun.Xctestrun._temporary_file_path"
+        "core.test_session.xctestrun.Xctestrun._temporary_file_path"
     ) as mock_context:
         mock_enter = MagicMock(return_value=fake_tmp_file)
         mock_context.return_value.__enter__ = mock_enter
@@ -62,19 +64,19 @@ def mock_temporary_file_path(fake_tmp_file):
         yield mock_enter
 
 
-class TestXctestrun:
+class TestXctestrunListTests:
     """
-    Test Xctestrun methods
+    Test Xctestrun.list_tests method
     """
 
     @pytest.mark.asyncio
     async def test_list_tests_calls_enumeration_command(
-            self,
-            mock_read_file,
-            mock_temporary_file_path,
-            mock_xcodebuild_run,
-            success_test_enumeration_result,
-            fake_udid,
+        self,
+        mock_read_file,
+        mock_temporary_file_path,
+        mock_xcodebuild_run,
+        success_test_enumeration_result,
+        fake_udid,
     ):
         """
         GIVEN: A Xctestrun class
@@ -86,7 +88,7 @@ class TestXctestrun:
         fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
 
         with patch.object(
-                XcodebuildTestEnumerationCommand, "__init__", return_value=None
+            XcodebuildTestEnumerationCommand, "__init__", return_value=None
         ) as mock_init:
             await Xctestrun.list_tests(
                 xctestrun_path=fake_xctestrun,
@@ -105,12 +107,12 @@ class TestXctestrun:
 
     @pytest.mark.asyncio
     async def test_list_tests_returns_result(
-            self,
-            mock_read_file,
-            mock_temporary_file_path,
-            mock_xcodebuild_run,
-            success_test_enumeration_result,
-            fake_udid,
+        self,
+        mock_read_file,
+        mock_temporary_file_path,
+        mock_xcodebuild_run,
+        success_test_enumeration_result,
+        fake_udid,
     ):
         """
         GIVEN: A Xctestrun class
@@ -128,16 +130,18 @@ class TestXctestrun:
             ),
         )
 
-        assert result == Xctests.model_validate(success_test_enumeration_result.get("values")[0])
+        assert result == Xctests.model_validate(
+            success_test_enumeration_result.get("values")[0]
+        )
 
     @pytest.mark.asyncio
     async def test_list_tests_xcodebuild_exception(
-            self,
-            mock_read_file,
-            mock_temporary_file_path,
-            mock_xcodebuild_run,
-            success_test_enumeration_result,
-            fake_udid,
+        self,
+        mock_read_file,
+        mock_temporary_file_path,
+        mock_xcodebuild_run,
+        success_test_enumeration_result,
+        fake_udid,
     ):
         """
         GIVEN: A Xctestrun class
@@ -167,12 +171,12 @@ class TestXctestrun:
 
     @pytest.mark.asyncio
     async def test_list_tests_list_enumeration_failure(
-            self,
-            mock_read_file,
-            mock_temporary_file_path,
-            mock_xcodebuild_run,
-            success_test_enumeration_result,
-            fake_udid,
+        self,
+        mock_read_file,
+        mock_temporary_file_path,
+        mock_xcodebuild_run,
+        success_test_enumeration_result,
+        fake_udid,
     ):
         """
         GIVEN: A Xctestrun class
@@ -206,12 +210,12 @@ class TestXctestrun:
 
     @pytest.mark.asyncio
     async def test_list_tests_invalid_file_content(
-            self,
-            mock_read_file,
-            mock_temporary_file_path,
-            mock_xcodebuild_run,
-            success_test_enumeration_result,
-            fake_udid,
+        self,
+        mock_read_file,
+        mock_temporary_file_path,
+        mock_xcodebuild_run,
+        success_test_enumeration_result,
+        fake_udid,
     ):
         """
         GIVEN: A Xctestrun class
