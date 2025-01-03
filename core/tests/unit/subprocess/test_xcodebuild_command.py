@@ -170,13 +170,54 @@ class TestXcodebuildTestCommand:
             xctestrun="/tmp/project",
             scheme="Release",
             destination=IOSDestination(id=fake_udid),
-            only_testing="test1",
-            skip_testing="test2",
+            only_testing=["test1"],
+            skip_testing=["test2"],
         )
 
         parsed_command = command.parse()
 
         assert expected_command == parsed_command
+
+    def test_parse_multiple_only_testing(self, fake_udid):
+        """
+        GIVEN: A `XcodebuildTestCommand` with multiple only_testing
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        AND: Specifically contain multiple `-only-testing` and `-skip-testing` options
+        """
+        expected_command = [
+            "xcodebuild",
+            "test-without-building",
+            "-xctestrun",
+            "/tmp/project",
+            "-scheme",
+            "Release",
+            "-destination",
+            f"platform=iOS,id={fake_udid}",
+            "-only-testing",
+            "test1",
+            "-only-testing",
+            "test2",
+            "-skip-testing",
+            "test3",
+            "-skip-testing",
+            "test4",
+        ]
+
+        command = XcodebuildTestCommand(
+            xctestrun="/tmp/project",
+            scheme="Release",
+            destination=IOSDestination(id=fake_udid),
+            only_testing=["test1", "test2"],
+            skip_testing=["test3", "test4"],
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command
+
 
 
 class TestXcodebuildTestEnumerationCommand:

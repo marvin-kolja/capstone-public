@@ -304,10 +304,14 @@ class XcodebuildTestCommand(XcodebuildCommand):
         xctestrun: str,
         scheme: str,
         destination: IOSDestination,
-        only_testing: Optional[str] = None,
-        skip_testing: Optional[str] = None,
+        only_testing: Optional[list[str]] = None,
+        skip_testing: Optional[list[str]] = None,
     ):
         """
+        **NOTE: `only_testing` has precedence over
+        `skip_testing`. Thus, while this will add both options, only the `only_testing` option will be used by
+        `xcodebuild` (ref: `man xcodebuild`).**
+
         :param xctestrun: Path to the xctestrun bundle.
         :param scheme: The scheme the xctestrun was built with.
         :param destination: On which device to run the test.
@@ -320,9 +324,11 @@ class XcodebuildTestCommand(XcodebuildCommand):
             XcodebuildOptions.destination(destination),
         ]
         if only_testing:
-            options.append(XcodebuildOptions.only_testing(only_testing))
+            for identifier in only_testing:
+                options.append(XcodebuildOptions.only_testing(identifier))
         if skip_testing:
-            options.append(XcodebuildOptions.skip_testing(skip_testing))
+            for identifier in skip_testing:
+                options.append(XcodebuildOptions.skip_testing(identifier))
 
         super().__init__(action="test-without-building", options=options)
 
