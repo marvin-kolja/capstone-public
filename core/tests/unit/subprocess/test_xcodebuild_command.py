@@ -212,6 +212,33 @@ class TestXcodebuildTestCommand:
 
         assert expected_command == parsed_command
 
+    def test_parse_result_bundle_path(self, fake_udid):
+        """
+        GIVEN: A `XcodebuildTestCommand` with a result_bundle_path
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+
+        expected_command = [
+            "xcodebuild",
+            "test-without-building",
+            "-xctestrun",
+            "/tmp/project",
+            "-destination",
+            f"platform=iOS,id={fake_udid}",
+            "-resultBundlePath",
+            "/tmp/result_bundle",
+        ]
+
+        command = XcodebuildTestCommand(
+            xctestrun="/tmp/project",
+            destination=IOSDestination(id=fake_udid),
+            result_bundle_path="/tmp/result_bundle",
+        )
+
+        assert expected_command == command.parse()
 
 
 class TestXcodebuildTestEnumerationCommand:

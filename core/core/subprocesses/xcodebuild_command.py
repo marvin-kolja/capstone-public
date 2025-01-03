@@ -305,6 +305,7 @@ class XcodebuildTestCommand(XcodebuildCommand):
         destination: IOSDestination,
         only_testing: Optional[list[str]] = None,
         skip_testing: Optional[list[str]] = None,
+        result_bundle_path: Optional[str] = None,
     ):
         """
         **NOTE: `only_testing` has precedence over
@@ -315,6 +316,8 @@ class XcodebuildTestCommand(XcodebuildCommand):
         :param destination: On which device to run the test.
         :param only_testing: Test identifier of the only test that should be executed.
         :param skip_testing: Test identifier of the test that should be skipped.
+        :param result_bundle_path: Path where the xcodebuild results should be stored. Path **MUST NOT** exist, otherwise
+            the xcodebuild command will fail.
         """
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
@@ -326,6 +329,8 @@ class XcodebuildTestCommand(XcodebuildCommand):
         if skip_testing:
             for identifier in skip_testing:
                 options.append(XcodebuildOptions.skip_testing(identifier))
+        if result_bundle_path:
+            options.append(XcodebuildOptions.result_bundle_path(result_bundle_path))
 
         super().__init__(action="test-without-building", options=options)
 
