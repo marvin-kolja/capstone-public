@@ -7,9 +7,8 @@ from typing import Any, Generator, Optional
 from pydantic import BaseModel, Field
 
 from core.exceptions.common import InvalidFileContent
-from core.exceptions.xcodebuild import XcodebuildException
 from core.exceptions.xctest import ListEnumerationFailure
-from core.subprocesses.xcodebuild import Xcodebuild
+from core.subprocesses.process import async_run_process, ProcessException
 from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,
@@ -115,7 +114,7 @@ class Xctest:
         :param destination: The destination the test bundle and app is installed on.
         :return: The test enumeration result in format of the :class:`.Xctests` model`
 
-        :raises: `XcodebuildException` when the executed command fails.
+        :raises: `ProcessException` when the executed command fails.
         :raises: `ListTestsFailure` when the command succeeds, but the result contains errors.
         """
         logger.debug(f"Getting list of tests for {xctestrun_path}")
@@ -131,8 +130,8 @@ class Xctest:
             )
 
             try:
-                stdout, stderr = await Xcodebuild.run(command=command)
-            except XcodebuildException as e:
+                stdout, stderr = await async_run_process(command=command)
+            except ProcessException as e:
                 logger.error(
                     f"Failed to get list of tests due to xcodebuild command failed: {e}"
                 )
@@ -181,7 +180,7 @@ class Xctest:
         :param only_testing: The identifiers of the tests to run. If empty all tests are run.
         :param skip_testing: The identifiers of the tests to skip. If empty no tests are skipped.
 
-        :raises: `XcodebuildException` when the executed command fails.
+        :raises: `ProcessException` when the executed command fails.
         """
         logger.debug(f"Start execution of tests for {xctestrun_path}")
 
@@ -193,8 +192,8 @@ class Xctest:
         )
 
         try:
-            await Xcodebuild.run(command=command)
-        except XcodebuildException as e:
+            await async_run_process(command=command)
+        except ProcessException as e:
             logger.error(
                 f"Failed to run the test for {xctestrun_path} due to process failure with return code: {e.return_code}"
             )

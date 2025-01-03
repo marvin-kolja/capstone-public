@@ -5,8 +5,8 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from core.exceptions.common import InvalidFileContent
-from core.exceptions.xcodebuild import XcodebuildException
 from core.exceptions.xctest import ListEnumerationFailure
+from core.subprocesses.process import ProcessException
 from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     IOSDestination,
@@ -23,7 +23,7 @@ def fake_tmp_file():
 @pytest.fixture
 def mock_xcodebuild_run():
     with patch(
-        "core.test_session.xctest.Xcodebuild.run", return_value=([], [])
+        "core.test_session.xctest.async_run_process", return_value=([], [])
     ) as run_mock:
         yield run_mock
 
@@ -146,17 +146,17 @@ class TestXctestListTests:
         GIVEN: A Xctest class
 
         WHEN: calling `list_tests`
-        AND: The xcodebuild run fails and raises an `XcodebuildException`
+        AND: The xcodebuild run fails and raises a `ProcessException`
 
-        THEN: A `XcodebuildException` should be raised.
+        THEN: A `ProcessException` should be raised.
         AND: The exception should contain the stdout, stderr and return code of the process.
         """
         fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
-        mock_xcodebuild_run.side_effect = XcodebuildException(
+        mock_xcodebuild_run.side_effect = ProcessException(
             stdout=["stdout"], stderr=["stderr"], return_code=1
         )
 
-        with pytest.raises(XcodebuildException) as e:
+        with pytest.raises(ProcessException) as e:
             await Xctest.list_tests(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
@@ -299,18 +299,18 @@ class TestXctestRunTest:
         GIVEN: A Xctest class
 
         WHEN: calling `run_test`
-        AND: The xcodebuild run fails and raises an `XcodebuildException`
+        AND: The xcodebuild run fails and raises a `ProcessException`
 
-        THEN: A `XcodebuildException` should be raised.
+        THEN: A `ProcessException` should be raised.
         AND: The exception should contain the stdout, stderr and return code of the process.
         """
         fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
 
-        mock_xcodebuild_run.side_effect = XcodebuildException(
+        mock_xcodebuild_run.side_effect = ProcessException(
             stdout=["stdout"], stderr=["stderr"], return_code=1
         )
 
-        with pytest.raises(XcodebuildException) as e:
+        with pytest.raises(ProcessException) as e:
             await Xctest.run_test(
                 xctestrun_path=fake_xctestrun,
                 destination=IOSDestination(
