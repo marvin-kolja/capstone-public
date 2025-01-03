@@ -19,22 +19,18 @@ from core.subprocesses.xcodebuild_command import (
 logger = logging.getLogger(__name__)
 
 
-class XctestEntry(BaseModel):
-    """
-    Single xctest
-    """
-
-    identifier: str
-
-
 class XctestOverview(BaseModel):
     """
     Values from test enumeration result
+
+    :param testPlan: The name of the test plan.
+    :param disabledTests: The list of identifiers of disabled tests.
+    :param enabledTests: The list of identifiers of enabled tests.
     """
 
     testPlan: str
-    disabledTests: list[XctestEntry]
-    enabledTests: list[XctestEntry]
+    disabledTests: list[str]
+    enabledTests: list[str]
 
 
 class TestEnumerationResult(BaseModel):
@@ -166,8 +162,8 @@ class Xctest:
     async def run_test(
         xctestrun_path: str,
         destination: IOSDestination,
-        only_testing: Optional[list[XctestEntry]] = None,
-        skip_testing: Optional[list[XctestEntry]] = None,
+        only_testing: Optional[list[str]] = None,
+        skip_testing: Optional[list[str]] = None,
     ) -> None:
         """
         Starts executing the tests using the xctestrun file. The xctestrun file contains the testing bundle path and
@@ -179,25 +175,18 @@ class Xctest:
 
         :param xctestrun_path: The path to the xctestrun file
         :param destination: The destination the test bundle and app is installed on.
-        :param only_testing: The tests to run, if empty all tests are run.
-        :param skip_testing: The tests to skip, if empty no tests are skipped.
+        :param only_testing: The identifiers of the tests to run. If empty all tests are run.
+        :param skip_testing: The identifiers of the tests to skip. If empty no tests are skipped.
 
         :raises: `XcodebuildException` when the executed command fails.
         """
         logger.debug(f"Start execution of tests for {xctestrun_path}")
 
-        only_testing_identifiers = (
-            [test.identifier for test in only_testing] if only_testing else None
-        )
-        skip_testing_identifiers = (
-            [test.identifier for test in skip_testing] if skip_testing else None
-        )
-
         command = XcodebuildTestCommand(
             xctestrun=xctestrun_path,
             destination=destination,
-            only_testing=only_testing_identifiers,
-            skip_testing=skip_testing_identifiers,
+            only_testing=only_testing,
+            skip_testing=skip_testing,
         )
 
         try:

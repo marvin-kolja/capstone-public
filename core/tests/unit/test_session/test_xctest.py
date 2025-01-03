@@ -12,7 +12,7 @@ from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestCommand,
 )
-from core.test_session.xctest import Xctest, XctestOverview, XctestEntry
+from core.test_session.xctest import Xctest, XctestOverview
 
 
 @pytest.fixture
@@ -244,12 +244,12 @@ class TestXctestRunTest:
     """
 
     @pytest.mark.parametrize(
-        "only_testing_id, skip_testing_id",
+        "only_testing, skip_testing",
         [
             (None, None),
             (
-                "test1",
-                "test2",
+                ["test1"],
+                ["test2"],
             ),
         ],
     )
@@ -258,8 +258,8 @@ class TestXctestRunTest:
         self,
         mock_xcodebuild_run,
         fake_udid,
-        only_testing_id,
-        skip_testing_id,
+        only_testing,
+        skip_testing,
     ):
         """
         GIVEN: A Xctest class
@@ -278,19 +278,15 @@ class TestXctestRunTest:
                 destination=IOSDestination(
                     id=fake_udid,
                 ),
-                only_testing=[XctestEntry(identifier=only_testing_id)]
-                if only_testing_id
-                else None,
-                skip_testing=[XctestEntry(identifier=skip_testing_id)]
-                if skip_testing_id
-                else None,
+                only_testing=only_testing,
+                skip_testing=skip_testing,
             )
 
             mock_init.assert_called_once_with(
                 destination=IOSDestination(id=fake_udid),
                 xctestrun=fake_xctestrun,
-                only_testing=[only_testing_id] if only_testing_id else None,
-                skip_testing=[skip_testing_id] if skip_testing_id else None,
+                only_testing=only_testing,
+                skip_testing=skip_testing,
             )
 
     @pytest.mark.asyncio
