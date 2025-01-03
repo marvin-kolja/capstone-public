@@ -4,7 +4,7 @@ import pathlib
 import tempfile
 from typing import Any, Generator, Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, model_validator
 
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
