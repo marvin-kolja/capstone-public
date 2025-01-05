@@ -96,3 +96,9 @@ class AppUninstallError(CoreException):
     """Errors related to uninstalling the device"""
 
     pass
+
+
+class AppListError(CoreException):
+    """Errors related to listing installed apps"""
+
+    pass

@@ -4,7 +4,7 @@ import pytest
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from core.device.i_services import IServices
-from core.exceptions.i_device import AppInstallError, AppUninstallError
+from core.exceptions.i_device import AppInstallError, AppUninstallError, AppListError
 
 
 @pytest.fixture
@@ -54,3 +54,29 @@ class TestIServicesInstallation:
 
         with pytest.raises(AppUninstallError):
             services.uninstall_app(bundle_id)
+
+    def test_list_installed_apps(self, services, mock_installer):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `list_installed_apps` method of an `IServices` instance
+
+        THEN: The `InstallationProxyService.get_apps` method is called
+        """
+        services.list_installed_apps()
+
+        mock_installer.get_apps.assert_called_once()
+
+    def test_list_installed_apps_exception(self, services, mock_installer):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `list_installed_apps` method of an `IServices` instance
+        AND: The `InstallationProxyService.get_apps` method raised an exception
+
+        THEN: The `AppListError` exception is raised
+        """
+        mock_installer.get_apps.side_effect = Exception
+
+        with pytest.raises(AppListError):
+            services.list_installed_apps()

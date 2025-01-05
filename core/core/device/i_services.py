@@ -1,11 +1,11 @@
 import logging
-from typing import Callable
+from typing import Callable, Any
 
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from core.device.i_device import IDevice
 from core.device.services_protocol import ServicesProtocol
-from core.exceptions.i_device import AppInstallError, AppUninstallError
+from core.exceptions.i_device import AppInstallError, AppUninstallError, AppListError
 
 logger = logging.getLogger(__name__)
 
@@ -57,3 +57,22 @@ class IServices(ServicesProtocol):
                 f"Failed to uninstall app from device using bundle_id: {bundle_id}, error: {e}"
             )
             raise AppUninstallError from e
+
+    def list_installed_apps(self) -> list[str]:
+        """
+        List all installed apps on the device by returning their bundle IDs.
+
+        :return: A list of bundle IDs for all installed apps.
+        """
+        try:
+            logger.debug(
+                f"Listing installed applications on device {self.__device.lockdown_service.udid}"
+            )
+            apps = self._installer.get_apps()
+            bundle_ids = apps.keys()
+            return list(bundle_ids)
+        except Exception as e:
+            logger.error(
+                f"Failed to list apps on device {self.__device.lockdown_service.udid}, error: {e}"
+            )
+            raise AppListError from e
