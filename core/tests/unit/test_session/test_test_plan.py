@@ -1,0 +1,162 @@
+import pytest
+from pydantic import ValidationError
+from core.test_session.metrics import Metric
+from core.test_session.test_plan import TestPlan, TestStep, TestCase
+
+
+class TestTestPlan:
+    def test_valid_test_plan(self):
+        """
+        GIVEN a valid TestPlan with ordered steps
+
+        WHEN the TestPlan is validated
+
+        THEN it should pass without errors
+        """
+        valid_test_plan = TestPlan(
+            name="Valid Test Plan",
+            repetitions=2,
+            repetition_strategy="entire_suite",
+            metrics=[Metric.cpu],
+            recording_strategy="per_step",
+            recording_start_strategy="launch",
+            reinstall_app=False,
+            steps=[
+                TestStep(order=0, test_cases=[TestCase(xctest_id="test_1")]),
+                TestStep(order=1, test_cases=[TestCase(xctest_id="test_2")]),
+            ],
+        )
+        assert valid_test_plan.name == "Valid Test Plan"
+
+    def test_unordered_steps(self):
+        """
+        GIVEN a TestPlan with unordered steps
+
+        WHEN the TestPlan is validated
+
+        THEN it should not raise a ValidationError
+        AND the steps should be ordered
+        """
+        test_plan = TestPlan(
+            name="Unordered Steps",
+            repetitions=1,
+            repetition_strategy="entire_suite",
+            metrics=[Metric.cpu],
+            recording_strategy="per_step",
+            recording_start_strategy="launch",
+            reinstall_app=False,
+            steps=[
+                TestStep(order=1, test_cases=[TestCase(xctest_id="test_1")]),
+                TestStep(order=0, test_cases=[TestCase(xctest_id="test_2")]),
+                TestStep(order=2, test_cases=[TestCase(xctest_id="test_3")]),
+            ],
+        )
+
+        assert test_plan.steps[0].order == 0
+        assert test_plan.steps[1].order == 1
+        assert test_plan.steps[2].order == 2
+
+    def test_invalid_step_order_sequence(self):
+        """
+        GIVEN a TestPlan with invalid step order sequence
+
+        WHEN the TestPlan is created
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(ValidationError, match="Step order is not sequential"):
+            TestPlan(
+                name="Invalid Step Order",
+                repetitions=1,
+                repetition_strategy="entire_suite",
+                metrics=[Metric.cpu],
+                recording_strategy="per_step",
+                recording_start_strategy="launch",
+                reinstall_app=False,
+                steps=[
+                    TestStep(order=0, test_cases=[TestCase(xctest_id="test_1")]),
+                    TestStep(order=2, test_cases=[TestCase(xctest_id="test_2")]),
+                ],
+            )
+
+    def test_invalid_repetitions(self):
+        """
+        GIVEN a TestPlan with an invalid repetition count
+
+        WHEN the TestPlan is created
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 1"
+        ):
+            TestPlan(
+                name="Invalid Repetitions",
+                repetitions=0,
+                repetition_strategy="entire_suite",
+                metrics=[Metric.cpu],
+                recording_strategy="per_step",
+                recording_start_strategy="launch",
+                reinstall_app=False,
+                steps=[TestStep(order=0, test_cases=[TestCase(xctest_id="test_1")])],
+            )
+
+    def test_missing_steps(self):
+        """
+        GIVEN a TestPlan with missing steps
+
+        WHEN the TestPlan is created
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(
+            ValidationError,
+            match="List should have at least 1 item after validation, not 0",
+        ):
+            TestPlan(
+                name="Missing Steps",
+                repetitions=1,
+                repetition_strategy="entire_suite",
+                metrics=[Metric.cpu],
+                recording_strategy="per_step",
+                recording_start_strategy="launch",
+                reinstall_app=False,
+                steps=[],
+            )
+
+    def test_invalid_step_order(self):
+        """
+        GIVEN a TestStep with an invalid order
+
+        WHEN the TestStep is validated
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 0"
+        ):
+            TestStep(order=-1, test_cases=[TestCase(xctest_id="test_1")])
+
+    def test_invalid_step_repetitions(self):
+        """
+        GIVEN a TestStep with repetitions less than 1
+
+        WHEN the TestStep is validated
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 1"
+        ):
+            TestStep(order=0, repetitions=0, test_cases=[TestCase(xctest_id="test_1")])
+
+    def test_missing_test_cases(self):
+        """
+        GIVEN a TestStep with missing test cases
+
+        WHEN the TestStep is validated
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(ValidationError, match="Input should be a valid list"):
+            TestStep(order=0, test_cases=None)
