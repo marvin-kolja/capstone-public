@@ -285,10 +285,13 @@ class TestXctestRunTest:
                 ),
                 only_testing=only_testing,
                 skip_testing=skip_testing,
+                test_configuration="Some Configuration",
             )
 
             mock_init.assert_called_once_with(
                 destination=IOSDestination(id=fake_udid),
+                test_configuration="Some Configuration",
+                result_bundle_path=None,
                 xctestrun=fake_xctestrun,
                 only_testing=only_testing,
                 skip_testing=skip_testing,
@@ -321,6 +324,7 @@ class TestXctestRunTest:
                 destination=IOSDestination(
                     id=fake_udid,
                 ),
+                test_configuration="Some Configuration",
             )
 
         assert e.value.stdout == ["stdout"]
