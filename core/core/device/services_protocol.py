@@ -32,7 +32,7 @@ class ServicesProtocol(Protocol):
         """
         ...
 
-    def pid_for_app(self, bundle_id: str) -> str:
+    def pid_for_app(self, bundle_id: str) -> int:
         """
         Returns the process identifier (PID) for an app running on the device
         """
