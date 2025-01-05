@@ -216,6 +216,16 @@ class XcodebuildOptions:
             value,
         )
 
+    @staticmethod
+    @xcodebuild_option("-only-test-configuration")
+    def only_test_configuration(value: str):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.only_test_configuration
+            ),
+            value,
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -303,6 +313,7 @@ class XcodebuildTestCommand(XcodebuildCommand):
         self,
         xctestrun: str,
         destination: IOSDestination,
+        test_configuration: str,
         only_testing: Optional[list[str]] = None,
         skip_testing: Optional[list[str]] = None,
         result_bundle_path: Optional[str] = None,
@@ -314,6 +325,8 @@ class XcodebuildTestCommand(XcodebuildCommand):
 
         :param xctestrun: Path to the xctestrun bundle.
         :param destination: On which device to run the test.
+        :param test_configuration: The test configuration to use for testing. While xcodebuild allows multiple test
+        configurations to be used, we support only one.
         :param only_testing: Test identifiers of the only tests that should be executed.
         :param skip_testing: Test identifiers of the tests that should be skipped.
         :param result_bundle_path: Path where the xcodebuild results should be stored. Path **MUST NOT** exist, otherwise
@@ -322,6 +335,7 @@ class XcodebuildTestCommand(XcodebuildCommand):
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
             XcodebuildOptions.destination(destination),
+            XcodebuildOptions.only_test_configuration(test_configuration),
         ]
         if only_testing:
             for identifier in only_testing:

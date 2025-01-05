@@ -158,6 +158,8 @@ class TestXcodebuildTestCommand:
             "/tmp/project",
             "-destination",
             f"platform=iOS,id={fake_udid}",
+            "-only-test-configuration",
+            "Some Configuration",
             "-only-testing",
             "test1",
             "-skip-testing",
@@ -169,6 +171,7 @@ class TestXcodebuildTestCommand:
             destination=IOSDestination(id=fake_udid),
             only_testing=["test1"],
             skip_testing=["test2"],
+            test_configuration="Some Configuration",
         )
 
         parsed_command = command.parse()
@@ -191,6 +194,8 @@ class TestXcodebuildTestCommand:
             "/tmp/project",
             "-destination",
             f"platform=iOS,id={fake_udid}",
+            "-only-test-configuration",
+            "Some Configuration",
             "-only-testing",
             "test1",
             "-only-testing",
@@ -206,6 +211,7 @@ class TestXcodebuildTestCommand:
             destination=IOSDestination(id=fake_udid),
             only_testing=["test1", "test2"],
             skip_testing=["test3", "test4"],
+            test_configuration="Some Configuration",
         )
 
         parsed_command = command.parse()
@@ -228,6 +234,8 @@ class TestXcodebuildTestCommand:
             "/tmp/project",
             "-destination",
             f"platform=iOS,id={fake_udid}",
+            "-only-test-configuration",
+            "Some Configuration",
             "-resultBundlePath",
             "/tmp/result_bundle",
         ]
@@ -236,6 +244,7 @@ class TestXcodebuildTestCommand:
             xctestrun="/tmp/project",
             destination=IOSDestination(id=fake_udid),
             result_bundle_path="/tmp/result_bundle",
+            test_configuration="Some Configuration",
         )
 
         assert expected_command == command.parse()

@@ -170,6 +170,7 @@ class Xctest:
     async def run_test(
         xctestrun_path: str,
         destination: IOSDestination,
+        test_configuration: str,
         only_testing: Optional[list[str]] = None,
         skip_testing: Optional[list[str]] = None,
     ) -> None:
@@ -183,6 +184,8 @@ class Xctest:
 
         :param xctestrun_path: The path to the xctestrun file
         :param destination: The destination the test bundle and app is installed on.
+        :param test_configuration: The test configuration to use. While Xcode supports executing tests using multiple
+        we support only one and rather allow the user to specify the test configuration in the test plan.
         :param only_testing: The identifiers of the tests to run. If empty all tests are run.
         :param skip_testing: The identifiers of the tests to skip. If empty no tests are skipped.
 
@@ -195,6 +198,7 @@ class Xctest:
             destination=destination,
             only_testing=only_testing,
             skip_testing=skip_testing,
+            test_configuration=test_configuration,
         )
 
         try:
