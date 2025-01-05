@@ -14,6 +14,11 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     XcodebuildTestCommand,
 )
+from core.test_session.xctestrun_parser import (
+    Xctestrun,
+    read_xctestrun_file,
+    parse_xctestrun_content,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -214,3 +219,34 @@ class Xctest:
             raise
 
         logger.debug(f"Finished running tests for {xctestrun_path}")
+
+    @staticmethod
+    def parse_xctestrun(path: str) -> Xctestrun:
+        """
+        Extracts important information such as the test plan name, test configurations, and test targets from the
+        `.xctestrun` file.
+
+        It also replaces ``__TESTROOT__`` with the actual parent directory of the xctestrun file. This way the
+        ``TestHostPath`` and ``UITargetAppPath`` fields have the correct full paths.
+
+        :param path: The path to the xctestrun file.
+        """
+        xctestrun = parse_xctestrun_content(read_xctestrun_file(path))
+
+        for test_configuration in xctestrun.TestConfigurations:
+            for test_target in test_configuration.TestTargets:
+                keys = ["TestHostPath", "UITargetAppPath"]
+
+                for key in keys:
+                    value = getattr(test_target, key)
+                    if value:
+                        setattr(
+                            test_target,
+                            key,
+                            value.replace(
+                                "__TESTROOT__",
+                                pathlib.Path(path).absolute().parent.as_posix(),
+                            ),
+                        )
+
+        return xctestrun
