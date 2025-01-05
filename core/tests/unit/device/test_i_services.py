@@ -23,7 +23,7 @@ def mock_installer(services):
 @pytest.mark.parametrize(
     "paired,developer_mode_enabled,product_version", [(True, True, "18.0")]
 )
-class TestIServicesInstallation:
+class TestIServices:
     def test_install_exception(self, services, mock_installer):
         """
         GIVEN: An `IServices` instance
