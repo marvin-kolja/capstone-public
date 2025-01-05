@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Any
+from typing import Callable, Optional
 
 from pymobiledevice3.services.dvt.dvt_secure_socket_proxy import (
     DvtSecureSocketProxyService,
@@ -108,3 +108,21 @@ class IServices(ServicesProtocol):
         ) as dvt:
             if pid := self.pid_for_app(bundle_id):
                 ProcessControl(dvt).signal(pid=pid, sig=9)
+
+    def pid_for_app(self, bundle_id: str) -> Optional[int]:
+        """
+        Tries to get the PID for an app using the bundle ID.
+
+        :param bundle_id: The bundle id of the app to get the PID for
+
+        :return: The PID of the app or None if the PID could not be retrieved
+        """
+        with DvtSecureSocketProxyService(
+            lockdown=self.__device.lockdown_service
+        ) as dvt:
+            pid = ProcessControl(dvt).process_identifier_for_bundle_identifier(
+                bundle_id
+            )
+            if pid == 0:
+                return None
+            return pid
