@@ -173,6 +173,7 @@ class Xctest:
         test_configuration: str,
         only_testing: Optional[list[str]] = None,
         skip_testing: Optional[list[str]] = None,
+        xcresult_path: Optional[str] = None,
     ) -> None:
         """
         Starts executing the tests using the xctestrun file. The xctestrun file contains the testing bundle path and
@@ -188,6 +189,8 @@ class Xctest:
         we support only one and rather allow the user to specify the test configuration in the test plan.
         :param only_testing: The identifiers of the tests to run. If empty all tests are run.
         :param skip_testing: The identifiers of the tests to skip. If empty no tests are skipped.
+        :param xcresult_path: The path to save the result bundle to. If not provided xcodebuild will decide where to
+        save it.
 
         :raises: `ProcessException` when the executed command fails.
         """
@@ -199,6 +202,7 @@ class Xctest:
             only_testing=only_testing,
             skip_testing=skip_testing,
             test_configuration=test_configuration,
+            result_bundle_path=xcresult_path,
         )
 
         try:
