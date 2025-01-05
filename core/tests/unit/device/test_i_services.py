@@ -117,7 +117,7 @@ class TestIServices:
 
         WHEN: Calling the `terminate_app` method of an `IServices` instance
 
-        THEN: The `ProcessControl.signal` method is called with signal 15 (SIGTERM)
+        THEN: The `ProcessControl.signal` method is called with signal 9 (SIGKILL)
         AND: The `DvtSecureSocketProxyService` is created and used as a context manager
         """
         bundle_id = "some_bundle_id"
@@ -129,7 +129,7 @@ class TestIServices:
             mock_dvt.return_value.__enter__.assert_called_once()
             mock_dvt.return_value.__exit__.assert_called_once()
             mock_process_control.return_value.signal.assert_called_once_with(
-                pid=123, sig=15
+                pid=123, sig=9
             )
 
     def test_pid_for_app(self, services, i_device, mock_dvt, mock_process_control):
