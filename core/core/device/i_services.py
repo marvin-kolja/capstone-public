@@ -1,6 +1,10 @@
 import logging
 from typing import Callable, Any
 
+from pymobiledevice3.services.dvt.dvt_secure_socket_proxy import (
+    DvtSecureSocketProxyService,
+)
+from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
 from core.device.i_device import IDevice
@@ -76,3 +80,14 @@ class IServices(ServicesProtocol):
                 f"Failed to list apps on device {self.__device.lockdown_service.udid}, error: {e}"
             )
             raise AppListError from e
+
+    def launch_app(self, bundle_id: str) -> int:
+        """
+        Launches an app using the bundle ID.
+
+        :param bundle_id: The bundle id of the app to launch
+        """
+        with DvtSecureSocketProxyService(
+            lockdown=self.__device.lockdown_service
+        ) as dvt:
+            return ProcessControl(dvt).launch(bundle_id)
