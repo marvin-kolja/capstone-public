@@ -330,3 +330,24 @@ class TestXctestRunTest:
         assert e.value.stdout == ["stdout"]
         assert e.value.stderr == ["stderr"]
         assert e.value.return_code == 1
+
+    def test_parse_xctestrun(self, example_xctestrun_path):
+        """
+        GIVEN: A valid xctestrun path
+        AND: A Xctest class
+
+        WHEN: calling `parse_xctestrun`
+
+        THEN: The `TestHostPath` and `UITargetAppPath` should not contain __TESTROOT__
+        AND: The `TestHostPath` and `UITargetAppPath` should contain the xctestrun parent directory path
+        """
+        result = Xctest.parse_xctestrun(example_xctestrun_path)
+
+        for config in result.TestConfigurations:
+            for target in config.TestTargets:
+                assert "__TESTROOT__" not in target.TestHostPath
+                assert str(example_xctestrun_path.parent) in target.TestHostPath
+                if target.UITargetAppPath:
+                    # The UITargetAppPath is optional
+                    assert "__TESTROOT__" not in target.UITargetAppPath
+                    assert str(example_xctestrun_path.parent) in target.UITargetAppPath
