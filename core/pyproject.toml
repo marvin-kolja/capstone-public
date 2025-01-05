@@ -10,6 +10,7 @@ python = "^3.13"
 pymobiledevice3 = "^4.14.16"
 pydantic = "^2.9.2"
 pyzmq = "^26.2.0"
+mmh3 = "^5.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pdoc3 = "^0.11.1"
