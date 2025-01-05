@@ -91,3 +91,20 @@ class IServices(ServicesProtocol):
             lockdown=self.__device.lockdown_service
         ) as dvt:
             return ProcessControl(dvt).launch(bundle_id)
+
+    def terminate_app(self, bundle_id: str):
+        """
+        Terminates an app using the bundle ID.
+
+        Termination is done by sending a SIGKILL signal to the app's process.
+
+        NOTE: While SIGTERM would signal the app to gracefully terminate, it was observed that the app would not
+        terminate in some cases. Hence, SIGKILL is used to ensure the app is terminated.
+
+        :param bundle_id: The bundle id of the app to terminate
+        """
+        with DvtSecureSocketProxyService(
+            lockdown=self.__device.lockdown_service
+        ) as dvt:
+            if pid := self.pid_for_app(bundle_id):
+                ProcessControl(dvt).signal(pid=pid, sig=9)
