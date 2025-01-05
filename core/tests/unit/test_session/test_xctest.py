@@ -133,6 +133,11 @@ class TestXctestListTests:
             success_test_enumeration_result.get("values")[0]
         )
 
+        # Make sure the test identifier is parsed correctly.
+        assert result.enabledTests[0] == success_test_enumeration_result.get("values")[
+            0
+        ].get("enabledTests")[0].get("identifier")
+
     @pytest.mark.asyncio
     async def test_list_tests_xcodebuild_exception(
         self,
