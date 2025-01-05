@@ -43,7 +43,7 @@ class XctestOverview(BaseModel):
         return data
 
 
-class TestEnumerationResult(BaseModel):
+class XcTestEnumerationResult(BaseModel):
     """
     Test enumeration result
     """
@@ -90,7 +90,7 @@ class Xctest:
                 raise InvalidFileContent from e
 
     @staticmethod
-    def _parse_test_enumeration_result(file_content: str) -> TestEnumerationResult:
+    def _parse_test_enumeration_result(file_content: str) -> XcTestEnumerationResult:
         """
         Parses the test enumeration result from a string.
 
@@ -101,7 +101,7 @@ class Xctest:
         :raises: `InvalidFileContent` when unable to validate the content.
         """
         try:
-            return TestEnumerationResult.model_validate_json(file_content)
+            return XcTestEnumerationResult.model_validate_json(file_content)
         except Exception as e:
             logger.error(f"Failed to validate the result of the test enumeration: {e}")
             raise InvalidFileContent from e

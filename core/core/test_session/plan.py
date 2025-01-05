@@ -4,11 +4,11 @@ from typing import Literal, Optional
 from core.test_session.metrics import Metric
 
 
-class TestCase(BaseModel):
+class StepTestCase(BaseModel):
     xctest_id: str
 
 
-class TestStep(BaseModel):
+class PlanStep(BaseModel):
     order: int = Field(ge=0)
     """Order of the step in the test plan."""
 
@@ -21,7 +21,7 @@ class TestStep(BaseModel):
     the test plan has 3 repetitions and the step has 2 repetitions, the step will be executed 6 times in total.
     """
 
-    test_cases: list[TestCase]
+    test_cases: list[StepTestCase]
     """List of test cases to be executed in this step."""
 
     metrics: Optional[list[Metric]] = None
@@ -42,7 +42,7 @@ class TestStep(BaseModel):
     """Overrides the test plan reinstall app strategy for this step."""
 
 
-class TestPlan(BaseModel):
+class SessionTestPlan(BaseModel):
     name: Optional[str] = None
     """
     User defined name of the test plan.
@@ -94,7 +94,7 @@ class TestPlan(BaseModel):
     Can be overridden by the test step.
     """
 
-    steps: list[TestStep] = Field(min_length=1)
+    steps: list[PlanStep] = Field(min_length=1)
     """
     List of test steps to be executed in this test plan.
     """

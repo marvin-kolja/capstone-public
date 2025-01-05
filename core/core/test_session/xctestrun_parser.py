@@ -15,7 +15,7 @@ class ContainerInfo(BaseModel):
     SchemeName: str
 
 
-class TestTarget(BaseModel):
+class XcTestTarget(BaseModel):
     """
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TestTargets for
     information about the fields.
@@ -50,17 +50,17 @@ class TestTarget(BaseModel):
     TestingEnvironmentVariables: dict[str, str] = dict
 
 
-class TestConfiguration(BaseModel):
+class XcTestConfiguration(BaseModel):
     """
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TEST_CONFIGURATIONS_SECTION for
     information about the fields.
     """
 
     Name: str
-    TestTargets: list[TestTarget]
+    TestTargets: list[XcTestTarget]
 
 
-class TestPlan(BaseModel):
+class XcTestPlan(BaseModel):
     """
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TEST_PLAN_SECTION for
     information about the fields.
@@ -70,7 +70,7 @@ class TestPlan(BaseModel):
     Name: str
 
 
-class XCTestrunMetadata(BaseModel):
+class XcTestrunMetadata(BaseModel):
     """
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#METADATA_SECTION for information
     about the fields.
@@ -88,9 +88,9 @@ class Xctestrun(BaseModel):
     """
 
     ContainerInfo: ContainerInfo
-    TestConfigurations: list[TestConfiguration]
-    TestPlan: TestPlan
-    __xctestrun_metadata__: XCTestrunMetadata
+    TestConfigurations: list[XcTestConfiguration]
+    TestPlan: XcTestPlan
+    __xctestrun_metadata__: XcTestrunMetadata
 
 
 def read_xctestrun_file(path: str) -> BinaryIO:
