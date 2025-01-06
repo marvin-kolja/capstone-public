@@ -212,3 +212,17 @@ class TestIServices:
         mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_with(
             bundle_id
         )
+
+    @pytest.mark.asyncio
+    async def test_sync_wait_forever_for_app_pid_incorrect_thread(self, services):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `_sync_wait_forever_for_app_pid` method of an `IServices` in the main thread
+
+        THEN: A `RuntimeError` should be raised
+        """
+        with pytest.raises(RuntimeError):
+            services._sync_wait_for_app_pid(
+                "com.apple.mobilephone", timedelta(seconds=1), cancel_event=None
+            )

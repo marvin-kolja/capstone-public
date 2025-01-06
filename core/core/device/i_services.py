@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import threading
 import time
 from asyncio import shield
 from datetime import timedelta
@@ -162,9 +163,20 @@ class IServices(ServicesProtocol):
         :param bundle_id: The bundle id of the app to use to get the PID
         :param frequency: The time to wait between PID checks.
         :param cancel_event: Allows the method to be cancelled by setting this event
+
+        :raises RuntimeError: If this method is called in the main thread
         """
+        current_thread = threading.current_thread()
+
+        if current_thread is threading.main_thread():
+            raise RuntimeError(
+                "This method should not be called directly."
+                "Use the async `wait_for_app_pid` instead to run this method in a separate asyncio thread to avoid"
+                "blocking the event loop."
+            )
+
         logger.debug(
-            f"Starting synchronous wait for app PID with bundle ID: {bundle_id}"
+            f"Starting synchronous wait for app PID with bundle ID: {bundle_id} in thread: {current_thread.name}"
         )
 
         frequency_s = timedelta_to_seconds_precise(frequency)
