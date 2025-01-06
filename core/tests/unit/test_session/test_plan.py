@@ -149,6 +149,25 @@ class TestSessionTestPlan:
                 xctestrun_config=fake_xctestrun_config,
             )
 
+    def test_test_cases_with_different_test_targets(self):
+        """
+        GIVEN a list of StepTestCases with different test targets
+
+        WHEN the PlanStep is created
+
+        THEN it should raise a ValidationError
+        """
+        test_cases = [
+            StepTestCase(xctest_id="TestTarget/TestClass/testMethod"),
+            StepTestCase(xctest_id="TestTarget2/TestClass/testMethod"),
+        ]
+
+        with pytest.raises(
+            ValidationError,
+            match="All test cases in a step must be from the same test target",
+        ):
+            PlanStep(order=0, test_cases=test_cases)
+
     def test_invalid_step_order(self, fake_valid_test_cases):
         """
         GIVEN a TestStep with an invalid order
