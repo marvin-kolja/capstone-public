@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -148,5 +149,66 @@ class TestIServices:
         mock_dvt.return_value.__enter__.assert_called_once()
         mock_dvt.return_value.__exit__.assert_called_once()
         mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_once_with(
+            bundle_id
+        )
+
+    @pytest.mark.asyncio
+    async def test_wait_for_app_pid_timeout(
+        self, services, i_device, mock_dvt, mock_process_control
+    ):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `wait_for_app_pid` method of an `IServices` instance
+        AND: The PID could not be retrieved within the timeout
+
+        THEN: A `TimeoutError` should be raised
+        AND: The `ProcessControl.process_identifier_for_bundle_identifier` method is called once with the bundle ID
+        AND: The `DvtSecureSocketProxyService` is created and used as a context manager
+        """
+        bundle_id = "some_bundle_id"
+        timeout = timedelta(milliseconds=100)
+        mock_process_control.return_value.process_identifier_for_bundle_identifier.return_value = (
+            0
+        )
+
+        with pytest.raises(TimeoutError):
+            await services.wait_for_app_pid(bundle_id, timeout=timeout)
+
+        mock_dvt.assert_called_once_with(lockdown=i_device.lockdown_service)
+        mock_dvt.return_value.__enter__.assert_called_once()
+        mock_dvt.return_value.__exit__.assert_called_once()
+        mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_once_with(
+            bundle_id
+        )
+
+    @pytest.mark.asyncio
+    async def test_wait_for_app_pid_success(
+        self, services, i_device, mock_dvt, mock_process_control
+    ):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `wait_for_app_pid` method of an `IServices` instance
+        AND: The PID is retrieved within the timeout
+
+        THEN: The PID is returned
+        AND: The `ProcessControl.process_identifier_for_bundle_identifier` method is called once with the bundle ID
+        AND: The `DvtSecureSocketProxyService` is created and used as a context manager
+        """
+        bundle_id = "some_bundle_id"
+        timeout = timedelta(milliseconds=100)
+        mock_process_control.return_value.process_identifier_for_bundle_identifier.return_value = (
+            123
+        )
+
+        pid = await services.wait_for_app_pid(bundle_id, timeout=timeout)
+
+        assert pid == 123
+
+        mock_dvt.assert_called_once_with(lockdown=i_device.lockdown_service)
+        mock_dvt.return_value.__enter__.assert_called_once()
+        mock_dvt.return_value.__exit__.assert_called_once()
+        mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_with(
             bundle_id
         )
