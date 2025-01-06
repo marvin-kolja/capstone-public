@@ -5,7 +5,6 @@ from core.device.i_services import IServices
 
 
 class TestIServices:
-
     @pytest.mark.real_device
     def test_list_installed_apps_contains_ios_phone_app(self, device_udid):
         """
@@ -22,11 +21,12 @@ class TestIServices:
 
         assert "com.apple.mobilephone" in bundle_ids
 
-
     @pytest.mark.real_device
     @pytest.mark.requires_sudo
     @pytest.mark.asyncio
-    async def test_launching_and_terminating_ios_phone_app(self, tunnel_server_subprocess, device_udid):
+    async def test_launching_and_terminating_ios_phone_app(
+        self, tunnel_server_subprocess, device_udid
+    ):
         """
         GIVEN: An `IServices` instance
 

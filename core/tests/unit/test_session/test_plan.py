@@ -98,7 +98,9 @@ class TestSessionTestPlan:
                 recording_strategy="per_step",
                 recording_start_strategy="launch",
                 reinstall_app=False,
-                steps=[PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")])],
+                steps=[
+                    PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")])
+                ],
             )
 
     def test_missing_steps(self):
@@ -148,7 +150,9 @@ class TestSessionTestPlan:
         with pytest.raises(
             ValidationError, match="Input should be greater than or equal to 1"
         ):
-            PlanStep(order=0, repetitions=0, test_cases=[StepTestCase(xctest_id="test_1")])
+            PlanStep(
+                order=0, repetitions=0, test_cases=[StepTestCase(xctest_id="test_1")]
+            )
 
     def test_missing_test_cases(self):
         """

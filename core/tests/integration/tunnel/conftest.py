@@ -16,6 +16,7 @@ async def tunnel_server(port):
     server.stop()
     await server.await_close()
 
+
 @pytest.fixture
 def server(request):
     return request.getfixturevalue(request.param)
