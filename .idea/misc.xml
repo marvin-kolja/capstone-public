@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-    <option name="sdkName" value="Poetry (api)" />
+    <option name="enabledOnReformat" value="true" />
+    <option name="enabledOnSave" value="true" />
+    <option name="pathToExecutable" value="/opt/homebrew/bin/black" />
+    <option name="sdkName" value="Poetry (core)" />
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true">
     <output url="file://$PROJECT_DIR$/out" />
