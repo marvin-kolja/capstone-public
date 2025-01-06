@@ -1,11 +1,21 @@
 import pytest
 from pydantic import ValidationError
 from core.test_session.metrics import Metric
-from core.test_session.plan import SessionTestPlan, PlanStep, StepTestCase
+from core.test_session.plan import (
+    SessionTestPlan,
+    PlanStep,
+    StepTestCase,
+    XctestrunConfig,
+)
+
+
+@pytest.fixture
+def fake_xctestrun_config():
+    return XctestrunConfig(path="path", test_configuration="config")
 
 
 class TestSessionTestPlan:
-    def test_valid_test_plan(self):
+    def test_valid_test_plan(self, fake_xctestrun_config):
         """
         GIVEN a valid SessionTestPlan with ordered steps
 
@@ -25,10 +35,11 @@ class TestSessionTestPlan:
                 PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")]),
                 PlanStep(order=1, test_cases=[StepTestCase(xctest_id="test_2")]),
             ],
+            xctestrun_config=fake_xctestrun_config,
         )
         assert valid_test_plan.name == "Valid Test Plan"
 
-    def test_unordered_steps(self):
+    def test_unordered_steps(self, fake_xctestrun_config):
         """
         GIVEN a SessionTestPlan with unordered steps
 
@@ -50,13 +61,14 @@ class TestSessionTestPlan:
                 PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_2")]),
                 PlanStep(order=2, test_cases=[StepTestCase(xctest_id="test_3")]),
             ],
+            xctestrun_config=fake_xctestrun_config,
         )
 
         assert test_plan.steps[0].order == 0
         assert test_plan.steps[1].order == 1
         assert test_plan.steps[2].order == 2
 
-    def test_invalid_step_order_sequence(self):
+    def test_invalid_step_order_sequence(self, fake_xctestrun_config):
         """
         GIVEN a SessionTestPlan with invalid step order sequence
 
@@ -77,9 +89,10 @@ class TestSessionTestPlan:
                     PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")]),
                     PlanStep(order=2, test_cases=[StepTestCase(xctest_id="test_2")]),
                 ],
+                xctestrun_config=fake_xctestrun_config,
             )
 
-    def test_invalid_repetitions(self):
+    def test_invalid_repetitions(self, fake_xctestrun_config):
         """
         GIVEN a SessionTestPlan with an invalid repetition count
 
@@ -101,9 +114,10 @@ class TestSessionTestPlan:
                 steps=[
                     PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")])
                 ],
+                xctestrun_config=fake_xctestrun_config,
             )
 
-    def test_missing_steps(self):
+    def test_missing_steps(self, fake_xctestrun_config):
         """
         GIVEN a SessionTestPlan with missing steps
 
@@ -124,6 +138,7 @@ class TestSessionTestPlan:
                 recording_start_strategy="launch",
                 reinstall_app=False,
                 steps=[],
+                xctestrun_config=fake_xctestrun_config,
             )
 
     def test_invalid_step_order(self):

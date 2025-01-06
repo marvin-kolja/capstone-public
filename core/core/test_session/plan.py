@@ -42,10 +42,27 @@ class PlanStep(BaseModel):
     """Overrides the test plan reinstall app strategy for this step."""
 
 
+class XctestrunConfig(BaseModel):
+    path: str
+    """
+    Path to the xctestrun file.
+    """
+
+    test_configuration: str
+    """
+    Name of test configuration to be used.
+    """
+
+
 class SessionTestPlan(BaseModel):
     name: Optional[str] = None
     """
     User defined name of the test plan.
+    """
+
+    xctestrun_config: XctestrunConfig
+    """
+    Information about the xctestrun file and the test configuration to be used.
     """
 
     repetitions: int = Field(ge=1)
