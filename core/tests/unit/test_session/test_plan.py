@@ -14,8 +14,16 @@ def fake_xctestrun_config():
     return XctestrunConfig(path="path", test_configuration="config")
 
 
+@pytest.fixture
+def fake_valid_test_cases():
+    return [
+        StepTestCase(xctest_id="TestTarget/TestClass/testMethod"),
+        StepTestCase(xctest_id="TestTarget/TestClass/testMethod2"),
+    ]
+
+
 class TestSessionTestPlan:
-    def test_valid_test_plan(self, fake_xctestrun_config):
+    def test_valid_test_plan(self, fake_xctestrun_config, fake_valid_test_cases):
         """
         GIVEN a valid SessionTestPlan with ordered steps
 
@@ -32,14 +40,14 @@ class TestSessionTestPlan:
             recording_start_strategy="launch",
             reinstall_app=False,
             steps=[
-                PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")]),
-                PlanStep(order=1, test_cases=[StepTestCase(xctest_id="test_2")]),
+                PlanStep(order=0, test_cases=fake_valid_test_cases),
+                PlanStep(order=1, test_cases=fake_valid_test_cases),
             ],
             xctestrun_config=fake_xctestrun_config,
         )
         assert valid_test_plan.name == "Valid Test Plan"
 
-    def test_unordered_steps(self, fake_xctestrun_config):
+    def test_unordered_steps(self, fake_xctestrun_config, fake_valid_test_cases):
         """
         GIVEN a SessionTestPlan with unordered steps
 
@@ -57,9 +65,9 @@ class TestSessionTestPlan:
             recording_start_strategy="launch",
             reinstall_app=False,
             steps=[
-                PlanStep(order=1, test_cases=[StepTestCase(xctest_id="test_1")]),
-                PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_2")]),
-                PlanStep(order=2, test_cases=[StepTestCase(xctest_id="test_3")]),
+                PlanStep(order=1, test_cases=fake_valid_test_cases),
+                PlanStep(order=0, test_cases=fake_valid_test_cases),
+                PlanStep(order=2, test_cases=fake_valid_test_cases),
             ],
             xctestrun_config=fake_xctestrun_config,
         )
@@ -68,7 +76,9 @@ class TestSessionTestPlan:
         assert test_plan.steps[1].order == 1
         assert test_plan.steps[2].order == 2
 
-    def test_invalid_step_order_sequence(self, fake_xctestrun_config):
+    def test_invalid_step_order_sequence(
+        self, fake_xctestrun_config, fake_valid_test_cases
+    ):
         """
         GIVEN a SessionTestPlan with invalid step order sequence
 
@@ -86,13 +96,13 @@ class TestSessionTestPlan:
                 recording_start_strategy="launch",
                 reinstall_app=False,
                 steps=[
-                    PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")]),
-                    PlanStep(order=2, test_cases=[StepTestCase(xctest_id="test_2")]),
+                    PlanStep(order=0, test_cases=fake_valid_test_cases),
+                    PlanStep(order=2, test_cases=fake_valid_test_cases),
                 ],
                 xctestrun_config=fake_xctestrun_config,
             )
 
-    def test_invalid_repetitions(self, fake_xctestrun_config):
+    def test_invalid_repetitions(self, fake_xctestrun_config, fake_valid_test_cases):
         """
         GIVEN a SessionTestPlan with an invalid repetition count
 
@@ -111,9 +121,7 @@ class TestSessionTestPlan:
                 recording_strategy="per_step",
                 recording_start_strategy="launch",
                 reinstall_app=False,
-                steps=[
-                    PlanStep(order=0, test_cases=[StepTestCase(xctest_id="test_1")])
-                ],
+                steps=[PlanStep(order=0, test_cases=fake_valid_test_cases)],
                 xctestrun_config=fake_xctestrun_config,
             )
 
@@ -141,7 +149,7 @@ class TestSessionTestPlan:
                 xctestrun_config=fake_xctestrun_config,
             )
 
-    def test_invalid_step_order(self):
+    def test_invalid_step_order(self, fake_valid_test_cases):
         """
         GIVEN a TestStep with an invalid order
 
@@ -152,9 +160,9 @@ class TestSessionTestPlan:
         with pytest.raises(
             ValidationError, match="Input should be greater than or equal to 0"
         ):
-            PlanStep(order=-1, test_cases=[StepTestCase(xctest_id="test_1")])
+            PlanStep(order=-1, test_cases=fake_valid_test_cases)
 
-    def test_invalid_step_repetitions(self):
+    def test_invalid_step_repetitions(self, fake_valid_test_cases):
         """
         GIVEN a TestStep with repetitions less than 1
 
@@ -165,9 +173,7 @@ class TestSessionTestPlan:
         with pytest.raises(
             ValidationError, match="Input should be greater than or equal to 1"
         ):
-            PlanStep(
-                order=0, repetitions=0, test_cases=[StepTestCase(xctest_id="test_1")]
-            )
+            PlanStep(order=0, repetitions=0, test_cases=fake_valid_test_cases)
 
     def test_missing_test_cases(self):
         """
