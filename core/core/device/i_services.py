@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import time
 from datetime import timedelta
 from typing import Callable, Optional
 
@@ -10,6 +11,7 @@ from pymobiledevice3.services.dvt.dvt_secure_socket_proxy import (
 from pymobiledevice3.services.dvt.instruments.process_control import ProcessControl
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
 
+from core.common.timedelta_converter import timedelta_to_seconds_precise
 from core.device.i_device import IDevice
 from core.device.services_protocol import ServicesProtocol
 from core.exceptions.i_device import AppInstallError, AppUninstallError, AppListError
@@ -132,6 +134,45 @@ class IServices(ServicesProtocol):
                 return None
             return pid
 
+    def _sync_wait_for_app_pid(
+        self, bundle_id: str, frequency: timedelta, cancel_event: asyncio.Event
+    ) -> Optional[int]:
+        """
+        **Never call this method directly. Use the async `wait_for_app_pid` instead to run this method in a separate
+        asyncio thread to avoid blocking the event loop.**
+
+        Synchronously waits for an app on the device to have a PID using the bundle ID.
+
+        This is done forever until the PID is found or the cancel event is set.
+
+        :param bundle_id: The bundle id of the app to use to get the PID
+        :param frequency: The time to wait between PID checks.
+        :param cancel_event: Allows the method to be cancelled by setting this event
+        """
+        logger.debug(
+            f"Starting synchronous wait for app PID with bundle ID: {bundle_id}"
+        )
+
+        frequency_s = timedelta_to_seconds_precise(frequency)
+        with self._dvt as dvt:
+            # Establish a secure connection to the DVT service once and reuse it to avoid reconnecting for every check.
+            while not cancel_event.is_set():
+                logger.debug(f"Trying to get PID for app with bundle ID: {bundle_id}")
+                if pid := ProcessControl(dvt).process_identifier_for_bundle_identifier(
+                    bundle_id
+                ):
+                    logger.debug(f"App with bundle ID: {bundle_id} has a PID: {pid}")
+                    return pid
+                logger.debug(
+                    f"App with bundle ID: {bundle_id} does not have a PID yet, waiting for {frequency_s}s"
+                )
+                time.sleep(frequency_s)
+
+            logger.debug(
+                f"Cancelled synchronous wait for app PID with bundle ID: {bundle_id}"
+            )
+        return None
+
     async def wait_for_app_pid(
         self,
         bundle_id: str,
@@ -151,4 +192,5 @@ class IServices(ServicesProtocol):
 
         :raises TimeoutError: If the app does not have a PID before the timeout
         """
+        # TODO: Use `self._sync_wait_for_app_pid` in a separate thread to avoid blocking the event loop
         raise NotImplementedError()
