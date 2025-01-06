@@ -49,6 +49,23 @@ class PlanStep(BaseModel):
     test_cases: list[StepTestCase]
     """List of test cases to be executed in this step."""
 
+    @field_validator("test_cases", mode="after")
+    def validate_same_test_target(cls, test_cases):
+        """
+        Validates if all test cases in the step are from the same test target.
+        """
+        if not test_cases:
+            return
+
+        test_targets = {test_case.test_target for test_case in test_cases}
+
+        if len(test_targets) != 1:
+            raise ValueError(
+                f"All test cases in a step must be from the same test target, found [{",".join(test_targets)}]"
+            )
+
+        return test_cases
+
     metrics: Optional[list[Metric]] = None
     """
     Metrics to be recorded for this step.
