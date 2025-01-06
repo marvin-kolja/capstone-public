@@ -65,6 +65,13 @@ class SessionTestPlan(BaseModel):
     Information about the xctestrun file and the test configuration to be used.
     """
 
+    end_on_failure: Optional[bool] = False
+    """
+    Whether the test plan should end on the first failure encountered.
+    
+    A failure is either a test failure or when recording of metrics fails.
+    """
+
     repetitions: int = Field(ge=1)
     """
     Number of times the entire test plan should be repeated.
