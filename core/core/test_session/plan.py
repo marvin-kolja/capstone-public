@@ -7,6 +7,31 @@ from core.test_session.metrics import Metric
 class StepTestCase(BaseModel):
     xctest_id: str
 
+    @property
+    def test_target(self):
+        return self.xctest_id.split("/")[0]
+
+    @property
+    def test_class(self):
+        return self.xctest_id.split("/")[1]
+
+    @property
+    def test_method(self):
+        return self.xctest_id.split("/")[2]
+
+    @field_validator("xctest_id", mode="after")
+    def validate_xctest_id_format(cls, xctest_id):
+        """
+        Validates the format of the test case identifier.
+        """
+        parts = xctest_id.split("/")
+        if len(parts) != 3:
+            raise ValueError(
+                f"Invalid test case identifier format: {xctest_id}, expected 3 parts"
+            )
+
+        return xctest_id
+
 
 class PlanStep(BaseModel):
     order: int = Field(ge=0)
