@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import logging
 import time
+from asyncio import shield
 from datetime import timedelta
 from typing import Callable, Optional
 
@@ -118,6 +119,19 @@ class IServices(ServicesProtocol):
             if pid := self.pid_for_app(bundle_id):
                 ProcessControl(dvt).signal(pid=pid, sig=9)
 
+    @staticmethod
+    def _get_pid(bundle_id: str, dvt: DvtSecureSocketProxyService) -> int:
+        """
+        Get the PID for an app using the bundle ID.
+
+        :param bundle_id: The bundle id of the app to get the PID for
+        :param dvt: The DvtSecureSocketProxyService instance to use
+
+        :return: The PID of the app
+        """
+        logger.debug(f"Getting PID for app with bundle ID: {bundle_id}")
+        return ProcessControl(dvt).process_identifier_for_bundle_identifier(bundle_id)
+
     def pid_for_app(self, bundle_id: str) -> Optional[int]:
         """
         Tries to get the PID for an app using the bundle ID.
@@ -192,5 +206,31 @@ class IServices(ServicesProtocol):
 
         :raises TimeoutError: If the app does not have a PID before the timeout
         """
-        # TODO: Use `self._sync_wait_for_app_pid` in a separate thread to avoid blocking the event loop
-        raise NotImplementedError()
+        timeout_s = timedelta_to_seconds_precise(timeout)
+
+        logger.debug(
+            f"Waiting for app with bundle ID: {bundle_id} to have a PID with a timeout of {timeout_s}s"
+        )
+
+        cancel_event = asyncio.Event()
+        coro = asyncio.to_thread(
+            self._sync_wait_for_app_pid,
+            bundle_id,
+            frequency,
+            cancel_event,
+        )
+
+        try:
+            logger.debug(f"Waiting for app with bundle ID: {bundle_id} to have a PID")
+            return await asyncio.wait_for(
+                shield(coro),
+                timeout=timeout_s,
+            )
+        except TimeoutError:
+            logger.warning(
+                f"Timed out waiting for app with bundle ID: {bundle_id} to have a PID"
+            )
+            raise
+        finally:
+            logger.debug(f"Cancelling {coro} using cancel_event")
+            cancel_event.set()
