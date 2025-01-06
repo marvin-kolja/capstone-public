@@ -1,5 +1,9 @@
 from datetime import timedelta
 
 
+def timedelta_to_seconds(delta: timedelta) -> float:
+    return delta.total_seconds()
+
+
 def timedelta_to_milliseconds(delta: timedelta) -> int:
-    return int(delta.total_seconds() * 1e3)
+    return int(timedelta_to_seconds(delta) * 1e3)
