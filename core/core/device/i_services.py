@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from typing import Callable, Optional
 
@@ -21,6 +22,14 @@ class IServices(ServicesProtocol):
     @property
     def _installer(self) -> InstallationProxyService:
         return InstallationProxyService(lockdown=self.__device.lockdown_service)
+
+    @property
+    @contextlib.contextmanager
+    def _dvt(self) -> DvtSecureSocketProxyService:
+        with DvtSecureSocketProxyService(
+            lockdown=self.__device.lockdown_service
+        ) as dvt:
+            yield dvt
 
     def install_app(
         self, app_path: str, progress_callback: Callable[[str], None] = None
@@ -87,9 +96,7 @@ class IServices(ServicesProtocol):
 
         :param bundle_id: The bundle id of the app to launch
         """
-        with DvtSecureSocketProxyService(
-            lockdown=self.__device.lockdown_service
-        ) as dvt:
+        with self._dvt as dvt:
             return ProcessControl(dvt).launch(bundle_id)
 
     def terminate_app(self, bundle_id: str):
@@ -103,9 +110,7 @@ class IServices(ServicesProtocol):
 
         :param bundle_id: The bundle id of the app to terminate
         """
-        with DvtSecureSocketProxyService(
-            lockdown=self.__device.lockdown_service
-        ) as dvt:
+        with self._dvt as dvt:
             if pid := self.pid_for_app(bundle_id):
                 ProcessControl(dvt).signal(pid=pid, sig=9)
 
@@ -117,9 +122,7 @@ class IServices(ServicesProtocol):
 
         :return: The PID of the app or None if the PID could not be retrieved
         """
-        with DvtSecureSocketProxyService(
-            lockdown=self.__device.lockdown_service
-        ) as dvt:
+        with self._dvt as dvt:
             pid = ProcessControl(dvt).process_identifier_for_bundle_identifier(
                 bundle_id
             )
