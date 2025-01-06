@@ -9,7 +9,7 @@ from core.codec.socket_json_codec import (
     ClientSocketMessageJSONCodec,
     ServerSocketMessageJSONCodec,
 )
-from core.common.timeout import timedelta_to_milliseconds
+from core.common.timedelta_converter import timedelta_to_milliseconds
 from core.exceptions.socket import InvalidSocketMessage
 
 logger = logging.getLogger(__name__)

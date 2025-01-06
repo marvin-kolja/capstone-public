@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 import zmq
 
-from core.common.timeout import timedelta_to_milliseconds
+from core.common.timedelta_converter import timedelta_to_milliseconds
 from core.exceptions.socket import InvalidSocketMessage
 from core.async_socket import ClientSocket, ServerSocket
 from core.codec.socket_json_codec import (

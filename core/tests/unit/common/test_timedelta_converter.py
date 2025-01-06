@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from core.common.timeout import timedelta_to_milliseconds, timedelta_to_seconds
+from core.common.timedelta_converter import timedelta_to_milliseconds, timedelta_to_seconds
 
 
 def test_timedelta_to_milliseconds():
