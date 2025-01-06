@@ -185,3 +185,24 @@ class TestSessionTestPlan:
         """
         with pytest.raises(ValidationError, match="Input should be a valid list"):
             PlanStep(order=0, test_cases=None)
+
+    def test_validating_test_case_invalid_format(self):
+        """
+        GIVEN a TestStep with an invalid test case format
+
+        WHEN the TestStep is validated
+
+        THEN it should raise a ValidationError
+        """
+        with pytest.raises(ValidationError, match="expected 3 parts"):
+            StepTestCase(xctest_id="InvalidFormat")
+
+    def test_validating_test_case_valid_format(self):
+        """
+        GIVEN a TestStep with a valid test case format
+
+        WHEN the TestStep is validated
+
+        THEN it should pass without errors
+        """
+        StepTestCase(xctest_id="TestTarget/TestClass/testMethod")
