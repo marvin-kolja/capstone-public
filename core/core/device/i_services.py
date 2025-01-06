@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+from datetime import timedelta
 from typing import Callable, Optional
 
 from pymobiledevice3.services.dvt.dvt_secure_socket_proxy import (
@@ -130,3 +131,24 @@ class IServices(ServicesProtocol):
             if pid == 0:
                 return None
             return pid
+
+    async def wait_for_app_pid(
+        self,
+        bundle_id: str,
+        timeout: timedelta = timedelta(seconds=30),
+        frequency: Optional[timedelta] = timedelta(milliseconds=100),
+    ) -> int:
+        """
+        Waits for an app on the device to have a PID using the bundle ID.
+
+        :param bundle_id: The bundle id of the app to use to get the PID
+        :param timeout: The maximum time to wait for the app to have a PID before raising a TimeoutError
+        :param frequency: The time to wait between PID checks. This does not mean the PID will be checked every
+        ``frequency`` time, but rather the time to wait before checking the PID again if it is not found. Default is
+        100ms.
+
+        :return: The PID of the app
+
+        :raises TimeoutError: If the app does not have a PID before the timeout
+        """
+        raise NotImplementedError()
