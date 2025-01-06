@@ -5,8 +5,9 @@ from unittest.mock import patch
 import pytest
 import zmq
 
+from core.common.timeout import timedelta_to_milliseconds
 from core.exceptions.socket import InvalidSocketMessage
-from core.async_socket import ClientSocket, ServerSocket, _timedelta_to_milliseconds
+from core.async_socket import ClientSocket, ServerSocket
 from core.codec.socket_json_codec import (
     SocketMessageJSONCodec,
     ServerSocketMessageJSONCodec,
@@ -401,9 +402,9 @@ class TestClientSocket:
             await client_socket.receive(timeout=timeout)
 
         if timeout is None:
-            expected = _timedelta_to_milliseconds(timedelta(seconds=0.1))
+            expected = timedelta_to_milliseconds(timedelta(seconds=0.1))
         else:
-            expected = _timedelta_to_milliseconds(timeout)
+            expected = timedelta_to_milliseconds(timeout)
 
         mock_zmq_poller.poll.assert_called_once_with(expected)
 
@@ -481,9 +482,9 @@ class TestServerSocket:
             await server_socket.receive(timeout=timeout)
 
             if timeout is None:
-                expected = _timedelta_to_milliseconds(timedelta(seconds=0.1))
+                expected = timedelta_to_milliseconds(timedelta(seconds=0.1))
             else:
-                expected = _timedelta_to_milliseconds(timeout)
+                expected = timedelta_to_milliseconds(timeout)
 
             assert server_socket._socket.getsockopt(zmq.RCVTIMEO) == expected
 

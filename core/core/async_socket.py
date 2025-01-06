@@ -9,6 +9,7 @@ from core.codec.socket_json_codec import (
     ClientSocketMessageJSONCodec,
     ServerSocketMessageJSONCodec,
 )
+from core.common.timeout import timedelta_to_milliseconds
 from core.exceptions.socket import InvalidSocketMessage
 
 logger = logging.getLogger(__name__)
@@ -52,10 +53,6 @@ class Socket(Generic[E_INPUT, D_OUTPUT]):
         self._zmq_context.term()
 
 
-def _timedelta_to_milliseconds(delta: timedelta) -> int:
-    return int(delta.total_seconds() * 1e3)
-
-
 class ClientSocket(Socket[E_INPUT, D_OUTPUT]):
     def __init__(
         self, port: int, codec: Optional[CodecProtocol[E_INPUT, D_OUTPUT]] = None
@@ -90,7 +87,7 @@ class ClientSocket(Socket[E_INPUT, D_OUTPUT]):
         poller = zmq.asyncio.Poller()
         poller.register(self._socket, zmq.POLLIN)
 
-        timeout_milliseconds = _timedelta_to_milliseconds(timeout)
+        timeout_milliseconds = timedelta_to_milliseconds(timeout)
 
         logger.debug(f"Polling response with timeout of {timeout_milliseconds}ms")
         socks = dict(await poller.poll(timeout_milliseconds))
@@ -145,7 +142,7 @@ class ServerSocket(Socket[E_INPUT, D_OUTPUT]):
     async def receive(self, timeout: Optional[timedelta] = None) -> D_OUTPUT:
         if timeout is None:
             timeout = timedelta(seconds=0.1)
-        self._socket.setsockopt(zmq.RCVTIMEO, _timedelta_to_milliseconds(timeout))
+        self._socket.setsockopt(zmq.RCVTIMEO, timedelta_to_milliseconds(timeout))
         try:
             return await super().receive()
         except zmq.error.Again:
