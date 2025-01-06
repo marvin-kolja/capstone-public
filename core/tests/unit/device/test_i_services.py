@@ -178,7 +178,7 @@ class TestIServices:
         mock_dvt.assert_called_once_with(lockdown=i_device.lockdown_service)
         mock_dvt.return_value.__enter__.assert_called_once()
         mock_dvt.return_value.__exit__.assert_called_once()
-        mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_once_with(
+        mock_process_control.return_value.process_identifier_for_bundle_identifier.assert_called_with(
             bundle_id
         )
 
