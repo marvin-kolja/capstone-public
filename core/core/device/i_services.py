@@ -219,11 +219,12 @@ class IServices(ServicesProtocol):
             frequency,
             cancel_event,
         )
+        task = asyncio.create_task(coro)
 
         try:
             logger.debug(f"Waiting for app with bundle ID: {bundle_id} to have a PID")
             return await asyncio.wait_for(
-                shield(coro),
+                shield(task),
                 timeout=timeout_s,
             )
         except TimeoutError:
@@ -234,3 +235,4 @@ class IServices(ServicesProtocol):
         finally:
             logger.debug(f"Cancelling {coro} using cancel_event")
             cancel_event.set()
+            await task  # Ensure the thread's work is fully completed before returning
