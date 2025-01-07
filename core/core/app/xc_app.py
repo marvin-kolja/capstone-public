@@ -37,13 +37,12 @@ class XcApp:
         """
         info_plist_path = pathlib.Path(self._path, "Info.plist").absolute().as_posix()
 
-        if not pathlib.Path(info_plist_path).exists():
+        try:
+            data = read_plist(info_plist_path)
+        except FileNotFoundError:
             logger.warning(f"Info.plist file not found at path: {info_plist_path}")
-            raise FileNotFoundError(
-                f"Info.plist file not found at path: {info_plist_path}"
-            )
+            raise
 
-        data = read_plist(pathlib.Path(self._path, "Info.plist").absolute().as_posix())
         logger.debug(f"Successfully read Info.plist file from path: {info_plist_path}")
 
         return InfoPlist.model_validate(data)
