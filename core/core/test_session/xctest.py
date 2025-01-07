@@ -76,8 +76,8 @@ class Xctest:
 
         :return: The content of the file as a string.
 
-        :raises: `InvalidFileContent` when unable to read the file.
-        :raises: `FileNotFoundError` when the file does not exist.
+        :raises InvalidFileContent: when unable to read the file.
+        :raises FileNotFoundError: when the file does not exist.
         """
         with open(file_path, "r") as f:
             try:
@@ -95,7 +95,7 @@ class Xctest:
 
         :return: The parsed test enumeration result.
 
-        :raises: `InvalidFileContent` when unable to validate the content.
+        :raises InvalidFileContent: when unable to validate the content.
         """
         try:
             return XcTestEnumerationResult.model_validate_json(file_content)
@@ -122,8 +122,8 @@ class Xctest:
         :param destination: The destination the test bundle and app is installed on.
         :return: The test enumeration result in format of the :class:`.Xctests` model`
 
-        :raises: `ProcessException` when the executed command fails.
-        :raises: `ListTestsFailure` when the command succeeds, but the result contains errors.
+        :raises ProcessException: when the executed command fails.
+        :raises ListTestsFailure: when the command succeeds, but the result contains errors.
         """
         logger.debug(f"Getting list of tests for {xctestrun_path}")
         with Xctest._temporary_file_path("test_enumeration.json") as tmp_file:
@@ -194,7 +194,7 @@ class Xctest:
         :param xcresult_path: The path to save the result bundle to. If not provided xcodebuild will decide where to
         save it.
 
-        :raises: `ProcessException` when the executed command fails.
+        :raises ProcessException: when the executed command fails.
         """
         logger.debug(f"Start execution of tests for {xctestrun_path}")
 

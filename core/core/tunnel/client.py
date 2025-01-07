@@ -35,7 +35,7 @@ def get_error_from_context(
     :param error_response: The error response from the server.
     :return Exception: The appropriate exception for the error response.
 
-    :raises: ValueError: If the error code in the response is unknown.
+    :raises ValueError: If the error code in the response is unknown.
     """
     error_code = error_response.error_code
 
@@ -98,8 +98,8 @@ class Client:
 
         :return: The response data.
 
-        :raises: InvalidSocketMessage: If the request or response are invalid.
-        :raises: Parsed server errors, see `get_error_from_context`.
+        :raises InvalidSocketMessage: If the request or response are invalid.
+        :raises Exception: Parsed server errors, see `get_error_from_context`.
         """
         request = ClientRequest(action=action, data=kwargs)
         logger.debug(f"Calling server with action: {action}")

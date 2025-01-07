@@ -25,7 +25,8 @@ class XcApp:
 
         :return: The parsed Info.plist file
 
-        :raises: `FileNotFoundError` when the Info.plist file is not found.
+        :raises FileNotFoundError: when the Info.plist file is not found.
+        :raises InvalidFileContent:
         """
         info_plist_path = pathlib.Path(self._path, "Info.plist").absolute().as_posix()
 

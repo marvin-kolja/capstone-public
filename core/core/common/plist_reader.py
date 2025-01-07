@@ -12,8 +12,8 @@ def read_plist(path: str) -> dict[str, Any]:
 
     :param path: The path to the plist file.
     :return: The content of the plist file as a dictionary.
-    :raises: `InvalidFileContent` when parsing the plist file fails.
-    :raises: `FileNotFoundError` when the file does not exist.
+    :raises InvalidFileContent: when parsing the plist file fails.
+    :raises FileNotFoundError: when the file does not exist.
     """
     with open(path, "rb") as file:
         try:
