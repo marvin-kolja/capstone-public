@@ -6,6 +6,7 @@ from typing import Any, Generator, Optional
 
 from pydantic import BaseModel, field_validator
 
+from core.common.plist_reader import read_plist
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
 from core.subprocesses.process import async_run_process, ProcessException
@@ -14,11 +15,7 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     XcodebuildTestCommand,
 )
-from core.test_session.xctestrun_parser import (
-    Xctestrun,
-    read_xctestrun_file,
-    parse_xctestrun_content,
-)
+from core.test_session.xctestrun_parser import Xctestrun
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +228,8 @@ class Xctest:
 
         :param path: The path to the xctestrun file.
         """
-        xctestrun = parse_xctestrun_content(read_xctestrun_file(path))
+        plist_data = read_plist(path)
+        xctestrun = Xctestrun.model_validate(plist_data)
 
         for test_configuration in xctestrun.TestConfigurations:
             for test_target in test_configuration.TestTargets:

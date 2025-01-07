@@ -1,9 +1,5 @@
-import plistlib
-
 from pydantic import BaseModel
-from typing import Optional, BinaryIO, Any
-
-from core.exceptions.common import InvalidFileContent
+from typing import Optional
 
 
 class ContainerInfo(BaseModel):
@@ -91,35 +87,3 @@ class Xctestrun(BaseModel):
     TestConfigurations: list[XcTestConfiguration]
     TestPlan: XcTestPlan
     __xctestrun_metadata__: XcTestrunMetadata
-
-
-def read_xctestrun_file(path: str) -> BinaryIO:
-    """
-    Read the content of the xctestrun file as binary.
-
-    :param path: The path to the xctestrun file.
-
-    :return: The binary content of the xctestrun file.
-
-    :raises: `FileNotFoundError` when the file does not exist.
-    """
-    return open(path, "rb")
-
-
-def parse_xctestrun_content(content: BinaryIO) -> Xctestrun:
-    """
-    Parse binary content of xctestrun file and return a Xctestrun instance.
-
-    :param content: The binary content of the xctestrun file.
-
-    :return: A Xctestrun instance.
-
-    :raises: `InvalidFileContent` when unable to read the content.
-    :raises: `pydantic.ValidationError` when unable to validate the content.
-    """
-    try:
-        xctestrun_dict: dict[str, Any] = plistlib.load(content)
-    except Exception as e:
-        raise InvalidFileContent from e
-
-    return Xctestrun(**xctestrun_dict)
