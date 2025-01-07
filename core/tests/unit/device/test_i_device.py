@@ -22,6 +22,8 @@ from core.exceptions.i_device import (
     DdiMountingError,
     DeviceHasPasscodeSet,
     RsdNotSupported,
+    DeviceNotReadyForDvt,
+    RsdNotConnected,
 )
 
 
@@ -576,3 +578,135 @@ class TestIDeviceRSD:
         """
         with pytest.raises(RsdNotSupported):
             _ = i_device.rsd
+
+
+class TestIDeviceDVT:
+    @pytest.mark.parametrize(
+        "paired,product_version",
+        [
+            (False, "15.0"),
+            (False, "16.0"),
+            (False, "17.0"),
+            (False, "18.0"),
+        ],
+    )
+    @pytest.mark.parametrize("developer_mode_enabled", [None])
+    def test_check_dvt_ready_not_paired(
+        self, i_device, paired, product_version, developer_mode_enabled
+    ):
+        """
+        GIVEN: An IDevice instance that is not paired.
+
+        WHEN: check_dvt_ready is called.
+
+        THEN: A `DeviceNotReadyForDvt` exception should be raised with `DeviceNotPaired` as the cause.
+        """
+        with pytest.raises(DeviceNotReadyForDvt) as e:
+            i_device.check_dvt_ready()
+        assert isinstance(e.value.__cause__, DeviceNotPaired)
+
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,",
+        [
+            (True, "15.0", None),
+            (True, "16.0", False),
+            (True, "17.0", False),
+            (True, "18.0", False),
+        ],
+    )
+    def test_check_dvt_ready_developer_mode_not_enabled(
+        self,
+        i_device,
+        paired,
+        product_version,
+        developer_mode_enabled,
+        patched_i_device_mounter,
+    ):
+        """
+        GIVEN: An IDevice instance that is paired but developer mode is not enabled or not supported.
+        AND: The Developer Disk Image is not mounted.
+
+        WHEN: check_dvt_ready is called.
+
+        THEN: A `DeviceNotReadyForDvt` exception should be raised with `DeveloperModeNotEnabled` as the cause.
+        OR: A `DeviceNotReadyForDvt` exception should be raised with the `DdiNotMounted` when the developer mode is not
+        supported.
+        """
+        patched_i_device_mounter.is_image_mounted.return_value = False
+
+        if i_device.requires_developer_mode:
+            with pytest.raises(DeviceNotReadyForDvt) as e:
+                i_device.check_dvt_ready()
+            assert isinstance(e.value.__cause__, DeveloperModeNotEnabled)
+        else:
+            # If the device does not require developer mode to be enabled, it should still raise an exception as the
+            # dd image is not mounted in this case.
+            with pytest.raises(DeviceNotReadyForDvt) as e:
+                i_device.check_dvt_ready()
+            assert isinstance(e.value.__cause__, DdiNotMounted)
+
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted",
+        [
+            (True, "15.0", None, False),
+            (True, "16.0", True, False),
+            (True, "17.0", True, False),
+            (True, "18.0", True, False),
+        ],
+    )
+    def test_check_dvt_ready_ddi_not_mounted(
+        self,
+        i_device,
+        paired,
+        product_version,
+        developer_mode_enabled,
+        ddi_mounted,
+        patched_i_device_mounter,
+    ):
+        """
+        GIVEN: An IDevice instance that is paired, has developer mode enabled, but the Developer Disk Image is not
+        mounted.
+
+        WHEN: check_dvt_ready is called.
+
+        THEN: A `DeviceNotReadyForDvt` exception should be raised with `DdiNotMounted` as the cause.
+        """
+        patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
+
+        with pytest.raises(DeviceNotReadyForDvt) as e:
+            i_device.check_dvt_ready()
+        assert isinstance(e.value.__cause__, DdiNotMounted)
+
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted,rsd_connected",
+        [
+            (True, "15.0", None, True, False),
+            (True, "16.0", True, True, False),
+            (True, "17.0", True, True, False),
+            (True, "18.0", True, True, False),
+        ],
+    )
+    def test_check_dvt_ready_rsd_not_set(
+        self,
+        i_device,
+        paired,
+        product_version,
+        developer_mode_enabled,
+        ddi_mounted,
+        rsd_connected,
+    ):
+        """
+        GIVEN: An IDevice instance that is paired, has developer mode enabled, the Developer Disk Image is mounted, but
+        the Remote Service Discovery is not connected.
+
+        WHEN: check_dvt_ready is called.
+
+        THEN: A `DeviceNotReadyForDvt` exception should be raised with `RsdNotSet` as the cause.
+        """
+        if i_device.requires_tunnel_for_developer_tools:
+            with pytest.raises(DeviceNotReadyForDvt) as e:
+                i_device.check_dvt_ready()
+            assert isinstance(e.value.__cause__, RsdNotConnected)
+        else:
+            # If the device does not require RSD, the check should pass at this point.
+            i_device.check_dvt_ready()
