@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -10,6 +10,42 @@ from core.test_session.plan import (
     PlanStep,
     StepTestCase,
 )
+from core.test_session.xctestrun import XcTestTarget
+
+
+@pytest.fixture
+def mock_test_plan():
+    return MagicMock(
+        spec=SessionTestPlan,
+        recording_strategy="per_step",
+        reinstall_app=False,
+        metrics=[Metric.cpu, Metric.fps],
+        end_on_failure=True,
+        xctestrun_config=MagicMock(
+            spec=XctestrunConfig,
+            path="example.xctestrun",
+        ),
+    )
+
+
+@pytest.fixture
+def mock_step():
+    return MagicMock(
+        spec=PlanStep,
+        reinstall_app=True,
+        metrics=None,
+        test_cases=[
+            MagicMock(
+                spec=StepTestCase,
+            ),
+        ],
+        recording_start_strategy="launch",
+    )
+
+
+@pytest.fixture
+def mock_xc_test_targets():
+    return {"target_1": MagicMock(spec=XcTestTarget)}
 
 
 class TestExecutionPlan:
@@ -220,3 +256,111 @@ class TestExecutionPlan:
                 assert (
                     mock_generate_plan_step_execution_steps.call_count == expected_count
                 )
+
+    def test_generate_execution_steps_per_step(
+        self, mock_test_plan, mock_step, mock_xc_test_targets
+    ):
+        """
+        GIVEN: A test plan with a single step and a single test case
+
+        WHEN: _generate_plan_step_execution_steps is called
+
+        THEN: A single ExecutionStep object should be created
+        AND: The execution step should have the correct properties
+        """
+        mock_step.test_cases = [MagicMock(spec=StepTestCase, test_target="target_1")]
+        mock_test_plan.steps = [mock_step]
+
+        execution_steps = ExecutionPlan._generate_plan_step_execution_steps(
+            test_plan=mock_test_plan,
+            step=mock_step,
+            repetition=0,
+            step_repetition=0,
+            xc_test_targets=mock_xc_test_targets,
+        )
+
+        assert len(execution_steps) == 1
+        step = execution_steps[0]
+        assert step.plan_repetition == 0
+        assert step.step == mock_step
+        assert step.step_repetition == 0
+        assert step.recording_start_strategy == "launch"
+        assert step.reinstall_app is True
+        assert step.metrics == [Metric.cpu, Metric.fps]
+        assert step.test_cases == mock_step.test_cases
+        assert step.test_target == mock_xc_test_targets["target_1"]
+
+    def test_generate_execution_steps_per_test(
+        self, mock_test_plan, mock_step, mock_xc_test_targets
+    ):
+        """
+        GIVEN: A test plan with a single step with two test cases
+
+        WHEN: _generate_plan_step_execution_steps is called
+
+        THEN: Two ExecutionStep objects should be created
+        AND: The first step should have reinstall_app set to True
+        AND: The second step should have reinstall_app set to False
+        """
+        mock_test_plan.recording_strategy = "per_test"
+        mock_step.test_cases = [
+            MagicMock(spec=StepTestCase, test_target="target_1"),
+            MagicMock(spec=StepTestCase, test_target="target_1"),
+        ]
+        execution_steps = ExecutionPlan._generate_plan_step_execution_steps(
+            test_plan=mock_test_plan,
+            step=mock_step,
+            repetition=1,
+            step_repetition=1,
+            xc_test_targets=mock_xc_test_targets,
+        )
+
+        assert len(execution_steps) == 2
+        assert execution_steps[0].reinstall_app is True
+        assert execution_steps[1].reinstall_app is False
+
+    def test_missing_test_target(self, mock_test_plan, mock_step):
+        """
+        GIVEN: A test plan with a single step and a single test case with a test target that does not exist
+
+        WHEN: _generate_plan_step_execution_steps is called
+
+        THEN: A ValueError should be raised
+        """
+        mock_step.test_cases = [
+            MagicMock(spec=StepTestCase, test_target="missing_target")
+        ]
+        xc_test_targets = {"target_1": MagicMock(spec=XcTestTarget)}
+
+        with pytest.raises(ValueError, match="Test target 'missing_target' not found"):
+            ExecutionPlan._generate_plan_step_execution_steps(
+                test_plan=mock_test_plan,
+                step=mock_step,
+                repetition=1,
+                step_repetition=1,
+                xc_test_targets=xc_test_targets,
+            )
+
+    def test_invalid_recording_strategy(
+        self, mock_test_plan, mock_step, mock_xc_test_targets
+    ):
+        """
+        GIVEN: A test plan with an invalid recording strategy
+
+        WHEN: _generate_plan_step_execution_steps is called
+
+        THEN: A ValueError should be raised
+        """
+        mock_test_plan.recording_strategy = "invalid_strategy"
+        mock_step.test_cases = [MagicMock(test_target="target_1")]
+
+        with pytest.raises(
+            ValueError, match="Invalid recording strategy: invalid_strategy"
+        ):
+            ExecutionPlan._generate_plan_step_execution_steps(
+                test_plan=mock_test_plan,
+                step=mock_step,
+                repetition=1,
+                step_repetition=1,
+                xc_test_targets=mock_xc_test_targets,
+            )
