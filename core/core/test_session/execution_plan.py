@@ -104,6 +104,8 @@ class ExecutionPlan:
         test_targets: dict[str, XcTestTarget] = {}
 
         for test_target in xc_test_configuration.TestTargets:
+            # BlueprintName is the name of the test target and can be used to identify if xctest ids have a valid test
+            # suite name.
             test_targets[test_target.BlueprintName] = test_target
 
         return test_targets
