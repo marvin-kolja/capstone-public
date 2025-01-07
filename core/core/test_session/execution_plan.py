@@ -199,6 +199,8 @@ class ExecutionPlan:
                         test_target=test_target,
                     )
                 )
+        else:
+            raise ValueError(f"Invalid recording strategy: {recording_strategy}")
 
         return execution_steps
 
