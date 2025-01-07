@@ -1,6 +1,7 @@
-import os
 import pathlib
 import shutil
+
+import pytest
 
 from core.app.xc_app import XcApp
 
@@ -30,3 +31,20 @@ class TestXcApp:
         assert info_plist.CFBundleDisplayName is None
         assert info_plist.MinimumOSVersion == "17.3"
         assert info_plist.LSRequiresIPhoneOS is True
+
+    def test_parse_info_plist_file_not_found(self, tmp_path):
+        """
+        GIVEN: A path to an .app package.
+        AND: No Info.plist file in the .app package.
+
+        WHEN: The `parse_info_plist` method is called.
+
+        THEN: A `FileNotFoundError` is raised.
+        """
+        fake_app_path = pathlib.Path(tmp_path, "Placeholder.app")
+        fake_app_path.mkdir()
+
+        app = XcApp(fake_app_path.absolute().as_posix())
+
+        with pytest.raises(FileNotFoundError):
+            app.parse_info_plist()
