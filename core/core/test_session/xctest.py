@@ -15,7 +15,7 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     XcodebuildTestCommand,
 )
-from core.test_session.xctestrun_parser import Xctestrun
+from core.test_session.xctestrun import Xctestrun
 
 logger = logging.getLogger(__name__)
 
