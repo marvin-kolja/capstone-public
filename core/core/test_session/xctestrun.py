@@ -56,6 +56,27 @@ class XcTestTarget(BaseModel):
             raise ValueError(f"Path '{value}' contains the '__TESTROOT__' placeholder")
         return value
 
+    @property
+    def app_path(self) -> str:
+        """
+        Get the path to the app that is being tested. If the test target is a UI test target, this property will return
+        the path to the ``UITargetAppPath`` as that is the path to the app that is being tested. Otherwise, it will
+        return the path to the ``TestHostPath``.
+        """
+        if self.UITargetAppPath is not None:
+            return self.UITargetAppPath
+        return self.TestHostPath
+
+    @property
+    def ui_test_app_path(self) -> Optional[str]:
+        """
+        If the test target is a UI test target, this property will return the path to the ``TestHostPath`` as that is
+        the path to the UI test app.
+        """
+        if self.UITargetAppPath is None:
+            return None
+        return self.TestHostPath
+
 
 class XcTestConfiguration(BaseModel):
     """

@@ -53,3 +53,23 @@ class TestXctestrun:
         returned_configuration = xctestrun.extract_test_configuration_with_name("name")
 
         assert returned_configuration == test_configuration
+
+
+class TestXcTestTarget:
+    def test_app_path_properties(self, example_xctestrun):
+        """
+        GIVEN a valid XcTestTarget object
+
+        WHEN the app_path and ui_test_app_path properties are accessed
+
+        THEN the matching paths should be returned depending on the target type (unit or UI test)
+        """
+        unit_test_target = example_xctestrun.TestConfigurations[0].TestTargets[0]
+
+        assert unit_test_target.app_path == unit_test_target.TestHostPath
+        assert unit_test_target.ui_test_app_path is None
+
+        ui_test_target = example_xctestrun.TestConfigurations[0].TestTargets[1]
+
+        assert ui_test_target.app_path == ui_test_target.UITargetAppPath
+        assert ui_test_target.ui_test_app_path == ui_test_target.TestHostPath

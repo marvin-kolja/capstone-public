@@ -14,6 +14,7 @@ from pymobiledevice3.remote.tunnel_service import (
 
 from core.async_socket import ClientSocket
 from core.codec.socket_json_codec import SocketMessageJSONCodec
+from core.test_session.xctest import Xctest
 from core.tunnel.client import get_tunnel_client
 from core.tunnel.interface import TunnelResult
 
@@ -135,6 +136,14 @@ def example_xctestrun_path():
     """
     current_dir = pathlib.Path(os.path.abspath(__file__)).parent
     return pathlib.Path(current_dir, "..", "test_data", "Example.xctestrun")
+
+
+@pytest.fixture()
+def example_xctestrun(example_xctestrun_path):
+    """
+    Fixture to parse the `example_xctestrun_path` and return the parsed xctestrun.
+    """
+    return Xctest.parse_xctestrun(example_xctestrun_path.absolute().as_posix())
 
 
 @pytest.fixture(scope="session")
