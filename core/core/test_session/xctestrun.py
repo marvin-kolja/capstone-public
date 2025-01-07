@@ -87,3 +87,17 @@ class Xctestrun(BaseModel):
     TestConfigurations: list[XcTestConfiguration]
     TestPlan: XcTestPlan
     __xctestrun_metadata__: XcTestrunMetadata
+
+    def extract_test_configuration_with_name(self, name: str) -> XcTestConfiguration:
+        """
+        Extract the test configuration from the xctestrun file that matches the provided name.
+
+        :param name: The name of the test configuration to extract.
+        :return: The test configuration that matches the provided name.
+        :raises ValueError: when the test configuration with the provided name is not found.
+        """
+        for configuration in self.TestConfigurations:
+            if configuration.Name == name:
+                return configuration
+
+        raise ValueError(f"Test configuration '{name}' not found in xctestrun")
