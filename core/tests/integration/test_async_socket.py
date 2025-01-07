@@ -86,7 +86,7 @@ class TestSocket:
             with ClientSocket(port=port) as client_socket:
                 await client_socket.send(message)
                 # We need to wait for a bit to make sure the message is actually sent
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0.1)
 
         async def server_receive_message(message: ClientRequest):
             with ServerSocket(port=port) as server_socket:
