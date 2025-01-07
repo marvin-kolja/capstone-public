@@ -12,6 +12,60 @@ from core.test_session.plan import (
 )
 
 
+@pytest.mark.parametrize("recording_start_strategy", ["launch", "attach"])
+@pytest.mark.parametrize("repetition_strategy", ["entire_suite", "per_step"])
+@pytest.mark.parametrize("recording_strategy", ["per_step", "per_test"])
+@pytest.mark.parametrize("reinstall_app", [True, False])
+@pytest.fixture
+def example_test_plan(
+    example_xctestrun_path,
+    recording_start_strategy,
+    repetition_strategy,
+    recording_strategy,
+    reinstall_app,
+):
+    return SessionTestPlan(
+        xctestrun_config=XctestrunConfig(
+            path=example_xctestrun_path.absolute().as_posix(),
+            test_configuration="Test Scheme Action",  # This is based on the example xctestrun file
+        ),
+        recording_start_strategy=recording_start_strategy,
+        repetition_strategy=repetition_strategy,
+        recording_strategy=recording_strategy,
+        reinstall_app=reinstall_app,
+        metrics=[Metric.cpu, Metric.fps],
+        repetitions=2,
+        steps=[
+            PlanStep(
+                order=0,
+                repetitions=2,
+                reinstall_app=False,
+                test_cases=[
+                    StepTestCase(
+                        xctest_id="PlaceholderUITests/PlaceholderUITests/testExample",
+                        # This is based on the example xctestrun file
+                    ),
+                    StepTestCase(
+                        xctest_id="PlaceholderUITests/PlaceholderUITests/testExample2",
+                        # This is based on the example xctestrun file
+                    ),
+                ],
+            ),
+            PlanStep(
+                order=1,
+                repetitions=1,
+                reinstall_app=True,
+                test_cases=[
+                    StepTestCase(
+                        xctest_id="PlaceholderUITests/PlaceholderUITests/testLaunchPerformance",
+                        # This is based on the example xctestrun file
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 class TestExecutionPlan:
     def test_convert_test_targets_to_dict(self, example_xctestrun):
         """
@@ -63,18 +117,10 @@ class TestExecutionPlan:
                         TestTarget.ui_test_app_path + "/Info.plist"
                     )
 
-    @pytest.mark.parametrize("recording_start_strategy", ["launch", "attach"])
-    @pytest.mark.parametrize("repetition_strategy", ["entire_suite", "per_step"])
-    @pytest.mark.parametrize("recording_strategy", ["per_step", "per_test"])
-    @pytest.mark.parametrize("reinstall_app", [True, False])
     def test_plan_execution_steps(
         self,
-        example_xctestrun_path,
+        example_test_plan,
         example_xctestrun,
-        recording_start_strategy,
-        repetition_strategy,
-        recording_strategy,
-        reinstall_app,
     ):
         """
         GIVEN: A SessionTestPlan object
@@ -84,50 +130,9 @@ class TestExecutionPlan:
         THEN: The correct amount of ExecutionStep objects should be created based on the test plan
         AND: The order of the steps should be correct based on the repetition numbers
         """
-        session_test_plan = SessionTestPlan(
-            xctestrun_config=XctestrunConfig(
-                path=example_xctestrun_path.absolute().as_posix(),
-                test_configuration="Test Scheme Action",  # This is based on the example xctestrun file
-            ),
-            recording_start_strategy=recording_start_strategy,
-            repetition_strategy=repetition_strategy,
-            recording_strategy=recording_strategy,
-            reinstall_app=reinstall_app,
-            metrics=[Metric.cpu, Metric.fps],
-            repetitions=2,
-            steps=[
-                PlanStep(
-                    order=0,
-                    repetitions=2,
-                    reinstall_app=False,
-                    test_cases=[
-                        StepTestCase(
-                            xctest_id="PlaceholderUITests/PlaceholderUITests/testExample",
-                            # This is based on the example xctestrun file
-                        ),
-                        StepTestCase(
-                            xctest_id="PlaceholderUITests/PlaceholderUITests/testExample2",
-                            # This is based on the example xctestrun file
-                        ),
-                    ],
-                ),
-                PlanStep(
-                    order=1,
-                    repetitions=1,
-                    reinstall_app=True,
-                    test_cases=[
-                        StepTestCase(
-                            xctest_id="PlaceholderUITests/PlaceholderUITests/testLaunchPerformance",
-                            # This is based on the example xctestrun file
-                        ),
-                    ],
-                ),
-            ],
-        )
-
         test_configuration = example_xctestrun.TestConfigurations[0]
         execution_steps = ExecutionPlan._plan_execution_steps(
-            session_test_plan,
+            example_test_plan,
             {
                 "PlaceholderTests": test_configuration.TestTargets[0],
                 "PlaceholderUITests": test_configuration.TestTargets[1],
@@ -135,22 +140,22 @@ class TestExecutionPlan:
         )
 
         # Count validation
-        if recording_strategy == "per_step":
+        if example_test_plan.recording_strategy == "per_step":
             expected_count = (
-                sum(step.repetitions for step in session_test_plan.steps)
-                * session_test_plan.repetitions
+                sum(step.repetitions for step in example_test_plan.steps)
+                * example_test_plan.repetitions
             )
             assert len(execution_steps) == expected_count, (
                 f"Expected {expected_count} steps for 'per_step', "
                 f"but got {len(execution_steps)}."
             )
-        elif recording_strategy == "per_test":
+        elif example_test_plan.recording_strategy == "per_test":
             expected_count = (
                 sum(
                     len(step.test_cases) * step.repetitions
-                    for step in session_test_plan.steps
+                    for step in example_test_plan.steps
                 )
-                * session_test_plan.repetitions
+                * example_test_plan.repetitions
             )
             assert len(execution_steps) == expected_count, (
                 f"Expected {expected_count} steps for 'per_test', "
