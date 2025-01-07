@@ -136,7 +136,71 @@ class ExecutionPlan:
         Generate the execution steps for a single test plan step based on the test plan, step, xc test targets, and
         repetitions.
         """
-        raise NotImplementedError
+        execution_steps: list[ExecutionStep] = []
+        recording_strategy = test_plan.recording_strategy
+
+        # Determine correct recording start strategy
+        #
+        # This is never None, but IntelliJ does not seem to understand that
+        # noinspection PyTypeChecker
+        recording_start_strategy: Literal["launch", "attach"] = (
+            step.recording_start_strategy or test_plan.recording_start_strategy
+        )
+
+        # Determine correct reinstall app strategy
+        reinstall_app = (
+            step.reinstall_app
+            if step.reinstall_app is not None
+            else test_plan.reinstall_app
+        )
+
+        # Determine correct metrics
+        metrics = step.metrics if step.metrics is not None else test_plan.metrics
+
+        # NOTE: We assume that all test cases in a step are from the same test target here as test cases are validated
+        # that way. Thus, we can safely get the test target name from the first test case.
+        test_target_name = step.test_cases[0].test_target
+
+        if (test_target := xc_test_targets.get(test_target_name)) is None:
+            raise ValueError(
+                f"Test target '{test_target_name}' not found in xctestrun file {test_plan.xctestrun_config.path}"
+            )
+
+        if recording_strategy == "per_step":
+            execution_steps.append(
+                ExecutionStep(
+                    plan_repetition=repetition,
+                    step=step,
+                    step_repetition=step_repetition,
+                    recording_start_strategy=recording_start_strategy,
+                    reinstall_app=reinstall_app,
+                    metrics=metrics,
+                    test_cases=step.test_cases,
+                    end_on_failure=test_plan.end_on_failure,
+                    test_target=test_target,
+                )
+            )
+        elif recording_strategy == "per_test":
+            for idx, test_case in enumerate(step.test_cases):
+                first_in_step = idx == 0
+                should_reinstall_app = first_in_step and reinstall_app
+                # Ensure the app is reinstalled ONLY once per step, if required
+
+                execution_steps.append(
+                    ExecutionStep(
+                        plan_repetition=repetition,
+                        step=step,
+                        step_repetition=step_repetition,
+                        recording_start_strategy=recording_start_strategy,
+                        reinstall_app=should_reinstall_app,
+                        metrics=metrics,
+                        test_cases=[test_case],
+                        end_on_failure=test_plan.end_on_failure,
+                        test_target=test_target,
+                    )
+                )
+
+        return execution_steps
 
     @staticmethod
     def _convert_test_targets_to_dict(
