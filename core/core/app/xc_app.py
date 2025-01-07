@@ -19,6 +19,13 @@ class XcApp:
         logger.debug(f"Initializing XcApp with path: {path}")
         self._path = path
 
+    @property
+    def path(self) -> str:
+        """
+        The path to the .app package.
+        """
+        return self._path
+
     def parse_info_plist(self) -> InfoPlist:
         """
         Reads the Info.plist file from the .app package and parses it.

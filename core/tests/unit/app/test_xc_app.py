@@ -48,3 +48,18 @@ class TestXcApp:
 
         with pytest.raises(FileNotFoundError):
             app.parse_info_plist()
+
+    def test_path_property(self, tmp_path):
+        """
+        GIVEN: A path to an .app package.
+
+        WHEN: The `path` property is accessed.
+
+        THEN: The correct path to the .app package is returned.
+        """
+        fake_app_path = pathlib.Path(tmp_path, "Placeholder.app")
+        fake_app_path.mkdir()
+
+        app = XcApp(fake_app_path.absolute().as_posix())
+
+        assert app.path == fake_app_path.absolute().as_posix()
