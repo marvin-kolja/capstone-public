@@ -3,6 +3,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel
 
 from core.app.info_plist import InfoPlist
+from core.app.xc_app import XcApp
 from core.test_session.metrics import Metric
 from core.test_session.plan import PlanStep, StepTestCase, SessionTestPlan
 from core.test_session.xctest import Xctest
@@ -110,4 +111,20 @@ class ExecutionPlan:
 
         :param test_targets: The test targets to extract the info plists from.
         """
-        raise NotImplementedError
+
+        info_plists: dict[str, InfoPlist] = {}
+
+        for test_target in test_targets:
+            target_app = XcApp(test_target.app_path)
+
+            if target_app.path not in info_plists:
+                info_plist = target_app.parse_info_plist()
+                info_plists[target_app.path] = info_plist
+
+            if test_target.ui_test_app_path is not None:
+                ui_test_app = XcApp(test_target.ui_test_app_path)
+                if ui_test_app.path not in info_plists:
+                    ui_info_plist = ui_test_app.parse_info_plist()
+                    info_plists[ui_test_app.path] = ui_info_plist
+
+        return info_plists
