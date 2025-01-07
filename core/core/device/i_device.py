@@ -337,3 +337,20 @@ class IDevice:
         await rsd.connect()
 
         self._rsd = rsd
+
+    def check_dvt_ready(self):
+        """
+        Check if the device is ready to be used for DVT.
+
+        Makes all the required checks in all possible branches to ensure the device is ready to be used for DVT.
+
+        :raises DeviceNotReadyForDvt: When the device is not ready for DVT.
+        """
+        if not self.paired:
+            raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.DeviceNotPaired
+        if self.requires_developer_mode and not self.developer_mode_enabled:
+            raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.DeveloperModeNotEnabled
+        if not self.ddi_mounted:
+            raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.DdiNotMounted
+        if self.requires_tunnel_for_developer_tools and self.rsd is None:
+            raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.RsdNotConnected

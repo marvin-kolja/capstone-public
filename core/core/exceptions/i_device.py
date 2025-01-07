@@ -102,3 +102,18 @@ class AppListError(CoreException):
     """Errors related to listing installed apps"""
 
     pass
+
+
+class RsdNotConnected(CoreException):
+    """Raised when no rsd connection is established to the device"""
+
+    pass
+
+
+class DeviceNotReadyForDvt(CoreException):
+    """
+    Raised when the device is not ready for developer services that use ``pymobiledevice3``'s
+    ``DvtSecureSocketProxyService``.
+    """
+
+    pass
