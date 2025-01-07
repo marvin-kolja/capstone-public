@@ -101,7 +101,12 @@ class ExecutionPlan:
 
         :param xc_test_configuration: The test configuration to extract the test targets from.
         """
-        raise NotImplementedError
+        test_targets: dict[str, XcTestTarget] = {}
+
+        for test_target in xc_test_configuration.TestTargets:
+            test_targets[test_target.BlueprintName] = test_target
+
+        return test_targets
 
     @staticmethod
     def _extract_info_plists(test_targets: list[XcTestTarget]) -> dict[str, InfoPlist]:
