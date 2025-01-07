@@ -90,6 +90,51 @@ class ExecutionPlan:
         Plan the execution steps based on the test plan. This will create a list of `ExecutionStep` instances that
         represent the steps to be executed in the test session.
         """
+        execution_steps: list[ExecutionStep] = []
+
+        if test_plan.repetition_strategy == "entire_suite":
+            for repetition in range(test_plan.repetitions):
+                for step in test_plan.steps:
+                    for step_repetition in range(step.repetitions):
+                        execution_steps.extend(
+                            ExecutionPlan._create_execution_steps(
+                                test_plan=test_plan,
+                                step=step,
+                                step_repetition=step_repetition,
+                                repetition=repetition,
+                                xc_test_targets=xc_test_targets,
+                            )
+                        )
+        elif test_plan.repetition_strategy == "per_step":
+            for step in test_plan.steps:
+                repetitions = step.repetitions * test_plan.repetitions
+                for current_repetition in range(repetitions):
+                    execution_steps.extend(
+                        ExecutionPlan._create_execution_steps(
+                            test_plan=test_plan,
+                            step=step,
+                            step_repetition=current_repetition,
+                            repetition=0,
+                            xc_test_targets=xc_test_targets,
+                        )
+                    )
+        else:
+            raise ValueError(
+                f"Invalid repetition strategy: {test_plan.repetition_strategy}"
+            )
+        return execution_steps
+
+    @staticmethod
+    def _create_execution_steps(
+        test_plan: SessionTestPlan,
+        step: PlanStep,
+        repetition: int,
+        step_repetition: int,
+        xc_test_targets: dict[str, XcTestTarget],
+    ) -> list[ExecutionStep]:
+        """
+        Create execution steps based on the test plan, step, xc test targets, and repetitions.
+        """
         raise NotImplementedError
 
     @staticmethod
