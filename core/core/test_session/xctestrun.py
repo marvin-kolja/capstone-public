@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 
 
@@ -44,6 +44,17 @@ class XcTestTarget(BaseModel):
     TestBundleDestinationRelativePath: Optional[str] = None
     PreferredScreenCaptureFormat: Optional[str] = None
     TestingEnvironmentVariables: dict[str, str] = dict
+
+    @field_validator("TestHostPath", "UITargetAppPath", mode="before")
+    def validate_test_host_and_ui_target_app_paths(cls, value):
+        """
+        Make sure that the path do not contain __TESTROOT__ placeholder.
+        """
+        if value is None:
+            return value
+        if "__TESTROOT__" in value:
+            raise ValueError(f"Path '{value}' contains the '__TESTROOT__' placeholder")
+        return value
 
 
 class XcTestConfiguration(BaseModel):

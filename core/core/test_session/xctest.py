@@ -229,22 +229,17 @@ class Xctest:
         :param path: The path to the xctestrun file.
         """
         plist_data = read_plist(path)
-        xctestrun = Xctestrun.model_validate(plist_data)
 
-        for test_configuration in xctestrun.TestConfigurations:
-            for test_target in test_configuration.TestTargets:
+        for test_configuration in plist_data["TestConfigurations"]:
+            for test_target in test_configuration["TestTargets"]:
                 keys = ["TestHostPath", "UITargetAppPath"]
 
                 for key in keys:
-                    value = getattr(test_target, key)
+                    value = test_target.get(key)
                     if value:
-                        setattr(
-                            test_target,
-                            key,
-                            value.replace(
-                                "__TESTROOT__",
-                                pathlib.Path(path).absolute().parent.as_posix(),
-                            ),
+                        test_target[key] = value.replace(
+                            "__TESTROOT__",
+                            pathlib.Path(path).absolute().parent.as_posix(),
                         )
 
-        return xctestrun
+        return Xctestrun.model_validate(plist_data)
