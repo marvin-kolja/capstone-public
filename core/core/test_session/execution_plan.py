@@ -78,16 +78,16 @@ class ExecutionPlan:
             list(self.xc_test_targets.values())
         )
 
-        self.execution_steps = self._plan_execution_steps(
+        self.execution_steps = self._generate_execution_steps(
             self.test_plan, self.xc_test_targets
         )
 
     @staticmethod
-    def _plan_execution_steps(
+    def _generate_execution_steps(
         test_plan: SessionTestPlan, xc_test_targets: dict[str, XcTestTarget]
     ) -> list[ExecutionStep]:
         """
-        Plan the execution steps based on the test plan. This will create a list of `ExecutionStep` instances that
+        Plan the execution steps based on the test plan. This will generate a list of `ExecutionStep` that
         represent the steps to be executed in the test session.
         """
         execution_steps: list[ExecutionStep] = []
@@ -97,7 +97,7 @@ class ExecutionPlan:
                 for step in test_plan.steps:
                     for step_repetition in range(step.repetitions):
                         execution_steps.extend(
-                            ExecutionPlan._create_execution_steps(
+                            ExecutionPlan._generate_plan_step_execution_steps(
                                 test_plan=test_plan,
                                 step=step,
                                 step_repetition=step_repetition,
@@ -110,7 +110,7 @@ class ExecutionPlan:
                 repetitions = step.repetitions * test_plan.repetitions
                 for current_repetition in range(repetitions):
                     execution_steps.extend(
-                        ExecutionPlan._create_execution_steps(
+                        ExecutionPlan._generate_plan_step_execution_steps(
                             test_plan=test_plan,
                             step=step,
                             step_repetition=current_repetition,
@@ -125,7 +125,7 @@ class ExecutionPlan:
         return execution_steps
 
     @staticmethod
-    def _create_execution_steps(
+    def _generate_plan_step_execution_steps(
         test_plan: SessionTestPlan,
         step: PlanStep,
         repetition: int,
@@ -133,7 +133,8 @@ class ExecutionPlan:
         xc_test_targets: dict[str, XcTestTarget],
     ) -> list[ExecutionStep]:
         """
-        Create execution steps based on the test plan, step, xc test targets, and repetitions.
+        Generate the execution steps for a single test plan step based on the test plan, step, xc test targets, and
+        repetitions.
         """
         raise NotImplementedError
 

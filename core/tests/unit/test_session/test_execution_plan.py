@@ -122,11 +122,11 @@ class TestExecutionPlan:
                 ],
             )
 
-        def test_plan_execution_steps(self, example_xctestrun):
+        def test_generate_execution_steps(self, example_xctestrun):
             """
             GIVEN: A SessionTestPlan object
 
-            WHEN: _plan_execution_steps is called
+            WHEN: _generate_execution_steps is called
 
             THEN: The correct amount of ExecutionStep objects should be created based on the test plan
             AND: The order of the steps should be correct based on the repetition numbers
@@ -134,7 +134,7 @@ class TestExecutionPlan:
             example_test_plan = self.session_test_plan
 
             test_configuration = example_xctestrun.TestConfigurations[0]
-            execution_steps = ExecutionPlan._plan_execution_steps(
+            execution_steps = ExecutionPlan._generate_execution_steps(
                 example_test_plan,
                 {
                     "PlaceholderTests": test_configuration.TestTargets[0],
