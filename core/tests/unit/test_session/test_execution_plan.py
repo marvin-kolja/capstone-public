@@ -186,3 +186,37 @@ class TestExecutionPlan:
                     assert (
                         step.step_repetition == 0
                     ), "First step should have repetition 0."
+
+        def test_generate_execution_steps_execution_step_creation_count(
+            self,
+            example_xctestrun,
+        ):
+            """
+            GIVEN: A SessionTestPlan object
+
+            WHEN: _generate_execution_steps is called
+
+            THEN: The _generate_plan_step_execution_steps method should be called the correct amount of times
+            """
+            example_test_plan = self.session_test_plan
+
+            test_configuration = example_xctestrun.TestConfigurations[0]
+
+            with patch(
+                "core.test_session.execution_plan.ExecutionPlan._generate_plan_step_execution_steps"
+            ) as mock_generate_plan_step_execution_steps:
+                ExecutionPlan._generate_execution_steps(
+                    example_test_plan,
+                    {
+                        "PlaceholderTests": test_configuration.TestTargets[0],
+                        "PlaceholderUITests": test_configuration.TestTargets[1],
+                    },
+                )
+
+                expected_count = (
+                    sum(step.repetitions for step in example_test_plan.steps)
+                    * example_test_plan.repetitions
+                )
+                assert (
+                    mock_generate_plan_step_execution_steps.call_count == expected_count
+                )
