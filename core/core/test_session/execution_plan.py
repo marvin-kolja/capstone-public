@@ -135,6 +135,9 @@ class ExecutionPlan:
         """
         Generate the execution steps for a single test plan step based on the test plan, step, xc test targets, and
         repetitions.
+
+        :raises ValueError: If the test target is not found in the xctestrun file or if the recording strategy is
+        invalid.
         """
         execution_steps: list[ExecutionStep] = []
         recording_strategy = test_plan.recording_strategy
