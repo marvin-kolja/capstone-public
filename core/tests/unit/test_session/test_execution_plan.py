@@ -271,6 +271,7 @@ class TestExecutionPlan:
         AND: The second step should have reinstall_app set to False
         """
         mock_test_plan.recording_strategy = "per_test"
+        mock_test_plan.steps = [mock_step]
         mock_step.test_cases = [
             StepTestCase(
                 xctest_id="target_1/test_class/test",
@@ -299,6 +300,7 @@ class TestExecutionPlan:
 
         THEN: A ValueError should be raised
         """
+        mock_test_plan.steps = [mock_step]
         mock_step.test_cases = [
             MagicMock(spec=StepTestCase, test_target="missing_target")
         ]
@@ -324,6 +326,7 @@ class TestExecutionPlan:
         THEN: A ValueError should be raised
         """
         mock_test_plan.recording_strategy = "invalid_strategy"
+        mock_test_plan.steps = [mock_step]
         mock_step.test_cases = [MagicMock(test_target="target_1")]
 
         with pytest.raises(
