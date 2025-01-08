@@ -240,10 +240,11 @@ class TestSession:
 
             await session._run_execution_plan()
 
-            assert mock_run_execution_step.await_count == 1
             if end_on_failure:
+                assert mock_run_execution_step.await_count == 1
                 assert mock_execution_step_state.set_failed.call_count == 1
                 assert mock_next_step.call_count == 1
             else:
+                assert mock_run_execution_step.await_count == 2
                 assert mock_execution_step_state.set_failed.call_count == 2
                 assert mock_next_step.call_count == 2
