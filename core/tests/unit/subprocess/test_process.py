@@ -211,3 +211,17 @@ class TestProcess:
         mock_asyncio_process.wait.assert_awaited_once()
         assert stdout == [line]
         assert stderr == [line]
+
+    @pytest.mark.asyncio
+    async def test_wait_not_running(self, process):
+        """
+        GIVEN: A process instance
+
+        WHEN: Calling the `wait` method
+
+        THEN: The method should return empty lists
+        """
+        stdout, stderr = await process.wait()
+
+        assert stdout == []
+        assert stderr == []
