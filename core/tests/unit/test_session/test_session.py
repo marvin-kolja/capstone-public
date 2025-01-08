@@ -200,3 +200,58 @@ class TestSession:
             assert mock_execution_step_state.set_running.call_count == 100
             mock_execution_step_state.set_completed.assert_called()
             assert mock_execution_step_state.set_completed.call_count == 100
+
+    @pytest.mark.parametrize("end_on_failure", [True, False])
+    @pytest.mark.asyncio
+    async def test_run_execution_plan_failure(
+        self,
+        mock_execution_plan,
+        mock_execution_step,
+        end_on_failure,
+    ):
+        """
+        GIVEN: A test session
+
+        WHEN: Running the execution plan and an exception occurs
+
+        THEN: The session should set the step state to failed
+        AND: If the test plan is set to end on failure, it should break the loop
+        """
+        mock_execution_plan.execution_steps = [mock_execution_step, mock_execution_step]
+        # Two steps to ensure the loop breaks after the first failure
+
+        mock_execution_plan.test_plan.end_on_failure = end_on_failure
+
+        session = Session(
+            execution_plan=mock_execution_plan,
+            session_id=MagicMock(),
+            device=MagicMock(),
+            output_dir=MagicMock(),
+        )
+
+        mock_execution_step_state = MagicMock(spec=ExecutionStepState)
+
+        with patch.object(
+            session._session_state,
+            "next_execution_step",
+            return_value=mock_execution_step_state,
+        ) as mock_next_step, patch.object(
+            session, "_run_execution_step"
+        ) as mock_run_execution_step:
+            mock_run_execution_step.side_effect = Exception
+
+            await session._run_execution_plan()
+
+            mock_run_execution_step.assert_called()
+            assert mock_run_execution_step.await_count == 1
+
+            mock_next_step.assert_called()
+            mock_execution_step_state.set_running.assert_called()
+            mock_execution_step_state.set_failed.assert_called()
+
+            if end_on_failure:
+                assert mock_execution_step_state.set_failed.call_count == 1
+                assert mock_next_step.call_count == 1
+            else:
+                assert mock_execution_step_state.set_failed.call_count == 2
+                assert mock_next_step.call_count == 2

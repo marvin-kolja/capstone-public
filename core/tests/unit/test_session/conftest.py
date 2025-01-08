@@ -53,6 +53,7 @@ def mock_execution_plan():
     return MagicMock(
         spec=ExecutionPlan,
         execution_steps=[],
+        test_plan=MagicMock(),
     )
 
 
