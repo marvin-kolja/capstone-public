@@ -225,3 +225,21 @@ class TestProcess:
 
         assert stdout == []
         assert stderr == []
+
+    @pytest.mark.parametrize("sig", [signal.SIGTERM, signal.SIGKILL, signal.SIGINT])
+    @pytest.mark.asyncio
+    async def test_send_signal(self, mock_asyncio_process, mock_os_kill, process, sig):
+        """
+        GIVEN: A process instance
+        AND: A mocked asyncio subprocess process
+
+        WHEN: Sending a signal to the process
+
+        THEN: The `os.kill` should be called with the correct signal
+        """
+        process._Process__process = mock_asyncio_process
+        mock_asyncio_process.returncode = None
+
+        process.send_signal(sig)
+
+        mock_os_kill.assert_called_once_with(mock_asyncio_process.pid, sig)

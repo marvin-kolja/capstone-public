@@ -128,6 +128,10 @@ class Process:
         if self.is_running:
             self._send_signal(self.__process.pid, signal.SIGKILL)
 
+    def send_signal(self, sig: signal.Signals):
+        if self.is_running:
+            self._send_signal(self.__process.pid, sig)
+
     async def wait(self) -> tuple[list[str], list[str]]:
         """
         Wait for the process to finish and return the stdout and stderr as a tuple.
