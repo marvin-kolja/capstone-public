@@ -193,12 +193,10 @@ class TestSession:
             session, "_run_execution_step"
         ) as mock_run_execution_step:
             await session._run_execution_plan()
-            mock_next_step.assert_called()
+
             assert mock_next_step.call_count == 100
             assert mock_run_execution_step.await_count == 100
-            mock_execution_step_state.set_running.assert_called()
             assert mock_execution_step_state.set_running.call_count == 100
-            mock_execution_step_state.set_completed.assert_called()
             assert mock_execution_step_state.set_completed.call_count == 100
 
     @pytest.mark.parametrize("end_on_failure", [True, False])
@@ -242,13 +240,7 @@ class TestSession:
 
             await session._run_execution_plan()
 
-            mock_run_execution_step.assert_called()
             assert mock_run_execution_step.await_count == 1
-
-            mock_next_step.assert_called()
-            mock_execution_step_state.set_running.assert_called()
-            mock_execution_step_state.set_failed.assert_called()
-
             if end_on_failure:
                 assert mock_execution_step_state.set_failed.call_count == 1
                 assert mock_next_step.call_count == 1
