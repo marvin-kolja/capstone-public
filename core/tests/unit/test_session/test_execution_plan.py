@@ -146,6 +146,9 @@ class TestExecutionPlan:
                 },
             )
 
+            # Make sure that very first execution step always has reinstall_app set to True
+            assert execution_steps[0].reinstall_app is True
+
             # Count validation
             if example_test_plan.recording_strategy == "per_step":
                 expected_count = (
