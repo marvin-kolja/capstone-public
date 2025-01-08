@@ -74,3 +74,15 @@ class SessionState:
         Gets the total number of execution
         """
         return len(self._execution_plan.execution_steps)
+
+    def next_execution_step(self) -> Optional[ExecutionStepState]:
+        """
+        Increment the current execution step index and return the next execution step state.
+
+        The returned execution step state will be stored in the execution step states dictionary.
+
+        :return: The next execution step as a state.
+
+        :raises IndexError: If the current execution step index is greater than the total execution steps.
+        """
+        raise NotImplementedError
