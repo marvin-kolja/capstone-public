@@ -2,18 +2,21 @@ import asyncio
 import os
 import pathlib
 from datetime import timedelta
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock
 
 import pytest
 import zmq
 import zmq.asyncio
+from pymobiledevice3.lockdown import UsbmuxLockdownClient
 from pymobiledevice3.remote.common import TunnelProtocol
 from pymobiledevice3.remote.tunnel_service import (
     TunnelResult as pymobiledevice3TunnelResult,
 )
+import pymobiledevice3.exceptions as pmd3_exceptions
 
 from core.async_socket import ClientSocket
 from core.codec.socket_json_codec import SocketMessageJSONCodec
+from core.device.i_device import IDevice
 from core.test_session.xctest import Xctest
 from core.tunnel.client import get_tunnel_client
 from core.tunnel.interface import TunnelResult
@@ -153,3 +156,25 @@ def example_info_plist_path():
     """
     current_dir = pathlib.Path(os.path.abspath(__file__)).parent
     return pathlib.Path(current_dir, "..", "test_data", "Example-Info.plist")
+
+
+@pytest.fixture()
+def mock_usbmux_lockdown_client(
+    paired, developer_mode_enabled, product_version, fake_udid
+) -> UsbmuxLockdownClient:
+    mock_instance = MagicMock(spec=UsbmuxLockdownClient)
+    mock_instance.product_version = product_version
+    mock_instance.paired = paired
+    if not paired:
+        type(mock_instance).developer_mode_status = PropertyMock(
+            side_effect=pmd3_exceptions.NotPairedError()
+        )
+    else:
+        mock_instance.developer_mode_status = developer_mode_enabled
+    mock_instance.udid = fake_udid
+    return mock_instance
+
+
+@pytest.fixture()
+def i_device_mocked_lockdown(mock_usbmux_lockdown_client):
+    return IDevice(lockdown_client=mock_usbmux_lockdown_client)
