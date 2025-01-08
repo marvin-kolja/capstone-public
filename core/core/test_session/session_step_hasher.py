@@ -17,4 +17,14 @@ def hash_session_execution_step(session_id: UUID, execution_step: ExecutionStep)
 
     :return: the hash of a string representing the dynamic parts of the execution step
     """
-    return Hasher.hash("")
+    input_string = (
+        f"{session_id}"
+        f"/{execution_step.plan_repetition}"
+        f"/{execution_step.step.order}"
+        f"/{execution_step.step_repetition}"
+    )
+
+    if len(execution_step.test_cases) == 1:
+        input_string += f"/{execution_step.test_cases[0].xctest_id}"
+
+    return Hasher.hash(input_string)
