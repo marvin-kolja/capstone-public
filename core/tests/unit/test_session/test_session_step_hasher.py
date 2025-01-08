@@ -8,14 +8,6 @@ from core.test_session.plan import PlanStep, StepTestCase
 from core.test_session.session_step_hasher import hash_session_execution_step
 
 
-@pytest.fixture
-def mock_execution_step():
-    return MagicMock(
-        spec=ExecutionStep,
-        step=MagicMock(spec=PlanStep, order=1, name="Test"),
-    )
-
-
 class TestSessionStepHasher:
     @pytest.mark.parametrize("plan_repetition", [0, 1])
     @pytest.mark.parametrize("step_order", [0, 1])

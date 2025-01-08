@@ -8,14 +8,6 @@ from core.test_session.plan import PlanStep, StepTestCase
 from core.test_session.session_state import SessionState, ExecutionStepState
 
 
-@pytest.fixture
-def mock_execution_plan():
-    return MagicMock(
-        spec=ExecutionPlan,
-        execution_steps=[],
-    )
-
-
 class TestSessionState:
 
     def test_init(self, mock_execution_plan):
