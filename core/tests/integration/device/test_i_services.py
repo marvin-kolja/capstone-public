@@ -8,6 +8,20 @@ from core.device.i_services import IServices
 
 class TestIServices:
     @pytest.mark.real_device
+    def test_uninstall_app_non_existing(self, device_udid):
+        """
+        GIVEN: An `IServices` instance
+
+        WHEN: Calling the `uninstall_app` method with a non-existing bundle ID
+
+        THEN: No exception is raised
+        """
+        device = IDeviceManager().get_device(udid=device_udid)
+        services = IServices(device=device)
+
+        services.uninstall_app(bundle_id="non.existing.bundle.id")
+
+    @pytest.mark.real_device
     def test_list_installed_apps_contains_ios_phone_app(self, device_udid):
         """
         GIVEN: An `IServices` instance
