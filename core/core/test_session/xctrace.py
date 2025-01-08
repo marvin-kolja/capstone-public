@@ -1,4 +1,5 @@
 import logging
+import signal
 from typing import Optional
 
 from core.subprocesses.process import async_run_process
@@ -38,7 +39,7 @@ class Xctrace:
             launch=app_to_launch,
         )
 
-        await async_run_process(command)
+        await async_run_process(command, signal_on_cancel=signal.SIGINT)
 
     @staticmethod
     async def record_attach(
@@ -71,7 +72,7 @@ class Xctrace:
             launch=None,
         )
 
-        await async_run_process(command)
+        await async_run_process(command, signal_on_cancel=signal.SIGINT)
 
     @staticmethod
     async def export_toc(trace_path: str, toc_path: str):
