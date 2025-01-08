@@ -49,6 +49,13 @@ class SessionState:
     """
     This class keeps track of the current state of the test session. It is responsible for managing the execution steps
     and also stores the execution step state (``ExecutionStepState``).
+
+    Attributes:
+        _execution_plan (ExecutionPlan): The execution plan for the test session.
+        _session_id (UUID): The unique identifier for the test session.
+        _execution_step_states (dict[str, ExecutionStepState]): The execution step states.
+        _current_execution_step_index (int): The current index of the execution step. It starts from -1, indicating
+            that the execution has not started, yet.
     """
 
     def __init__(self, execution_plan: ExecutionPlan, session_id: UUID):
