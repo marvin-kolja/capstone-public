@@ -71,4 +71,6 @@ class Session:
         """
         Uses the execution plan to execute the execution steps one by one.
         """
-        raise NotImplementedError
+        for _ in range(len(self._execution_plan.execution_steps)):
+            self._session_state.next_execution_step()
+            # TODO: run the execution step
