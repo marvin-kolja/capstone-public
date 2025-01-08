@@ -128,7 +128,7 @@ class Process:
         if self.is_running:
             self._send_signal(self.__process.pid, signal.SIGKILL)
 
-    async def wait(self) -> tuple[[str], [str]]:
+    async def wait(self) -> tuple[list[str], list[str]]:
         """
         Wait for the process to finish and return the stdout and stderr as a tuple.
 
@@ -143,6 +143,7 @@ class Process:
             atexit.unregister(self.kill)
             logger.debug("Unregistered kill at exit handler")
             return stdout, stderr
+        return [], []
 
     @staticmethod
     async def _read_stream(stream: asyncio.StreamReader) -> list[str]:
@@ -170,7 +171,7 @@ class Process:
 async def async_run_process(
     command: ProcessCommand,
     cwd: Optional[str] = None,
-) -> tuple[[str], [str]]:
+) -> tuple[list[str], list[str]]:
     """
     Convenience function to run a command using the `Process` class. It will create a new `Process` instance, execute
     the command and wait for the process to finish.
