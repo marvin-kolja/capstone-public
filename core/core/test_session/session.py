@@ -4,7 +4,7 @@ from uuid import UUID
 
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
-from core.test_session.execution_plan import ExecutionPlan
+from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.session_state import SessionState, ExecutionStepState
 
 logging.basicConfig(level=logging.DEBUG)
@@ -73,16 +73,20 @@ class Session:
         """
         for _ in range(len(self._execution_plan.execution_steps)):
             execution_step_state = self._session_state.next_execution_step()
-            await self._run_execution_step(execution_step_state)
+            execution_step_state.set_running()
+            try:
+                await self._run_execution_step(execution_step_state.execution_step)
+                execution_step_state.set_completed()
+            except Exception as e:
+                execution_step_state.set_failed(e)
+                if self._execution_plan.test_plan.end_on_failure:
+                    # If the test plan is set to end on failure, we need to end the session.
+                    break
 
-    async def _run_execution_step(self, step_state: ExecutionStepState):
+    async def _run_execution_step(self, execution_step: ExecutionStep):
         """
-        Run an execution step with the given state.
+        Run an execution step.
 
-        This interacts with execution step state to keep track of the execution step status.
-
-        :param step_state: The state of the execution step.
+        :param execution_step: The execution step to run.
         """
-        step = step_state.execution_step
-
         raise NotImplementedError
