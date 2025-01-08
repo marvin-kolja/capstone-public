@@ -25,5 +25,5 @@ def mock_usbmux_lockdown_client(
 
 
 @pytest.fixture()
-def i_device(mock_usbmux_lockdown_client):
+def i_device_mocked_lockdown(mock_usbmux_lockdown_client):
     return IDevice(lockdown_client=mock_usbmux_lockdown_client)

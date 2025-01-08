@@ -34,7 +34,9 @@ class TestIDeviceManager:
             assert isinstance(devices[0], IDevice)
             assert devices[0].lockdown_client is mock_usbmux_lockdown_client
 
-    def test_list_devices_delete_stale_devices(self, device_manager, i_device):
+    def test_list_devices_delete_stale_devices(
+        self, device_manager, i_device_mocked_lockdown
+    ):
         """
         GIVEN: An `IDeviceManager` instance
         AND: An existing `IDevice` stored in `device_manager`
@@ -45,7 +47,7 @@ class TestIDeviceManager:
         THEN: The `IDevice` should be deleted from the `device_manager`
         """
         device_manager._IDeviceManager__devices = {
-            i_device.lockdown_client.udid: i_device,
+            i_device_mocked_lockdown.lockdown_client.udid: i_device_mocked_lockdown,
         }
 
         with patch.object(device_manager, "_browse_lockdown_clients", return_value=[]):
@@ -56,7 +58,7 @@ class TestIDeviceManager:
             assert not device_manager._IDeviceManager__devices
 
     def test_list_devices_skip_storing_existing_devices(
-        self, device_manager, i_device, mock_usbmux_lockdown_client
+        self, device_manager, i_device_mocked_lockdown, mock_usbmux_lockdown_client
     ):
         """
         GIVEN: An `IDeviceManager` instance
@@ -67,10 +69,10 @@ class TestIDeviceManager:
 
         THEN: The `IDevice` should not replace the existing `IDevice` or add a new one.
         """
-        udid = i_device.lockdown_client.udid
+        udid = i_device_mocked_lockdown.lockdown_client.udid
 
         device_manager._IDeviceManager__devices = {
-            udid: i_device,
+            udid: i_device_mocked_lockdown,
         }
 
         another_mocked_lockdown_client = MagicMock(spec=UsbmuxLockdownClient)
@@ -83,10 +85,13 @@ class TestIDeviceManager:
         ):
             devices = device_manager.list_devices()
             assert len(devices) == 1
-            assert device_manager._IDeviceManager__devices[udid] == i_device
+            assert (
+                device_manager._IDeviceManager__devices[udid]
+                == i_device_mocked_lockdown
+            )
 
     def test_get_device_exists(
-        self, device_manager, i_device, mock_usbmux_lockdown_client
+        self, device_manager, i_device_mocked_lockdown, mock_usbmux_lockdown_client
     ):
         """
         GIVEN: An `IDeviceManager` instance
@@ -96,14 +101,16 @@ class TestIDeviceManager:
 
         THEN: Should return the corresponding `IDevice`
         """
-        udid = i_device.lockdown_client.udid
-        device_manager._IDeviceManager__devices[udid] = i_device
+        udid = i_device_mocked_lockdown.lockdown_client.udid
+        device_manager._IDeviceManager__devices[udid] = i_device_mocked_lockdown
 
-        with patch.object(device_manager, "list_devices", return_value=[i_device]):
+        with patch.object(
+            device_manager, "list_devices", return_value=[i_device_mocked_lockdown]
+        ):
             device = device_manager.get_device(udid)
 
             assert isinstance(device, IDevice)
-            assert device == i_device
+            assert device == i_device_mocked_lockdown
 
 
 def test_get_device_nonexistent(device_manager, fake_udid):
