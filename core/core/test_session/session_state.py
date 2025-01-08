@@ -2,6 +2,7 @@ from typing import Optional, Literal
 from uuid import UUID
 
 from core.test_session.execution_plan import ExecutionStep, ExecutionPlan
+from core.test_session.session_step_hasher import hash_session_execution_step
 
 StatusLiteral = Literal["not_started", "running", "completed", "failed"]
 
@@ -108,4 +109,20 @@ class SessionState:
 
         :raises IndexError: If the current execution step index is greater than the total execution steps.
         """
-        raise NotImplementedError
+        self.__current_execution_step_index += 1
+        if self.__current_execution_step_index >= self.total_execution_steps:
+            raise IndexError("No more execution steps left.")
+
+        execution_step = self.__execution_plan.execution_steps[
+            self.__current_execution_step_index
+        ]
+
+        execution_step_state = ExecutionStepState(
+            execution_step=execution_step,
+        )
+
+        self.__execution_step_states[
+            hash_session_execution_step(self.__session_id, execution_step)
+        ] = execution_step_state
+
+        return execution_step_state
