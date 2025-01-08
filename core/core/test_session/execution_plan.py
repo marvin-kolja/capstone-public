@@ -219,6 +219,11 @@ class ExecutionPlan:
         logger.debug(
             f"Reinstall app strategy for step '{step.name}' is '{reinstall_app}'"
         )
+        if repetition == 0 and step_repetition == 0:
+            reinstall_app = True
+            logger.debug(
+                f"Reinstall app strategy for step '{step.name}' is forced to 'True' as this is the first step"
+            )
 
         # Determine correct metrics
         metrics = step.metrics if step.metrics is not None else test_plan.metrics
