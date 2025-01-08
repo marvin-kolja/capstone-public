@@ -7,7 +7,12 @@ from core.app.info_plist import InfoPlist
 from core.app.xc_app import XcApp
 from core.subprocesses.xctrace_command import Instrument
 from core.test_session.metrics import Metric, parse_metrics_to_instruments
-from core.test_session.plan import PlanStep, StepTestCase, SessionTestPlan
+from core.test_session.plan import (
+    PlanStep,
+    StepTestCase,
+    SessionTestPlan,
+    XctestrunConfig,
+)
 from core.test_session.xctest import Xctest
 from core.test_session.xctestrun import XcTestTarget, Xctestrun, XcTestConfiguration
 
@@ -35,6 +40,8 @@ class ExecutionStep(BaseModel):
     end_on_failure: bool
     test_target: XcTestTarget
     """The test target that this step is associated with."""
+    xctestrun_config: XctestrunConfig
+    """The xctestrun configuration of the test plan."""
 
     @property
     def xctest_ids(self) -> list[str]:
@@ -269,6 +276,7 @@ class ExecutionPlan:
                     test_cases=step.test_cases,
                     end_on_failure=test_plan.end_on_failure,
                     test_target=test_target,
+                    xctestrun_config=test_plan.xctestrun_config,
                 )
             )
         elif recording_strategy == "per_test":
@@ -295,6 +303,7 @@ class ExecutionPlan:
                         test_cases=[test_case],
                         end_on_failure=test_plan.end_on_failure,
                         test_target=test_target,
+                        xctestrun_config=test_plan.xctestrun_config,
                     )
                 )
         else:

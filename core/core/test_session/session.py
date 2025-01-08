@@ -10,6 +10,7 @@ from core.subprocesses.process import ProcessException
 from core.subprocesses.xcodebuild_command import IOSDestination
 from core.subprocesses.xctrace_command import Instrument
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
+from core.test_session.plan import XctestrunConfig
 from core.test_session.session_state import SessionState
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.test_session.xctest import Xctest
@@ -171,9 +172,13 @@ class Session:
                     trace_path, instruments=instruments, app_bundle_id=app_bundle_id
                 )
                 await self._i_services.wait_for_app_pid(app_bundle_id)
-                test_task = self._create_xctest_task(xcresult_path, xctest_ids)
+                test_task = self._create_xctest_task(
+                    xcresult_path, xctest_ids, execution_step.xctestrun_config
+                )
             elif execution_step.recording_start_strategy == "attach":
-                test_task = self._create_xctest_task(xcresult_path, xctest_ids)
+                test_task = self._create_xctest_task(
+                    xcresult_path, xctest_ids, execution_step.xctestrun_config
+                )
                 pid = await self._i_services.wait_for_app_pid(app_bundle_id)
                 trace_task = self._create_trace_attach_task(
                     trace_path, instruments=instruments, pid=pid
@@ -210,7 +215,12 @@ class Session:
                 with suppress(asyncio.CancelledError, ProcessException):
                     await trace_task
 
-    def _create_xctest_task(self, xcresult_path: str, xctest_ids: list[str]):
+    def _create_xctest_task(
+        self,
+        xcresult_path: str,
+        xctest_ids: list[str],
+        xctestrun_config: XctestrunConfig,
+    ):
         """
         Run the xctestrun task.
 
@@ -222,8 +232,8 @@ class Session:
         return asyncio.create_task(
             Xctest.run_test(
                 xcresult_path=xcresult_path,
-                test_configuration=test_plan.xctestrun_config.test_configuration,
-                xctestrun_path=test_plan.xctestrun_config.path,
+                test_configuration=xctestrun_config.test_configuration,
+                xctestrun_path=xctestrun_config.path,
                 only_testing=xctest_ids,
                 destination=IOSDestination(id=self._device.lockdown_service.udid),
             )
