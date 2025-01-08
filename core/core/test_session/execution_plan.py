@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 from core.app.info_plist import InfoPlist
 from core.app.xc_app import XcApp
-from core.test_session.metrics import Metric
+from core.subprocesses.xctrace_command import Instrument
+from core.test_session.metrics import Metric, parse_metrics_to_instruments
 from core.test_session.plan import PlanStep, StepTestCase, SessionTestPlan
 from core.test_session.xctest import Xctest
 from core.test_session.xctestrun import XcTestTarget, Xctestrun, XcTestConfiguration
@@ -34,6 +35,20 @@ class ExecutionStep(BaseModel):
     end_on_failure: bool
     test_target: XcTestTarget
     """The test target that this step is associated with."""
+
+    @property
+    def xctest_ids(self) -> list[str]:
+        """
+        :return: the xctest ids of the ``test_cases`` in the step.
+        """
+        return [test_case.xctest_id for test_case in self.test_cases]
+
+    @property
+    def instruments(self) -> list[Instrument]:
+        """
+        :return: the instruments to be used for this step based on the metrics.
+        """
+        return parse_metrics_to_instruments(self.metrics)
 
 
 class ExecutionPlan:

@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from contextlib import suppress
-from datetime import timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -11,7 +10,6 @@ from core.subprocesses.process import ProcessException
 from core.subprocesses.xcodebuild_command import IOSDestination
 from core.subprocesses.xctrace_command import Instrument
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
-from core.test_session.metrics import parse_metrics_to_instruments
 from core.test_session.session_state import SessionState
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.test_session.xctest import Xctest
@@ -158,8 +156,8 @@ class Session:
         :param trace_path: The path to save the trace file to.
         :param xcresult_path: The path to save the xcresult file to.
         """
-        instruments = parse_metrics_to_instruments(execution_step.metrics)
-        xctest_ids = [test_case.xctest_id for test_case in execution_step.test_cases]
+        instruments = execution_step.instruments
+        xctest_ids = execution_step.xctest_ids
         app_bundle_id = self._execution_plan.info_plists[
             execution_step.test_target.app_path
         ].CFBundleIdentifier
