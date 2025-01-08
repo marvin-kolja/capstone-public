@@ -163,7 +163,6 @@ class TestSession:
     @pytest.mark.asyncio
     async def test_run_execution_plan(
         self,
-        mock_i_device,
         mock_execution_plan,
         mock_execution_step,
     ):
