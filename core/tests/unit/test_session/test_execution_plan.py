@@ -272,8 +272,12 @@ class TestExecutionPlan:
         """
         mock_test_plan.recording_strategy = "per_test"
         mock_step.test_cases = [
-            MagicMock(spec=StepTestCase, test_target="target_1"),
-            MagicMock(spec=StepTestCase, test_target="target_1"),
+            StepTestCase(
+                xctest_id="target_1/test_class/test",
+            ),
+            StepTestCase(
+                xctest_id="target_1/test_class/test2",
+            ),
         ]
         execution_steps = ExecutionPlan._generate_plan_step_execution_steps(
             test_plan=mock_test_plan,
