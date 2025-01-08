@@ -63,6 +63,8 @@ class Session:
         """
         if self._execution_plan.execution_steps is None:
             raise ValueError("Execution plan is not planned.")
+        if not self._execution_plan.execution_steps:
+            raise ValueError("No execution steps found in the plan.")
         self._device.check_dvt_ready()
 
     async def _run_execution_plan(self):
