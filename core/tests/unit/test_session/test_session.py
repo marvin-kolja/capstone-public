@@ -343,8 +343,13 @@ class TestSession:
         mock_execution_step.recording_start_strategy = recording_start_strategy
         mock_execution_step.reinstall_app = reinstall_app
         mock_execution_step.metrics = [Metric.cpu]
+        mock_execution_step.instruments = [Instrument.activity_monitor]
         mock_execution_step.test_cases = [mock_test_case]
+        mock_execution_step.xctest_ids = [mock_test_case.xctest_id]
         mock_execution_step.test_target = mock_test_target
+        mock_execution_step.xctestrun_config = (
+            mock_execution_plan.test_plan.xctestrun_config
+        )
 
         with patch.object(
             session, "_i_services", MagicMock(spec=IServices)
