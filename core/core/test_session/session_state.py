@@ -3,6 +3,8 @@ from uuid import UUID
 
 from core.test_session.execution_plan import ExecutionStep, ExecutionPlan
 
+StatusLiteral = Literal["not_started", "running", "completed", "failed"]
+
 
 class ExecutionStepState:
     """
@@ -10,29 +12,27 @@ class ExecutionStepState:
     step.
 
     Attributes:
-        _execution_step:
-        _status: The current status of the execution step.
-        _exception: The exception that occurred during the execution step.
+        __execution_step:
+        __status: The current status of the execution step.
+        __exception: The exception that occurred during the execution step.
     """
 
     def __init__(self, execution_step: ExecutionStep):
-        self._execution_step = execution_step
-        self._status: Literal["not_started", "running", "completed", "failed"] = (
-            "not_started"
-        )
-        self._exception: Optional[Exception] = None
+        self.__execution_step = execution_step
+        self.__status: StatusLiteral = "not_started"
+        self.__exception: Optional[Exception] = None
 
     @property
-    def status(self) -> Literal["not_started", "running", "completed", "failed"]:
-        return self._status
+    def status(self) -> StatusLiteral:
+        return self.__status
 
     @property
     def execution_step(self) -> ExecutionStep:
-        return self._execution_step
+        return self.__execution_step
 
     @property
     def exception(self) -> Optional[Exception]:
-        return self._exception
+        return self.__exception
 
     def set_running(self):
         """
@@ -40,9 +40,9 @@ class ExecutionStepState:
 
         :raises ValueError: If the status is completed or failed.
         """
-        if self._status in ["completed", "failed"]:
+        if self.__status in ["completed", "failed"]:
             raise ValueError("Cannot set running after completed or failed.")
-        self._status = "running"
+        self.__status = "running"
 
     def set_completed(self):
         """
@@ -50,9 +50,9 @@ class ExecutionStepState:
 
         :raises ValueError: If the status is failed.
         """
-        if self._status == "failed":
+        if self.__status == "failed":
             raise ValueError("Cannot set completed after failed.")
-        self._status = "completed"
+        self.__status = "completed"
 
     def set_failed(self, exception: Exception):
         """
@@ -62,10 +62,10 @@ class ExecutionStepState:
 
         :raises ValueError: If the status is completed.
         """
-        if self._status == "completed":
+        if self.__status == "completed":
             raise ValueError("Cannot set failed after completed.")
-        self._status = "failed"
-        self._exception = exception
+        self.__status = "failed"
+        self.__exception = exception
 
 
 class SessionState:
@@ -74,10 +74,10 @@ class SessionState:
     and also stores the execution step state (``ExecutionStepState``).
 
     Attributes:
-        _execution_plan (ExecutionPlan): The execution plan for the test session.
-        _session_id (UUID): The unique identifier for the test session.
-        _execution_step_states (dict[str, ExecutionStepState]): The execution step states.
-        _current_execution_step_index (int): The current index of the execution step. It starts from -1, indicating
+        __execution_plan (ExecutionPlan): The execution plan for the test session.
+        __session_id (UUID): The unique identifier for the test session.
+        __execution_step_states (dict[str, ExecutionStepState]): The execution step states.
+        __current_execution_step_index (int): The current index of the execution step. It starts from -1, indicating
             that the execution has not started, yet.
     """
 
@@ -86,17 +86,17 @@ class SessionState:
         :param execution_plan: The execution plan.
         :param session_id: The unique identifier for the test session.
         """
-        self._execution_plan = execution_plan
-        self._session_id = session_id
-        self._execution_step_states: dict[str, ExecutionStepState] = {}
-        self._current_execution_step_index = -1
+        self.__execution_plan = execution_plan
+        self.__session_id = session_id
+        self.__execution_step_states: dict[str, ExecutionStepState] = {}
+        self.__current_execution_step_index = -1
 
     @property
     def total_execution_steps(self) -> int:
         """
         Gets the total number of execution
         """
-        return len(self._execution_plan.execution_steps)
+        return len(self.__execution_plan.execution_steps)
 
     def next_execution_step(self) -> Optional[ExecutionStepState]:
         """

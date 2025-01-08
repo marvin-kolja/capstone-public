@@ -33,10 +33,10 @@ class TestSessionState:
             session_id=session_id,
         )
 
-        assert session_state._execution_plan == mock_execution_plan
-        assert session_state._session_id == session_id
-        assert session_state._execution_step_states == {}
-        assert session_state._current_execution_step_index == -1
+        assert session_state._SessionState__execution_plan == mock_execution_plan
+        assert session_state._SessionState__session_id == session_id
+        assert session_state._SessionState__execution_step_states == {}
+        assert session_state._SessionState__current_execution_step_index == -1
 
     def test_next_execution_step_valid(self, mock_execution_plan):
         """
@@ -63,8 +63,11 @@ class TestSessionState:
         execution_step_state = session_state.next_execution_step()
 
         assert execution_step_state.execution_step == mock_execution_plan
-        assert session_state._current_execution_step_index == 0
-        assert mock_execution_plan in session_state._execution_step_states.values()
+        assert session_state._SessionState__current_execution_step_index == 0
+        assert (
+            mock_execution_plan
+            in session_state._SessionState__execution_step_states.values()
+        )
 
     def test_next_execution_step_index_out_of_bounds(self):
         """
@@ -114,7 +117,9 @@ class TestExecutionStepState:
 
         execution_step_state = ExecutionStepState(execution_step=execution_step)
 
-        assert execution_step_state._execution_step == execution_step
+        assert (
+            execution_step_state._ExecutionStepState__execution_step == execution_step
+        )
         assert execution_step_state.status == "not_started"
         assert execution_step_state.exception is None
 
@@ -144,7 +149,7 @@ class TestExecutionStepState:
         execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
 
         for status in ["completed", "failed"]:
-            execution_step_state._status = status
+            execution_step_state._ExecutionStepState__status = status
             with pytest.raises(ValueError):
                 execution_step_state.set_running()
 
@@ -172,7 +177,7 @@ class TestExecutionStepState:
         THEN: It should raise a ValueError.
         """
         execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
-        execution_step_state._status = "failed"
+        execution_step_state._ExecutionStepState__status = "failed"
 
         with pytest.raises(ValueError):
             execution_step_state.set_completed()
@@ -204,7 +209,7 @@ class TestExecutionStepState:
         THEN: It should raise a ValueError.
         """
         execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
-        execution_step_state._status = "completed"
+        execution_step_state._ExecutionStepState__status = "completed"
 
         with pytest.raises(ValueError):
             execution_step_state.set_failed(Exception("Test"))
