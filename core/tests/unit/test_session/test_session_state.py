@@ -5,7 +5,7 @@ import pytest
 
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import PlanStep
-from core.test_session.session_state import SessionState
+from core.test_session.session_state import SessionState, ExecutionStepState
 
 
 @pytest.fixture
@@ -88,3 +88,123 @@ class TestSessionState:
 
         with pytest.raises(IndexError):
             session_state.next_execution_step()
+
+
+@pytest.fixture
+def mock_execution_step():
+    return MagicMock(
+        spec=ExecutionStep,
+        step=MagicMock(spec=PlanStep, order=1, name="Test"),
+    )
+
+
+class TestExecutionStepState:
+    def test_init(self):
+        """
+        GIVEN: A valid execution step
+
+        WHEN: ExecutionStepState is initialized.
+
+        THEN: The state should be initialized correctly.
+        """
+        execution_step = MagicMock(
+            spec=ExecutionStep,
+            step=MagicMock(spec=PlanStep, order=1, name="Test"),
+        )
+
+        execution_step_state = ExecutionStepState(execution_step=execution_step)
+
+        assert execution_step_state._execution_step == execution_step
+        assert execution_step_state.status == "not_started"
+        assert execution_step_state.exception is None
+
+    def test_set_running(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: set_running is called.
+
+        THEN: The status should be set to running.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        execution_step_state.set_running()
+
+        assert execution_step_state.status == "running"
+
+    def test_set_running_after_completed_or_failed(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: status is completed or failed.
+        AND: set_running is called.
+
+        THEN: It should raise a ValueError.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        for status in ["completed", "failed"]:
+            execution_step_state._status = status
+            with pytest.raises(ValueError):
+                execution_step_state.set_running()
+
+    def test_set_completed(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: set_completed is called.
+
+        THEN: The status should be set to completed.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        execution_step_state.set_completed()
+
+        assert execution_step_state.status == "completed"
+
+    def test_set_completed_after_failed(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: status is failed.
+        AND: set_completed is called.
+
+        THEN: It should raise a ValueError.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+        execution_step_state._status = "failed"
+
+        with pytest.raises(ValueError):
+            execution_step_state.set_completed()
+
+    def test_set_failed(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: set_failed is called with an exception.
+
+        THEN: The status should be set to failed.
+        AND: The exception should be stored.
+        """
+        exception = Exception("Test")
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        execution_step_state.set_failed(exception)
+
+        assert execution_step_state.status == "failed"
+        assert execution_step_state.exception == exception
+
+    def test_set_failed_after_completed(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: status is completed.
+        AND: set_failed is called with an exception.
+
+        THEN: It should raise a ValueError.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+        execution_step_state._status = "completed"
+
+        with pytest.raises(ValueError):
+            execution_step_state.set_failed(Exception("Test"))
