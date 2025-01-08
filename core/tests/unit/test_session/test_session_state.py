@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
-from core.test_session.plan import PlanStep
+from core.test_session.plan import PlanStep, StepTestCase
 from core.test_session.session_state import SessionState, ExecutionStepState
 
 
@@ -52,6 +52,14 @@ class TestSessionState:
         mock_execution_step = MagicMock(
             spec=ExecutionStep,
             step=MagicMock(spec=PlanStep, order=1, name="Test"),
+            plan_repetition=0,
+            step_repetition=0,
+            test_cases=[
+                MagicMock(
+                    spec=StepTestCase,
+                    xctest_id="Test",
+                )
+            ],
         )
         mock_execution_plan.execution_steps = [mock_execution_step]
 
@@ -62,10 +70,10 @@ class TestSessionState:
 
         execution_step_state = session_state.next_execution_step()
 
-        assert execution_step_state.execution_step == mock_execution_plan
+        assert execution_step_state.execution_step == mock_execution_step
         assert session_state._SessionState__current_execution_step_index == 0
         assert (
-            mock_execution_plan
+            execution_step_state
             in session_state._SessionState__execution_step_states.values()
         )
 
