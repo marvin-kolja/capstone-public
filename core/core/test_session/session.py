@@ -5,7 +5,7 @@ from uuid import UUID
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
 from core.test_session.execution_plan import ExecutionPlan
-from core.test_session.session_state import SessionState
+from core.test_session.session_state import SessionState, ExecutionStepState
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -72,5 +72,17 @@ class Session:
         Uses the execution plan to execute the execution steps one by one.
         """
         for _ in range(len(self._execution_plan.execution_steps)):
-            self._session_state.next_execution_step()
-            # TODO: run the execution step
+            execution_step_state = self._session_state.next_execution_step()
+            await self._run_execution_step(execution_step_state)
+
+    async def _run_execution_step(self, step_state: ExecutionStepState):
+        """
+        Run an execution step with the given state.
+
+        This interacts with execution step state to keep track of the execution step status.
+
+        :param step_state: The state of the execution step.
+        """
+        step = step_state.execution_step
+
+        raise NotImplementedError
