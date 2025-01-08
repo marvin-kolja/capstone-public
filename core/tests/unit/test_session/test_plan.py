@@ -40,8 +40,8 @@ class TestSessionTestPlan:
             recording_start_strategy="launch",
             reinstall_app=False,
             steps=[
-                PlanStep(order=0, test_cases=fake_valid_test_cases),
-                PlanStep(order=1, test_cases=fake_valid_test_cases),
+                PlanStep(order=0, name="Step 1", test_cases=fake_valid_test_cases),
+                PlanStep(order=1, name="Step 2", test_cases=fake_valid_test_cases),
             ],
             xctestrun_config=fake_xctestrun_config,
         )
@@ -65,9 +65,9 @@ class TestSessionTestPlan:
             recording_start_strategy="launch",
             reinstall_app=False,
             steps=[
-                PlanStep(order=1, test_cases=fake_valid_test_cases),
-                PlanStep(order=0, test_cases=fake_valid_test_cases),
-                PlanStep(order=2, test_cases=fake_valid_test_cases),
+                PlanStep(order=1, name="Step 1", test_cases=fake_valid_test_cases),
+                PlanStep(order=0, name="Step 2", test_cases=fake_valid_test_cases),
+                PlanStep(order=2, name="Step 3", test_cases=fake_valid_test_cases),
             ],
             xctestrun_config=fake_xctestrun_config,
         )
@@ -96,8 +96,8 @@ class TestSessionTestPlan:
                 recording_start_strategy="launch",
                 reinstall_app=False,
                 steps=[
-                    PlanStep(order=0, test_cases=fake_valid_test_cases),
-                    PlanStep(order=2, test_cases=fake_valid_test_cases),
+                    PlanStep(order=0, name="Step 1", test_cases=fake_valid_test_cases),
+                    PlanStep(order=2, name="Step 2", test_cases=fake_valid_test_cases),
                 ],
                 xctestrun_config=fake_xctestrun_config,
             )
@@ -121,7 +121,9 @@ class TestSessionTestPlan:
                 recording_strategy="per_step",
                 recording_start_strategy="launch",
                 reinstall_app=False,
-                steps=[PlanStep(order=0, test_cases=fake_valid_test_cases)],
+                steps=[
+                    PlanStep(order=0, name="Test 1", test_cases=fake_valid_test_cases)
+                ],
                 xctestrun_config=fake_xctestrun_config,
             )
 
@@ -166,7 +168,7 @@ class TestSessionTestPlan:
             ValidationError,
             match="All test cases in a step must be from the same test target",
         ):
-            PlanStep(order=0, test_cases=test_cases)
+            PlanStep(order=0, name="Step 1", test_cases=test_cases)
 
     def test_invalid_step_order(self, fake_valid_test_cases):
         """
@@ -179,7 +181,7 @@ class TestSessionTestPlan:
         with pytest.raises(
             ValidationError, match="Input should be greater than or equal to 0"
         ):
-            PlanStep(order=-1, test_cases=fake_valid_test_cases)
+            PlanStep(order=-1, name="Step 1", test_cases=fake_valid_test_cases)
 
     def test_invalid_step_repetitions(self, fake_valid_test_cases):
         """
@@ -192,7 +194,9 @@ class TestSessionTestPlan:
         with pytest.raises(
             ValidationError, match="Input should be greater than or equal to 1"
         ):
-            PlanStep(order=0, repetitions=0, test_cases=fake_valid_test_cases)
+            PlanStep(
+                order=0, name="Step 1", repetitions=0, test_cases=fake_valid_test_cases
+            )
 
     def test_missing_test_cases(self):
         """
@@ -203,7 +207,7 @@ class TestSessionTestPlan:
         THEN it should raise a ValidationError
         """
         with pytest.raises(ValidationError, match="Input should be a valid list"):
-            PlanStep(order=0, test_cases=None)
+            PlanStep(order=0, name="Step 1", test_cases=None)
 
     def test_validating_test_case_invalid_format(self):
         """

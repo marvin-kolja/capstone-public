@@ -37,7 +37,7 @@ class PlanStep(BaseModel):
     order: int = Field(ge=0)
     """Order of the step in the test plan."""
 
-    name: Optional[str] = None
+    name: str
     """User defined name of the test step."""
 
     repetitions: Optional[int] = Field(ge=1, default=1)
@@ -97,7 +97,7 @@ class XctestrunConfig(BaseModel):
 
 
 class SessionTestPlan(BaseModel):
-    name: Optional[str] = None
+    name: str
     """
     User defined name of the test plan.
     """

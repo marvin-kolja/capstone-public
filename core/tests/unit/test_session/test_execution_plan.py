@@ -118,6 +118,7 @@ class TestExecutionPlan:
             Creates a shared SessionTestPlan instance for all tests in this class.
             """
             self.session_test_plan = SessionTestPlan(
+                name="Example Test Plan",
                 xctestrun_config=XctestrunConfig(
                     path=example_xctestrun_path.absolute().as_posix(),
                     test_configuration="Test Scheme Action",  # This is based on the example xctestrun file
@@ -131,6 +132,7 @@ class TestExecutionPlan:
                 steps=[
                     PlanStep(
                         order=0,
+                        name="Step 1",
                         repetitions=2,
                         reinstall_app=False,
                         test_cases=[
@@ -146,6 +148,7 @@ class TestExecutionPlan:
                     ),
                     PlanStep(
                         order=1,
+                        name="Step 2",
                         repetitions=1,
                         reinstall_app=True,
                         test_cases=[
