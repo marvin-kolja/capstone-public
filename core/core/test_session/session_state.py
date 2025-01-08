@@ -35,12 +35,35 @@ class ExecutionStepState:
         return self._exception
 
     def set_running(self):
+        """
+        Set the status to running.
+
+        :raises ValueError: If the status is completed or failed.
+        """
+        if self._status in ["completed", "failed"]:
+            raise ValueError("Cannot set running after completed or failed.")
         self._status = "running"
 
     def set_completed(self):
+        """
+        Set the status to completed.
+
+        :raises ValueError: If the status is failed.
+        """
+        if self._status == "failed":
+            raise ValueError("Cannot set completed after failed.")
         self._status = "completed"
 
     def set_failed(self, exception: Exception):
+        """
+        Set the status to failed and store the exception.
+
+        :param exception: The exception that occurred during the execution step.
+
+        :raises ValueError: If the status is completed.
+        """
+        if self._status == "completed":
+            raise ValueError("Cannot set failed after completed.")
         self._status = "failed"
         self._exception = exception
 
