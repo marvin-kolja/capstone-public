@@ -172,6 +172,7 @@ class TestSession:
         WHEN: Running the execution plan
 
         THEN: It should call the sessions `next_execution_step` method the correct number of times
+        AND: It should call the step states `set_running` and `set_completed` methods the correct number of times
         """
         mock_execution_plan.execution_steps = [mock_execution_step for i in range(100)]
 
@@ -182,8 +183,12 @@ class TestSession:
             output_dir=MagicMock(),
         )
 
+        mock_execution_step_state = MagicMock(spec=ExecutionStepState)
+
         with patch.object(
-            session._session_state, "next_execution_step"
+            session._session_state,
+            "next_execution_step",
+            return_value=mock_execution_step_state,
         ) as mock_next_step, patch.object(
             session, "_run_execution_step"
         ) as mock_run_execution_step:
@@ -191,3 +196,7 @@ class TestSession:
             mock_next_step.assert_called()
             assert mock_next_step.call_count == 100
             assert mock_run_execution_step.await_count == 100
+            mock_execution_step_state.set_running.assert_called()
+            assert mock_execution_step_state.set_running.call_count == 100
+            mock_execution_step_state.set_completed.assert_called()
+            assert mock_execution_step_state.set_completed.call_count == 100
