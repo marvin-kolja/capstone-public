@@ -1,12 +1,21 @@
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 
 from core.device.i_device import IDevice
+from core.device.i_services import IServices
 from core.exceptions.i_device import DeviceNotReadyForDvt
+from core.subprocesses.xcodebuild_command import IOSDestination
+from core.subprocesses.xctrace_command import Instrument
+from core.test_session.metrics import Metric
+from core.test_session.plan import StepTestCase
 from core.test_session.session import Session
 from core.test_session.session_state import ExecutionStepState
+from core.test_session.session_step_hasher import hash_session_execution_step
+from core.test_session.xctestrun import XcTestTarget
+from tests.conftest import fake_udid
+from tests.unit.conftest import i_device_mocked_lockdown
 from tests.unit.test_session.conftest import mock_execution_plan
 
 
@@ -248,3 +257,142 @@ class TestSession:
                 assert mock_run_execution_step.await_count == 2
                 assert mock_execution_step_state.set_failed.call_count == 2
                 assert mock_next_step.call_count == 2
+
+    @pytest.mark.parametrize(
+        "recording_start_strategy",
+        ["launch", "attach"],
+    )
+    @pytest.mark.parametrize(
+        "reinstall_app",
+        [True, False],
+    )
+    @pytest.mark.parametrize(
+        "app_bundle_id, ui_app_bundle_id",
+        [
+            ("com.example.app", None),
+            ("com.example.app", "com.example.ui_test_app"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "apps_installed",
+        [
+            True,
+            False,
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_run_execution_step(
+        self,
+        mock_execution_plan,
+        mock_execution_step,
+        mock_i_device,
+        fake_udid,
+        recording_start_strategy,
+        reinstall_app,
+        app_bundle_id,
+        ui_app_bundle_id,
+        apps_installed,
+    ):
+        """
+        GIVEN: A test session
+
+        WHEN: Running an execution step
+
+        THEN: It should uninstall the app if it is already installed and the reinstall_app flag is set
+        AND: It should install the app if it is not already installed
+        AND: It should record the metrics using the correct strategy (launch or attach) and parameters
+        AND: It should run the test cases using the correct parameters
+
+        TODO: In the future the method should be split into smaller methods so this test can be a lot less messy
+        """
+        output_dir = "/tmp/output"
+        session_id = uuid.uuid4()
+        app_bundle_ids = (
+            [app_bundle_id, ui_app_bundle_id] if ui_app_bundle_id else [app_bundle_id]
+        )
+
+        session = Session(
+            execution_plan=mock_execution_plan,
+            session_id=session_id,
+            device=mock_i_device,
+            output_dir=output_dir,
+        )
+
+        mock_i_device.lockdown_service = MagicMock(udid=fake_udid)
+
+        mock_test_target = MagicMock(
+            spec=XcTestTarget,
+            app_path="/tmp/example.app",
+            ui_test_app_path="/tmp/ui_test_example.app" if ui_app_bundle_id else None,
+        )
+
+        mock_execution_plan.info_plists = {
+            "/tmp/example.app": MagicMock(CFBundleIdentifier=app_bundle_id),
+        }
+        if ui_app_bundle_id:
+            mock_execution_plan.info_plists["/tmp/ui_test_example.app"] = MagicMock(
+                CFBundleIdentifier=ui_app_bundle_id
+            )
+
+        mock_test_case = MagicMock(
+            spec=StepTestCase, xctest_id="TestTarget/TestClass/testMethod"
+        )
+
+        mock_execution_step.plan_repetition = 0
+        mock_execution_step.step_repetition = 0
+        mock_execution_step.recording_start_strategy = recording_start_strategy
+        mock_execution_step.reinstall_app = reinstall_app
+        mock_execution_step.metrics = [Metric.cpu]
+        mock_execution_step.test_cases = [mock_test_case]
+        mock_execution_step.test_target = mock_test_target
+
+        with patch.object(
+            session, "_i_services", MagicMock(spec=IServices)
+        ) as mock_i_services, patch(
+            "core.test_session.session.Xctest.run_test"
+        ) as mock_run_test, patch(
+            "core.test_session.session.Xctrace.record_launch"
+        ) as mock_record_launch, patch(
+            "core.test_session.session.Xctrace.record_attach"
+        ) as mock_record_attach:
+            mock_i_services.list_installed_apps.return_value = (
+                app_bundle_ids if apps_installed else []
+            )
+            mock_i_services.wait_for_app_pid.return_value = 1234
+            await session._run_execution_step(mock_execution_step)
+            mock_i_services.list_installed_apps.assert_called_once()
+
+            if not apps_installed or reinstall_app:
+                assert mock_i_services.install_app.call_count == len(app_bundle_ids)
+            else:
+                assert mock_i_services.install_app.call_count == 0
+
+            if apps_installed and reinstall_app:
+                assert mock_i_services.uninstall_app.call_count == len(app_bundle_ids)
+            else:
+                assert mock_i_services.uninstall_app.call_count == 0
+
+            if mock_execution_step.recording_start_strategy == "launch":
+                mock_record_launch.assert_called_once_with(
+                    trace_path=f"{output_dir}/{hash_session_execution_step(session_id, mock_execution_step)}.trace",
+                    instruments=[Instrument.activity_monitor],
+                    app_to_launch=app_bundle_id,
+                    append_trace=False,
+                    device=fake_udid,
+                )
+            else:
+                mock_record_attach.assert_called_once_with(
+                    trace_path=f"{output_dir}/{hash_session_execution_step(session_id, mock_execution_step)}.trace",
+                    instruments=[Instrument.activity_monitor],
+                    pid=1234,
+                    append_trace=False,
+                    device=fake_udid,
+                )
+
+            mock_run_test.assert_called_once_with(
+                xcresult_path=f"{output_dir}/{hash_session_execution_step(session_id, mock_execution_step)}.xcresult",
+                test_configuration=mock_execution_plan.test_plan.xctestrun_config.test_configuration,
+                xctestrun_path=mock_execution_plan.test_plan.xctestrun_config.path,
+                only_testing=[mock_test_case.xctest_id],
+                destination=IOSDestination(id=fake_udid),
+            )
