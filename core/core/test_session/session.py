@@ -97,15 +97,24 @@ class Session:
         """
         Run an execution step.
 
-        1. Uninstall the apps if required
-        2. Install the apps if not already installed, regardless of the reinstall_app flag
-        3. Parse metrics to instruments
-        4. Create paths for trace and xcresult files.
-        5. Execute the test cases and record the metrics.
-           - The order of how those are started depends on the recording_start_strategy.
-           - Either way, both run in parallel in the end.
+        1. Handle the installation of the app and the UI test app.
+        2. Generate paths for trace and xcresult files.
+        3. Execute tests and record metrics.
 
         :param execution_step: The execution step to run.
+        """
+        self._handle_app_installation(execution_step)
+        trace_path, xcresult_path = self._generate_result_paths(execution_step)
+        await self._execute_test_and_trace(execution_step, trace_path, xcresult_path)
+
+    def _handle_app_installation(self, execution_step):
+        """
+        Handle the installation of the app and the UI test app.
+
+        1. Uninstall the apps if required
+        2. Install the apps if not already installed, regardless of the reinstall_app flag
+
+        :param execution_step: The execution step to use for the installation.
         """
         app_path = execution_step.test_target.app_path
         ui_test_app_path = execution_step.test_target.ui_test_app_path
@@ -122,61 +131,61 @@ class Session:
             elif bundle_id not in installed_apps:
                 self._i_services.install_app(app_path)
 
-        app_bundle_id = self._execution_plan.info_plists[app_path].CFBundleIdentifier
+    def _generate_result_paths(self, execution_step) -> tuple[str, str]:
+        """
+        Generate the paths for the trace and xcresult files.
+        :param execution_step: The execution step to use for the generation.
+        :return: The paths for the trace and xcresult files as a tuple (trace_path, xcresult_path).
+        """
+        base_file_path = f"{self._output_dir}/{hash_session_execution_step(self._session_id, execution_step)}"
+        trace_path = f"{base_file_path}.trace"
+        xcresult_path = f"{base_file_path}.xcresult"
+        return trace_path, xcresult_path
 
-        instruments: list[Instrument] = parse_metrics_to_instruments(
-            execution_step.metrics
-        )
+    async def _execute_test_and_trace(self, execution_step, trace_path, xcresult_path):
+        """
+        Execute the test cases and record the metrics.
 
-        trace_path = f"{self._output_dir}/{hash_session_execution_step(self._session_id, execution_step)}.trace"
-        xcresult_path = f"{self._output_dir}/{hash_session_execution_step(self._session_id, execution_step)}.xcresult"
+        1. Parse metrics to instruments
+        2. Get the test cases to run
+        3. Get the app bundle id
+        5. Execute the test cases and record the metrics.
+           - The order of how those are started depends on the recording_start_strategy.
+           - Either way, both run in parallel in the end.
+           - The one that executes second will wait for the app pid before starting.
 
-        test_task = None
+        :param execution_step: The execution step to use for the execution
+        :param trace_path: The path to save the trace file to.
+        :param xcresult_path: The path to save the xcresult file to.
+        """
+        instruments = parse_metrics_to_instruments(execution_step.metrics)
+        xctest_ids = [test_case.xctest_id for test_case in execution_step.test_cases]
+        app_bundle_id = self._execution_plan.info_plists[
+            execution_step.test_target.app_path
+        ].CFBundleIdentifier
+
         trace_task = None
-
-        test_task_builder = lambda: Xctest.run_test(
-            xcresult_path=xcresult_path,
-            test_configuration=self._execution_plan.test_plan.xctestrun_config.test_configuration,
-            xctestrun_path=self._execution_plan.test_plan.xctestrun_config.path,
-            only_testing=[
-                test_case.xctest_id for test_case in execution_step.test_cases
-            ],
-            destination=IOSDestination(id=self._device.lockdown_service.udid),
-        )
-
+        test_task = None
         try:
+
             if execution_step.recording_start_strategy == "launch":
-                trace_task = asyncio.create_task(
-                    Xctrace.record_launch(
-                        trace_path=trace_path,
-                        instruments=instruments,
-                        app_to_launch=app_bundle_id,
-                        append_trace=False,
-                        device=self._device.lockdown_service.udid,
-                    )
+                trace_task = self._create_trace_launch_task(
+                    trace_path, instruments=instruments, app_bundle_id=app_bundle_id
                 )
                 await self._i_services.wait_for_app_pid(app_bundle_id)
-                test_task = asyncio.create_task(test_task_builder())
+                test_task = self._create_xctest_task(xcresult_path, xctest_ids)
             elif execution_step.recording_start_strategy == "attach":
-                test_task = asyncio.create_task(test_task_builder())
-                pid = await self._i_services.wait_for_app_pid(
-                    app_bundle_id, frequency=timedelta(milliseconds=500)
-                )
-                trace_task = asyncio.create_task(
-                    Xctrace.record_attach(
-                        trace_path=trace_path,
-                        instruments=instruments,
-                        pid=pid,
-                        append_trace=False,
-                        device=self._device.lockdown_service.udid,
-                    )
+                test_task = self._create_xctest_task(xcresult_path, xctest_ids)
+                pid = await self._i_services.wait_for_app_pid(app_bundle_id)
+                trace_task = self._create_trace_attach_task(
+                    trace_path, instruments=instruments, pid=pid
                 )
             else:
                 raise ValueError(
                     f"Invalid recording start strategy: {execution_step.recording_start_strategy}"
                 )
 
-            # Await both tasks but cancel the trace task if the test task fails or ends
+            # Await both tasks but cancel the other if one fails.
             tasks = await asyncio.wait(
                 [trace_task, test_task], return_when=asyncio.FIRST_COMPLETED
             )
@@ -191,7 +200,7 @@ class Session:
                     test_task.cancel()
                     await test_task
                     raise trace_task.exception()
-        except Exception as e:
+        except Exception:
             raise
         finally:
             if test_task:
@@ -202,3 +211,65 @@ class Session:
                 trace_task.cancel()
                 with suppress(asyncio.CancelledError, ProcessException):
                     await trace_task
+
+    def _create_xctest_task(self, xcresult_path: str, xctest_ids: list[str]):
+        """
+        Run the xctestrun task.
+
+        :param xcresult_path: The path to save the xcresult file.
+        :param xctest_ids: The test cases to run.
+        :return: A task running the tests.
+        """
+        test_plan = self._execution_plan.test_plan
+        return asyncio.create_task(
+            Xctest.run_test(
+                xcresult_path=xcresult_path,
+                test_configuration=test_plan.xctestrun_config.test_configuration,
+                xctestrun_path=test_plan.xctestrun_config.path,
+                only_testing=xctest_ids,
+                destination=IOSDestination(id=self._device.lockdown_service.udid),
+            )
+        )
+
+    def _create_trace_launch_task(
+        self, trace_path: str, instruments: list[Instrument], app_bundle_id: str
+    ):
+        """
+        Run the trace task using the launch strategy.
+        :param trace_path: The path to save the trace file
+        :param instruments: The instruments to record
+        :param app_bundle_id: The app bundle id to launch
+        :return: A task running the trace.
+        """
+        return asyncio.create_task(
+            Xctrace.record_launch(
+                trace_path=trace_path,
+                instruments=instruments,
+                app_to_launch=app_bundle_id,
+                append_trace=False,
+                device=self._device.lockdown_service.udid,
+            )
+        )
+
+    def _create_trace_attach_task(
+        self,
+        trace_path: str,
+        instruments: list[Instrument],
+        pid: int,
+    ):
+        """
+        Run the trace task using the attach strategy.
+        :param trace_path: The path to save the trace file
+        :param instruments: The instruments to record
+        :param pid: The process id to attach to
+        :return: A task running the trace.
+        """
+        return asyncio.create_task(
+            Xctrace.record_attach(
+                trace_path=trace_path,
+                instruments=instruments,
+                pid=pid,
+                append_trace=False,
+                device=self._device.lockdown_service.udid,
+            )
+        )
