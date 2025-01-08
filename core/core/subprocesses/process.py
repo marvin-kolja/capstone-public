@@ -175,25 +175,39 @@ class Process:
 async def async_run_process(
     command: ProcessCommand,
     cwd: Optional[str] = None,
+    signal_on_cancel: signal.Signals = signal.SIGTERM,
 ) -> tuple[list[str], list[str]]:
     """
     Convenience function to run a command using the `Process` class. It will create a new `Process` instance, execute
     the command and wait for the process to finish.
 
+    If CancelledError is raised, the process will be terminated with the signal provided in `signal_on_cancel`.
+
     :param command: The command to execute.
     :param cwd: The working directory to execute the command in.
+    :param signal_on_cancel: The signal to send to the process if the execution is cancelled.
 
     :return: The stdout and stderr of the command `(stdout, stderr)`.
 
     :raises ProcessException: If the process failed with a non-zero return code.
     """
     process = Process(command=command)
-    await process.execute(cwd=cwd)
-    stdout, stderr = await process.wait()
-    if process.failed:
-        raise ProcessException(
-            stdout=stdout,
-            stderr=stderr,
-            return_code=process.returncode,
-        )
-    return stdout, stderr
+
+    async def wait():
+        stdout, stderr = await process.wait()
+        if process.failed:
+            raise ProcessException(
+                stdout=stdout,
+                stderr=stderr,
+                return_code=process.returncode,
+            )
+        return stdout, stderr
+
+    try:
+        await process.execute(cwd=cwd)
+        return await wait()
+    except asyncio.CancelledError:
+        logger.debug("Process execution was cancelled")
+        process.send_signal(signal_on_cancel)
+    finally:
+        return await wait()
