@@ -6,6 +6,7 @@ import pytest
 from core.device.i_device import IDevice
 from core.exceptions.i_device import DeviceNotReadyForDvt
 from core.test_session.session import Session
+from core.test_session.session_state import ExecutionStepState
 from tests.unit.test_session.conftest import mock_execution_plan
 
 
@@ -184,9 +185,10 @@ class TestSession:
 
         with patch.object(
             session._session_state, "next_execution_step"
-        ) as mock_next_step:
+        ) as mock_next_step, patch.object(
+            session, "_run_execution_step"
+        ) as mock_run_execution_step:
             await session._run_execution_plan()
             mock_next_step.assert_called()
             assert mock_next_step.call_count == 100
-
-        # TODO: mock what comes after `next_execution_step` is called (currently not implemented)
+            assert mock_run_execution_step.await_count == 100
