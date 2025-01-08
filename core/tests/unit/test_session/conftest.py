@@ -15,7 +15,7 @@ from core.test_session.xctestrun import XcTestTarget
 
 @pytest.fixture
 def mock_test_plan():
-    return MagicMock(
+    plan = MagicMock(
         spec=SessionTestPlan,
         recording_strategy="per_step",
         reinstall_app=False,
@@ -26,21 +26,21 @@ def mock_test_plan():
             path="example.xctestrun",
         ),
     )
+    plan.name = "Test Plan"
+    return plan
 
 
 @pytest.fixture
 def mock_step():
-    return MagicMock(
+    mock = MagicMock(
         spec=PlanStep,
         reinstall_app=True,
         metrics=None,
-        test_cases=[
-            MagicMock(
-                spec=StepTestCase,
-            ),
-        ],
+        test_cases=[],
         recording_start_strategy="launch",
     )
+    mock.name = "Test 1"
+    return mock
 
 
 @pytest.fixture
