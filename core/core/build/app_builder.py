@@ -169,9 +169,11 @@ class AppBuilder:
         :param scheme: The scheme used for the build.
         :param test_plan: The test plan used for the build.
         """
-        products_dir = pathlib.Path(AppBuilder.products_dir(base_dir))
-        print(products_dir)
+        products_dir = AppBuilder.products_dir(base_dir)
         xctestrun_files = list(products_dir.glob("*.xctestrun"))
+
+        logger.debug(f"Found xctestrun files: {xctestrun_files}")
+        logger.debug(f"Looking for xctestrun file with prefix: {scheme}_{test_plan}")
 
         matching_xctestrun_files = [
             xctestrun_file
