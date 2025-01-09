@@ -3,7 +3,8 @@ import pathlib
 
 from pydantic import BaseModel
 
-from core.subprocesses.xcodebuild_command import IOSDestination
+from core.subprocesses.process import async_run_process, ProcessException
+from core.subprocesses.xcodebuild_command import IOSDestination, XcodebuildBuildCommand
 from core.xc_project import XcProject
 
 logger = logging.getLogger(__name__)
@@ -63,8 +64,28 @@ class AppBuilder:
         """
         Builds the application of the given xcode project
         """
-        # TODO: Use XcodebuildBuildCommand for building
-        raise NotImplementedError
+        command = XcodebuildBuildCommand(
+            action="build",
+            project=self.xc_project.path_to_project,
+            scheme=scheme,
+            configuration=configuration,
+            destination=destination,
+            derived_data_path=output_dir,
+        )
+
+        try:
+            await async_run_process(command=command)
+        except ProcessException as e:
+            logger.error(f"Failed to build xcode project: {e}")
+            raise
+
+        return XcodeBuildArtefacts(
+            build_dir=self.build_dir(output_dir).as_posix(),
+            products_dir=self.products_dir(output_dir).as_posix(),
+            iphoneos_dir=self.iphoneos_dir(output_dir, configuration).as_posix(),
+            configuration=configuration,
+            scheme=scheme,
+        )
 
     async def build_for_testing(
         self,
