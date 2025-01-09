@@ -1,4 +1,5 @@
 import logging
+import pathlib
 
 from pydantic import BaseModel
 
@@ -59,6 +60,13 @@ class XcProject:
             raise ValueError(
                 error_msg,
             )
+        if not pathlib.Path(path_to_project).exists():
+            error_msg = f"Path to project does not exist: {path_to_project}"
+            logger.error(error_msg)
+            raise FileNotFoundError(
+                error_msg,
+            )
+
         self.path_to_project = path_to_project
 
     async def list(self) -> ProjectDetails:

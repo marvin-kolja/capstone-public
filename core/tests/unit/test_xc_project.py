@@ -19,6 +19,17 @@ class TestXcProject:
         with pytest.raises(ValueError):
             XcProject("path/to/project")
 
+    def test_init_non_existent_path_to_project(self):
+        """
+        GIVEN: A path to an xcode project that does not exist
+
+        WHEN: The XcProject is initialized
+
+        THEN: A FileNotFoundError is raised.
+        """
+        with pytest.raises(FileNotFoundError):
+            XcProject("/tmp/non-existent.xcodeproj")
+
     @pytest.mark.asyncio
     async def test_list(self):
         """
