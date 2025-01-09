@@ -213,6 +213,7 @@ async def async_run_process(
     except asyncio.CancelledError:
         logger.debug("Process execution was cancelled")
         process.send_signal(signal_on_cancel)
+        raise  # Re-raise the CancelledError
     finally:
         await wait()
         return std_out_err
