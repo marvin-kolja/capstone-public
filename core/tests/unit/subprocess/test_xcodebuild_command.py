@@ -316,21 +316,28 @@ class TestXcodebuildBuildCommand:
             action,
             "-workspace" if workspace else "-project",
             workspace if workspace else project,
-            "-scheme",
-            "Some Scheme",
-            "-configuration",
-            "Some Configuration",
-            "-destination",
-            f"platform=iOS,id={fake_udid}",
-            "-destination-timeout",
-            "1",
-            "-derivedDataPath",
-            "/tmp/derived_data",
-            "-IDECustomBuildProductsPath",
-            "",
-            "-IDECustomBuildIntermediatesPath",
-            "",
         ]
+        if action == "build-for-testing":
+            expected_command.extend(["-test-plan", "Test Plan Name"])
+
+        expected_command.extend(
+            [
+                "-scheme",
+                "Some Scheme",
+                "-configuration",
+                "Some Configuration",
+                "-destination",
+                f"platform=iOS,id={fake_udid}",
+                "-destination-timeout",
+                "1",
+                "-derivedDataPath",
+                "/tmp/derived_data",
+                "-IDECustomBuildProductsPath",
+                "",
+                "-IDECustomBuildIntermediatesPath",
+                "",
+            ]
+        )
 
         command = XcodebuildBuildCommand(
             action=action,
@@ -338,6 +345,7 @@ class TestXcodebuildBuildCommand:
             project=project,
             scheme="Some Scheme",
             configuration="Some Configuration",
+            test_plan="Test Plan Name" if action == "build-for-testing" else None,
             destination=IOSDestination(id=fake_udid),
             derived_data_path="/tmp/derived_data",
         )

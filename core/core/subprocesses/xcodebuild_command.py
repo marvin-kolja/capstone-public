@@ -268,6 +268,14 @@ class XcodebuildOptions:
             XcodebuildOptions.__get_option_name(XcodebuildOptions.show_test_plans)
         )
 
+    @staticmethod
+    @xcodebuild_option("-test-plan")
+    def test_plan(test_plan):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.test_plan),
+            test_plan,
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -368,6 +376,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         derived_data_path: str,
         workspace: Optional[str] = None,
         project: Optional[str] = None,
+        test_plan: Optional[str] = None,
     ):
         if action not in ["build", "build-for-testing"]:
             raise CommandError(
@@ -376,12 +385,19 @@ class XcodebuildBuildCommand(XcodebuildCommand):
 
         _validate_workspace_or_project(workspace, project)
 
+        if action == "build-for-testing" and test_plan is None:
+            raise CommandError("Test plan must be provided when building for testing")
+        elif action == "build" and test_plan is not None:
+            raise CommandError("Test plan must not be provided when building")
+
         options = []
 
         if workspace:
             options.append(XcodebuildOptions.workspace(workspace))
         if project:
             options.append(XcodebuildOptions.project(project))
+        if test_plan:
+            options.append(XcodebuildOptions.test_plan(test_plan))
         options.append(XcodebuildOptions.scheme(scheme))
         options.append(XcodebuildOptions.configuration(configuration))
         options.append(XcodebuildOptions.destination(destination))
