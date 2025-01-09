@@ -1,4 +1,5 @@
 import inspect
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +13,7 @@ from core.subprocesses.xcodebuild_command import (
     XcodebuildTestCommand,
     IOSDestination,
     XcodebuildTestEnumerationCommand,
+    XcodebuildBuildCommand,
 )
 
 
@@ -288,3 +290,93 @@ class TestXcodebuildTestEnumerationCommand:
         parsed_command = command.parse()
 
         assert expected_command == parsed_command
+
+
+class TestXcodebuildBuildCommand:
+    @pytest.mark.parametrize("action", ["build", "build-for-testing"])
+    @pytest.mark.parametrize(
+        "workspace,project",
+        [
+            ["/tmp/workspace", None],
+            [None, "/tmp/project"],
+        ],
+    )
+    def test_parse_returns_correct_command(self, action, workspace, project, fake_udid):
+        """
+        GIVEN: A `XcodebuildBuildCommand` with correct arguments
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+        expected_command = [
+            "xcodebuild",
+            action,
+            "-workspace" if workspace else "-project",
+            workspace if workspace else project,
+            "-scheme",
+            "Some Scheme",
+            "-configuration",
+            "Some Configuration",
+            "-destination",
+            f"platform=iOS,id={fake_udid}",
+            "-destination-timeout",
+            "1",
+            "-derivedDataPath",
+            "/tmp/derived_data",
+            "-IDECustomBuildProductsPath",
+            "",
+            "-IDECustomBuildIntermediatesPath",
+            "",
+        ]
+
+        command = XcodebuildBuildCommand(
+            action=action,
+            workspace=workspace,
+            project=project,
+            scheme="Some Scheme",
+            configuration="Some Configuration",
+            destination=IOSDestination(id=fake_udid),
+            derived_data_path="/tmp/derived_data",
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command
+
+    def test_init_without_workspace_and_project_should_raise(self):
+        """
+        GIVEN: A `XcodebuildBuildCommand` without workspace and project
+
+        WHEN: initializing the command
+
+        THEN: A `CommandError` should be raised
+        """
+        with pytest.raises(CommandError):
+            XcodebuildBuildCommand(
+                action="build",
+                destination=MagicMock(spec=IOSDestination),
+                configuration=MagicMock(spec=str),
+                derived_data_path=MagicMock(spec=str),
+                scheme=MagicMock(spec=str),
+            )
+
+    @pytest.mark.parametrize("action", ["build", "build-for-testing"])
+    def test_init_when_workspace_and_project_should_raise(self, action):
+        """
+        GIVEN: A `XcodebuildBuildCommand` with both workspace and project
+
+        WHEN: initializing the command
+
+        THEN: A `CommandError` should be raised
+        """
+        with pytest.raises(CommandError):
+            XcodebuildBuildCommand(
+                action=action,
+                workspace="/tmp/workspace",
+                project="/tmp/project",
+                destination=MagicMock(spec=IOSDestination),
+                configuration=MagicMock(spec=str),
+                derived_data_path=MagicMock(spec=str),
+                scheme=MagicMock(spec=str),
+            )

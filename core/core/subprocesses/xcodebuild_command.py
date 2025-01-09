@@ -226,6 +226,34 @@ class XcodebuildOptions:
             value,
         )
 
+    @staticmethod
+    @xcodebuild_option("-configuration")
+    def configuration(value: str):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.configuration),
+            value,
+        )
+
+    @staticmethod
+    @xcodebuild_option("-IDECustomBuildProductsPath")
+    def ide_custom_build_products_path(value: str):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.ide_custom_build_products_path
+            ),
+            value,
+        )
+
+    @staticmethod
+    @xcodebuild_option("-IDECustomBuildIntermediatesPath")
+    def ide_custom_build_intermediates_path(value: str):
+        return XcodebuildOptionWithValue(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.ide_custom_build_intermediates_path
+            ),
+            value,
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -302,6 +330,53 @@ class XcodebuildCommand(ProcessCommand):
             else:
                 raise CommandError(f"Unknown option type: {type(option).__name__}")
         return command
+
+
+class XcodebuildBuildCommand(XcodebuildCommand):
+    """
+    A convenience command parser for the `xcodebuild` building commands (`build` and `build-for-testing`).
+    """
+
+    def __init__(
+        self,
+        action: Literal["build", "build-for-testing"],
+        scheme: str,
+        configuration: str,
+        destination: IOSDestination,
+        derived_data_path: str,
+        workspace: Optional[str] = None,
+        project: Optional[str] = None,
+    ):
+        if action not in ["build", "build-for-testing"]:
+            raise CommandError(
+                f"Invalid action: {action}, must be one of ['build', 'build-for-testing']"
+            )
+
+        options = []
+
+        if workspace and project:
+            raise CommandError(
+                "Either workspace or project should be provided, not both."
+            )
+        if not workspace and not project:
+            raise CommandError("Either workspace or project should be provided.")
+
+        if workspace:
+            options.append(XcodebuildOptions.workspace(workspace))
+        if project:
+            options.append(XcodebuildOptions.project(project))
+        options.append(XcodebuildOptions.scheme(scheme))
+        options.append(XcodebuildOptions.configuration(configuration))
+        options.append(XcodebuildOptions.destination(destination))
+        options.append(XcodebuildOptions.destination_timeout("1"))
+        options.append(XcodebuildOptions.derived_data_path(derived_data_path))
+
+        # NOTE: It seems that these options are needed for the derived data path to be used correctly
+        # See https://stackoverflow.com/a/71550483 for more information
+        options.append(XcodebuildOptions.ide_custom_build_products_path(""))
+        options.append(XcodebuildOptions.ide_custom_build_intermediates_path(""))
+
+        super().__init__(action=action, options=options)
 
 
 class XcodebuildTestCommand(XcodebuildCommand):
