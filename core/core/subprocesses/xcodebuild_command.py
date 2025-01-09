@@ -261,6 +261,13 @@ class XcodebuildOptions:
             XcodebuildOptions.__get_option_name(XcodebuildOptions.json)
         )
 
+    @staticmethod
+    @xcodebuild_option("-showTestPlans")
+    def show_test_plans():
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.show_test_plans)
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -476,6 +483,30 @@ class XcodebuildListCommand(XcodebuildCommand):
         _validate_workspace_or_project(workspace, project)
 
         options = [XcodebuildOptions.list()]
+        if workspace:
+            options.append(XcodebuildOptions.workspace(workspace))
+        if project:
+            options.append(XcodebuildOptions.project(project))
+        if json_output:
+            options.append(XcodebuildOptions.json())
+
+        super().__init__(action=None, options=options)
+
+
+class XcodebuildShowTestPlansCommand(XcodebuildCommand):
+    """
+    A convenience command parser for the `xcodebuild -showTestPlans` command.
+    """
+
+    def __init__(
+        self,
+        workspace: Optional[str] = None,
+        project: Optional[str] = None,
+        json_output: bool = True,
+    ):
+        _validate_workspace_or_project(workspace, project)
+
+        options = [XcodebuildOptions.show_test_plans()]
         if workspace:
             options.append(XcodebuildOptions.workspace(workspace))
         if project:
