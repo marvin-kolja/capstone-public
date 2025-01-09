@@ -19,7 +19,7 @@ async def tunnel_server(port):
 
 @pytest.fixture
 def server(request):
-    return request.getfixturevalue(request.param)
+    yield request.getfixturevalue(request.param)
 
 
 @pytest.fixture

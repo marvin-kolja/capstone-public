@@ -1,7 +1,23 @@
 import pytest
 from pymobiledevice3.lockdown import create_using_usbmux
+from pytest_asyncio import is_async_test
 
 from core.async_socket import ClientSocket, ServerSocket
+
+
+def pytest_collection_modifyitems(items):
+    """
+    Run all async tests in session scope. Overwrites the default asyncio loop scope of function.
+
+    Function copied from https://pytest-asyncio.readthedocs.io/en/v0.24.0/how-to-guides/run_session_tests_in_same_loop.html
+    Issue link on discussing default option: https://github.com/pytest-dev/pytest-asyncio/issues/793
+
+    # TODO: Remove once a default option is available in pytest-asyncio
+    """
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(loop_scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
 
 
 def pytest_addoption(parser):
