@@ -92,6 +92,8 @@ class TestAppBuilder:
                 test_plan=test_plan,
             )
 
+            mock_xctestrun_file.assert_called_once_with(output_dir, scheme, test_plan)
+
             mock_process_instance.execute.assert_awaited_once()
             mock_process_instance.wait.assert_awaited()
 
