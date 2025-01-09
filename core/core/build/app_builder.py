@@ -105,6 +105,7 @@ class AppBuilder:
             configuration=configuration,
             destination=destination,
             derived_data_path=output_dir,
+            test_plan=test_plan,
         )
 
         try:
