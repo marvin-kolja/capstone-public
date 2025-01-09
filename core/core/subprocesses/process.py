@@ -216,4 +216,4 @@ async def async_run_process(
         raise  # Re-raise the CancelledError
     finally:
         await wait()
-        return std_out_err
+    return std_out_err
