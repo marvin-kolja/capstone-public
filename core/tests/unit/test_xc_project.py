@@ -1,7 +1,8 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
+from core.subprocesses.process import Process
 from core.xc_project import XcProject
 
 
@@ -40,8 +41,12 @@ class TestXcProject:
             "}",
         ]
 
-        with patch("core.xc_project.async_run_process") as mock_async_run_process:
-            mock_async_run_process.return_value = [example_stdout, []]
+        with patch("core.subprocesses.process.Process") as mock_process:
+            mock_process_instance = MagicMock(spec=Process)
+            mock_process_instance.failed = False
+            mock_process_instance.execute.return_value = None
+            mock_process_instance.wait.return_value = (example_stdout, [])
+            mock_process.return_value = mock_process_instance
 
             result = await project.list()
 
@@ -71,8 +76,12 @@ class TestXcProject:
             "}",
         ]
 
-        with patch("core.xc_project.async_run_process") as mock_async_run_process:
-            mock_async_run_process.return_value = [example_stdout, []]
+        with patch("core.subprocesses.process.Process") as mock_process:
+            mock_process_instance = MagicMock(spec=Process)
+            mock_process_instance.failed = False
+            mock_process_instance.execute.return_value = None
+            mock_process_instance.wait.return_value = (example_stdout, [])
+            mock_process.return_value = mock_process_instance
 
             result = await project.xcode_test_plans()
 
