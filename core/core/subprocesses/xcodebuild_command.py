@@ -270,10 +270,10 @@ class XcodebuildOptions:
 
     @staticmethod
     @xcodebuild_option("-test-plan")
-    def test_plan(test_plan):
+    def test_plan(value: str):
         return XcodebuildOptionWithValue(
             XcodebuildOptions.__get_option_name(XcodebuildOptions.test_plan),
-            test_plan,
+            value,
         )
 
 
