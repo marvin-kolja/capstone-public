@@ -9,7 +9,6 @@ from core.test_session.session_state import SessionState, ExecutionStepState
 
 
 class TestSessionState:
-
     def test_init(self, mock_execution_plan):
         """
         GIVEN: A valid execution plan
