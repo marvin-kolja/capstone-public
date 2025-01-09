@@ -318,7 +318,7 @@ class TestXcodebuildBuildCommand:
             workspace if workspace else project,
         ]
         if action == "build-for-testing":
-            expected_command.extend(["-test-plan", "Test Plan Name"])
+            expected_command.extend(["-testPlan", "Test Plan Name"])
 
         expected_command.extend(
             [

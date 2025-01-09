@@ -269,7 +269,7 @@ class XcodebuildOptions:
         )
 
     @staticmethod
-    @xcodebuild_option("-test-plan")
+    @xcodebuild_option("-testPlan")
     def test_plan(value: str):
         return XcodebuildOptionWithValue(
             XcodebuildOptions.__get_option_name(XcodebuildOptions.test_plan),
