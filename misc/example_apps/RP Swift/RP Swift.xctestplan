@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "30DF5664-393A-4BC7-B7C7-5499F62C8A1A",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "diagnosticCollectionPolicy" : "Never",
+    "mainThreadCheckerEnabled" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:RP Swift.xcodeproj",
+      "identifier" : "CE2C5B6D2BF203AC00E21FAC",
+      "name" : "RP Swift"
+    },
+    "uiTestingScreenshotsLifetime" : "keepNever",
+    "userAttachmentLifetime" : "keepNever"
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "RP_SwiftUITests",
+        "RP_SwiftUITests\/testFindAllButtonCoordiantes()",
+        "RP_SwiftUITestsLaunchTests"
+      ],
+      "target" : {
+        "containerPath" : "container:RP Swift.xcodeproj",
+        "identifier" : "CEB9EB332BFDF7430073D92D",
+        "name" : "RP SwiftUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
