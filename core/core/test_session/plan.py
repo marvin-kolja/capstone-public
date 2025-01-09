@@ -5,6 +5,10 @@ from core.test_session.metrics import Metric
 
 
 class StepTestCase(BaseModel):
+    """
+    Represents a single test case in a test step. Test case refers to the actual test method that is executed.
+    """
+
     xctest_id: str
 
     @property
@@ -34,6 +38,12 @@ class StepTestCase(BaseModel):
 
 
 class PlanStep(BaseModel):
+    """
+    Represents a single step in our test plan. A step is simply a collection of test cases and describes how they should
+    be executed. A step can have its own metrics, recording strategy, and repetition count. Values such as metrics
+    and recording strategy "override" the values from the test plan, and do not have to be provided.
+    """
+
     order: int = Field(ge=0)
     """Order of the step in the test plan."""
 
@@ -85,6 +95,10 @@ class PlanStep(BaseModel):
 
 
 class XctestrunConfig(BaseModel):
+    """
+    Contains the path to the xctestrun file and the test configuration to be used.
+    """
+
     path: str
     """
     Path to the xctestrun file.
@@ -97,6 +111,13 @@ class XctestrunConfig(BaseModel):
 
 
 class SessionTestPlan(BaseModel):
+    """
+    Represents a test plan that is to be executed on a device. A test plan is a collection of test steps that contain
+    information about the specific test cases. Other information such as metrics, repetition count, and recording
+    strategy can be defined on the test plan level and can be overridden by the test steps. Those define how the test
+    plan will be interpreted and executed.
+    """
+
     name: str
     """
     User defined name of the test plan.
