@@ -228,7 +228,6 @@ class Session:
         :param xctest_ids: The test cases to run.
         :return: A task running the tests.
         """
-        test_plan = self._execution_plan.test_plan
         return asyncio.create_task(
             Xctest.run_test(
                 xcresult_path=xcresult_path,
