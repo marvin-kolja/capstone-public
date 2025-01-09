@@ -101,10 +101,11 @@ class XcProject:
             )
             raise
 
-    async def xcode_test_plans(self) -> [str]:
+    async def xcode_test_plans(self, scheme: str) -> [str]:
         """
         Get the test plans from the given project.
 
+        :param scheme: The project scheme to get the test plans for
         :return: Names of the test plans as a list
         :raises ProcessException: when the executed command fails
         :raises ValidationError: when the output of the command cannot be parsed correctly
@@ -113,6 +114,7 @@ class XcProject:
 
         command = XcodebuildShowTestPlansCommand(
             project=self.path_to_project,
+            scheme=scheme,
             json_output=True,
         )
 

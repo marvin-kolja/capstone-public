@@ -445,6 +445,8 @@ class TestXcodebuildShowTestPlansCommand:
         expected_command = [
             "xcodebuild",
             "-showTestPlans",
+            "-scheme",
+            "Some Scheme",
             "-workspace" if workspace else "-project",
             workspace if workspace else project,
             "-json",
@@ -453,6 +455,7 @@ class TestXcodebuildShowTestPlansCommand:
         command = XcodebuildShowTestPlansCommand(
             workspace=workspace,
             project=project,
+            scheme="Some Scheme",
         )
 
         parsed_command = command.parse()

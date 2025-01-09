@@ -6,6 +6,13 @@ from core.subprocesses.process import Process
 from core.xc_project import XcProject
 
 
+@pytest.fixture
+def mock_pathlib_exists():
+    with patch("core.xc_project.pathlib.Path.exists") as mock_exists:
+        mock_exists.return_value = True
+        yield mock_exists
+
+
 class TestXcProject:
 
     def test_init_path_to_project_ends_with_xcodeproj(self):
@@ -31,7 +38,7 @@ class TestXcProject:
             XcProject("/tmp/non-existent.xcodeproj")
 
     @pytest.mark.asyncio
-    async def test_list(self):
+    async def test_list(self, mock_pathlib_exists):
         """
         GIVEN: An XcProject
 
@@ -67,7 +74,7 @@ class TestXcProject:
             assert result.targets == ["target1"]
 
     @pytest.mark.asyncio
-    async def test_xcode_test_plans(self):
+    async def test_xcode_test_plans(self, mock_pathlib_exists):
         """
         GIVEN: An XcProject
 
@@ -94,6 +101,6 @@ class TestXcProject:
             mock_process_instance.wait.return_value = (example_stdout, [])
             mock_process.return_value = mock_process_instance
 
-            result = await project.xcode_test_plans()
+            result = await project.xcode_test_plans(scheme=MagicMock(spec=str))
 
             assert result == ["testPlan1"]

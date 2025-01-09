@@ -516,13 +516,17 @@ class XcodebuildShowTestPlansCommand(XcodebuildCommand):
 
     def __init__(
         self,
+        scheme: str,
         workspace: Optional[str] = None,
         project: Optional[str] = None,
         json_output: bool = True,
     ):
         _validate_workspace_or_project(workspace, project)
 
-        options = [XcodebuildOptions.show_test_plans()]
+        options = [
+            XcodebuildOptions.show_test_plans(),
+            XcodebuildOptions.scheme(scheme),
+        ]
         if workspace:
             options.append(XcodebuildOptions.workspace(workspace))
         if project:
