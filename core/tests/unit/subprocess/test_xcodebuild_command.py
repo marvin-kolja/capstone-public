@@ -14,6 +14,8 @@ from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,
     XcodebuildBuildCommand,
+    XcodebuildListCommand,
+    XcodebuildShowTestPlansCommand,
 )
 
 
@@ -380,3 +382,71 @@ class TestXcodebuildBuildCommand:
                 derived_data_path=MagicMock(spec=str),
                 scheme=MagicMock(spec=str),
             )
+
+
+class TestXcodebuildListCommand:
+    @pytest.mark.parametrize(
+        "workspace,project",
+        [
+            ["/tmp/workspace", None],
+            [None, "/tmp/project"],
+        ],
+    )
+    def test_parse_returns_correct_command(self, workspace, project, fake_udid):
+        """
+        GIVEN: A `XcodebuildListCommand` with correct arguments
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+        expected_command = [
+            "xcodebuild",
+            "-list",
+            "-workspace" if workspace else "-project",
+            workspace if workspace else project,
+            "-json",
+        ]
+
+        command = XcodebuildListCommand(
+            workspace=workspace,
+            project=project,
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command
+
+
+class TestXcodebuildShowTestPlansCommand:
+    @pytest.mark.parametrize(
+        "workspace,project",
+        [
+            ["/tmp/workspace", None],
+            [None, "/tmp/project"],
+        ],
+    )
+    def test_parse_returns_correct_command(self, workspace, project, fake_udid):
+        """
+        GIVEN: A `XcodebuildShowTestPlansCommand` with correct arguments
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should represent the correct command
+        """
+        expected_command = [
+            "xcodebuild",
+            "-showTestPlans",
+            "-workspace" if workspace else "-project",
+            workspace if workspace else project,
+            "-json",
+        ]
+
+        command = XcodebuildShowTestPlansCommand(
+            workspace=workspace,
+            project=project,
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_command == parsed_command
