@@ -3,7 +3,10 @@ import logging
 from pydantic import BaseModel
 
 from core.subprocesses.process import async_run_process, ProcessException
-from core.subprocesses.xcodebuild_command import XcodebuildListCommand
+from core.subprocesses.xcodebuild_command import (
+    XcodebuildListCommand,
+    XcodebuildShowTestPlansCommand,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,5 +101,25 @@ class XcProject:
         :raises ProcessException: when the executed command fails
         :raises ValidationError: when the output of the command cannot be parsed correctly
         """
-        # TODO: use async_run_process to execute XcodebuildShowTestPlansCommand
-        raise NotImplementedError
+        logger.debug(f"Getting test plans for project {self.path_to_project}")
+
+        command = XcodebuildShowTestPlansCommand(
+            project=self.path_to_project,
+            json_output=True,
+        )
+
+        try:
+            stdout, _ = await async_run_process(command=command)
+        except ProcessException as e:
+            logger.error(f"Failed to get the test plans of {self.path_to_project}: {e}")
+            raise
+
+        try:
+            json_string = "".join(stdout)
+            result = XcShowTestPlansResult.model_validate_json(json_string)
+            return [test_plan.name for test_plan in result.testPlans]
+        except Exception as e:
+            logger.error(
+                f"Failed to parse the output of the test plans of {self.path_to_project}: {e}"
+            )
+            raise
