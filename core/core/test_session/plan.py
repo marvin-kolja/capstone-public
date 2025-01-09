@@ -61,7 +61,7 @@ class PlanStep(BaseModel):
 
         if len(test_targets) != 1:
             raise ValueError(
-                f"All test cases in a step must be from the same test target, found [{",".join(test_targets)}]"
+                f"All test cases in a step must be from the same test target, found [{','.join(test_targets)}]"
             )
 
         return test_cases
