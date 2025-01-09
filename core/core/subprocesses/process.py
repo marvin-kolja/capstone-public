@@ -193,21 +193,26 @@ async def async_run_process(
     """
     process = Process(command=command)
 
+    std_out_err: Optional[tuple[list[str], list[str]]] = None
+
     async def wait():
-        stdout, stderr = await process.wait()
+        nonlocal std_out_err
+        local_std_out_err = await process.wait()
+        if std_out_err is None:
+            std_out_err = local_std_out_err
         if process.failed:
             raise ProcessException(
-                stdout=stdout,
-                stderr=stderr,
+                stdout=std_out_err[0],
+                stderr=std_out_err[1],
                 return_code=process.returncode,
             )
-        return stdout, stderr
 
     try:
         await process.execute(cwd=cwd)
-        return await wait()
+        await wait()
     except asyncio.CancelledError:
         logger.debug("Process execution was cancelled")
         process.send_signal(signal_on_cancel)
     finally:
-        return await wait()
+        await wait()
+        return std_out_err
