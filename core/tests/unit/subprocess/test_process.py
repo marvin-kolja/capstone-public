@@ -9,6 +9,8 @@ from core.subprocesses.process import (
     Process,
     ProcessCommand,
     ProcessAlreadyRunningError,
+    async_run_process,
+    ProcessException,
 )
 
 
@@ -243,3 +245,84 @@ class TestProcess:
         process.send_signal(sig)
 
         mock_os_kill.assert_called_once_with(mock_asyncio_process.pid, sig)
+
+
+async def test_async_run_process_cancel():
+    """
+    GIVEN: A command that is running using the `async_run_process` function inside a task
+
+    WHEN: The task is cancelled
+
+    THEN: The process should signal to close with the given signal
+    AND: The process should be waited correctly
+    """
+    command = MagicMock(spec=ProcessCommand)
+
+    async def sleep(*args, **kwargs):
+        await asyncio.sleep(0.1)
+
+    with patch("core.subprocesses.process.Process") as mock_process:
+        mock_process_instance = AsyncMock(spec=Process)
+        mock_process_instance.failed = False
+        mock_process_instance.execute.side_effect = sleep
+        mock_process_instance.wait.side_effect = sleep
+        mock_process.return_value = mock_process_instance
+
+        task = asyncio.create_task(
+            async_run_process(command=command, signal_on_cancel=signal.SIGKILL)
+        )
+        await asyncio.sleep(0.15)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        mock_process_instance.send_signal.assert_called_once()
+        mock_process_instance.wait.assert_awaited()
+        assert mock_process_instance.wait.await_count == 2
+        mock_process_instance.send_signal.assert_called_once_with(signal.SIGKILL)
+
+
+async def test_async_run_process_exception():
+    """
+    GIVEN: A command that is running using the `async_run_process` function
+
+    WHEN: The `execute` method of the process raises an exception
+
+    THEN: The exception should be raised from the task after the process was awaited.
+    """
+    command = MagicMock(spec=ProcessCommand)
+
+    async def sleep(*args, **kwargs):
+        await asyncio.sleep(0.1)
+
+    with patch("core.subprocesses.process.Process") as mock_process:
+        mock_process_instance = AsyncMock(spec=Process)
+        mock_process_instance.failed = False
+        mock_process_instance.execute.side_effect = ValueError
+        mock_process_instance.wait.side_effect = sleep
+        mock_process.return_value = mock_process_instance
+
+        with pytest.raises(ValueError):
+            await async_run_process(command=command)
+
+        mock_process_instance.wait.assert_awaited_once()
+
+
+async def test_async_run_process_failed():
+    """
+    GIVEN: A command that is running using the `async_run_process` function
+
+    WHEN: The process fails
+
+    THEN: The `ProcessException` should be raised
+    """
+    command = MagicMock(spec=ProcessCommand)
+
+    with patch("core.subprocesses.process.Process") as mock_process:
+        mock_process_instance = AsyncMock(spec=Process)
+        mock_process_instance.failed = True
+        mock_process.return_value = mock_process_instance
+
+        with pytest.raises(ProcessException):
+            await async_run_process(command=command)
