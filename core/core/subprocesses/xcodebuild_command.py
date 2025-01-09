@@ -254,6 +254,13 @@ class XcodebuildOptions:
             value,
         )
 
+    @staticmethod
+    @xcodebuild_option("-json")
+    def json():
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(XcodebuildOptions.json)
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -277,6 +284,14 @@ def _valid_option_names():
         option_names.append(xcodebuild_option_name)
 
     return option_names
+
+
+def _validate_workspace_or_project(workspace: Optional[str], project: Optional[str]):
+    if workspace is not None and project is not None:
+        raise CommandError("Either workspace or project should be provided, not both.")
+
+    if workspace is None and project is None:
+        raise CommandError("Either workspace or project should be provided.")
 
 
 class XcodebuildCommand(ProcessCommand):
@@ -352,14 +367,9 @@ class XcodebuildBuildCommand(XcodebuildCommand):
                 f"Invalid action: {action}, must be one of ['build', 'build-for-testing']"
             )
 
-        options = []
+        _validate_workspace_or_project(workspace, project)
 
-        if workspace and project:
-            raise CommandError(
-                "Either workspace or project should be provided, not both."
-            )
-        if not workspace and not project:
-            raise CommandError("Either workspace or project should be provided.")
+        options = []
 
         if workspace:
             options.append(XcodebuildOptions.workspace(workspace))
@@ -450,3 +460,27 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
             options.append(XcodebuildOptions.test_enumeration_output_path(output_path))
 
         super().__init__(action="test-without-building", options=options)
+
+
+class XcodebuildListCommand(XcodebuildCommand):
+    """
+    A convenience command parser for the `xcodebuild -list` command.
+    """
+
+    def __init__(
+        self,
+        workspace: Optional[str] = None,
+        project: Optional[str] = None,
+        json_output: bool = True,
+    ):
+        _validate_workspace_or_project(workspace, project)
+
+        options = [XcodebuildOptions.list()]
+        if workspace:
+            options.append(XcodebuildOptions.workspace(workspace))
+        if project:
+            options.append(XcodebuildOptions.project(project))
+        if json_output:
+            options.append(XcodebuildOptions.json())
+
+        super().__init__(action=None, options=options)
