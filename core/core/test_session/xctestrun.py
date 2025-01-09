@@ -4,7 +4,7 @@ from typing import Optional
 
 class ContainerInfo(BaseModel):
     """
-    Please refer to https://keith.github
+    General information about the container.
     """
 
     ContainerName: str
@@ -13,6 +13,8 @@ class ContainerInfo(BaseModel):
 
 class XcTestTarget(BaseModel):
     """
+    A test target that can be used to run tests.
+
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TestTargets for
     information about the fields.
     """
@@ -80,6 +82,8 @@ class XcTestTarget(BaseModel):
 
 class XcTestConfiguration(BaseModel):
     """
+    A test configuration that can be used to run tests.
+
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TEST_CONFIGURATIONS_SECTION for
     information about the fields.
     """
@@ -90,6 +94,8 @@ class XcTestConfiguration(BaseModel):
 
 class XcTestPlan(BaseModel):
     """
+    Xcode test plan.
+
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#TEST_PLAN_SECTION for
     information about the fields.
     """
@@ -100,6 +106,8 @@ class XcTestPlan(BaseModel):
 
 class XcTestrunMetadata(BaseModel):
     """
+    Xctestrun metadata.
+
     Please refer to https://keith.github.io/xcode-man-pages/xcodebuild.xctestrun.5.html#METADATA_SECTION for information
     about the fields.
     """
