@@ -121,7 +121,7 @@ class AppBuilder:
             configuration=configuration,
             scheme=scheme,
             xctestrun_path=self.xctestrun_file(
-                output_dir, scheme, configuration
+                output_dir, scheme, test_plan
             ).as_posix(),
             test_plan=test_plan,
         )
