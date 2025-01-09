@@ -2,6 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
+from core.subprocesses.process import async_run_process
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,6 +65,7 @@ class XcProject:
         :raises ProcessException: when the executed command fails
         :raises ValidationError: when the output of the command cannot be parsed correctly
         """
+        # TODO: use async_run_process to execute XcodebuildListCommand
         raise NotImplementedError
 
     async def xcode_test_plans(self) -> [str]:
@@ -73,4 +76,5 @@ class XcProject:
         :raises ProcessException: when the executed command fails
         :raises ValidationError: when the output of the command cannot be parsed correctly
         """
+        # TODO: use async_run_process to execute XcodebuildShowTestPlansCommand
         raise NotImplementedError
