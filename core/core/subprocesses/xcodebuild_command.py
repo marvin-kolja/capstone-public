@@ -401,7 +401,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         options.append(XcodebuildOptions.scheme(scheme))
         options.append(XcodebuildOptions.configuration(configuration))
         options.append(XcodebuildOptions.destination(destination))
-        options.append(XcodebuildOptions.destination_timeout("1"))
+        options.append(XcodebuildOptions.destination_timeout("10"))
         options.append(XcodebuildOptions.derived_data_path(derived_data_path))
 
         # NOTE: It seems that these options are needed for the derived data path to be used correctly
@@ -473,7 +473,7 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
         options = [
             XcodebuildOptions.xctestrun(xctestrun),
             XcodebuildOptions.destination(destination),
-            XcodebuildOptions.destination_timeout("1"),
+            XcodebuildOptions.destination_timeout("10"),
             XcodebuildOptions.enumerate_tests(),
             XcodebuildOptions.test_enumeration_style(enumeration_style),
             XcodebuildOptions.test_enumeration_format(enumeration_format),
