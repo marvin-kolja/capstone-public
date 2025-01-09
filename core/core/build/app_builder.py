@@ -98,8 +98,32 @@ class AppBuilder:
         """
         Build xcode project for testing
         """
-        # TODO: Use XcodebuildBuildCommand for building for testing
-        raise NotImplementedError
+        command = XcodebuildBuildCommand(
+            action="build-for-testing",
+            project=self.xc_project.path_to_project,
+            scheme=scheme,
+            configuration=configuration,
+            destination=destination,
+            derived_data_path=output_dir,
+        )
+
+        try:
+            await async_run_process(command=command)
+        except ProcessException as e:
+            logger.error(f"Failed to build xcode project: {e}")
+            raise
+
+        return XcodeTestBuildArtefacts(
+            build_dir=self.build_dir(output_dir).as_posix(),
+            products_dir=self.products_dir(output_dir).as_posix(),
+            iphoneos_dir=self.iphoneos_dir(output_dir, configuration).as_posix(),
+            configuration=configuration,
+            scheme=scheme,
+            xctestrun_path=self.xctestrun_file(
+                output_dir, scheme, configuration
+            ).as_posix(),
+            test_plan=test_plan,
+        )
 
     @staticmethod
     def build_dir(base_dir: str) -> pathlib.Path:
