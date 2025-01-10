@@ -248,6 +248,7 @@ class XcodebuildOptions:
                 XcodebuildOptions.ide_custom_build_products_path
             ),
             value,
+            use_equals_sign=True,
         )
 
     @staticmethod
@@ -258,6 +259,7 @@ class XcodebuildOptions:
                 XcodebuildOptions.ide_custom_build_intermediates_path
             ),
             value,
+            use_equals_sign=True,
         )
 
     @staticmethod
