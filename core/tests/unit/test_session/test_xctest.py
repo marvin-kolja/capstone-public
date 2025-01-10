@@ -12,7 +12,7 @@ from core.subprocesses.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestCommand,
 )
-from core.test_session.xctest import Xctest, XctestOverview
+from core.xc.xctest import Xctest, XctestOverview
 
 
 @pytest.fixture
@@ -22,9 +22,7 @@ def fake_tmp_file():
 
 @pytest.fixture
 def mock_xcodebuild_run():
-    with patch(
-        "core.test_session.xctest.async_run_process", return_value=([], [])
-    ) as run_mock:
+    with patch("core.xc.xctest.async_run_process", return_value=([], [])) as run_mock:
         yield run_mock
 
 
@@ -48,14 +46,14 @@ def success_test_enumeration_result():
 
 @pytest.fixture
 def mock_read_file(success_test_enumeration_result):
-    with patch("core.test_session.xctest.Xctest._read_file") as mock:
+    with patch("core.xc.xctest.Xctest._read_file") as mock:
         mock.return_value = json.dumps(success_test_enumeration_result)
         yield mock
 
 
 @pytest.fixture
 def mock_temporary_file_path(fake_tmp_file):
-    with patch("core.test_session.xctest.Xctest._temporary_file_path") as mock_context:
+    with patch("core.xc.xctest.Xctest._temporary_file_path") as mock_context:
         mock_enter = MagicMock(return_value=fake_tmp_file)
         mock_context.return_value.__enter__ = mock_enter
         mock_context.return_value.__exit__ = MagicMock(return_value=None)

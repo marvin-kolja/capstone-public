@@ -13,7 +13,7 @@ from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import XctestrunConfig
 from core.test_session.session_state import SessionState
 from core.test_session.session_step_hasher import hash_session_execution_step
-from core.test_session.xctest import Xctest
+from core.xc.xctest import Xctest
 from core.test_session.xctrace import Xctrace
 
 logging.basicConfig(level=logging.DEBUG)

@@ -17,7 +17,7 @@ import pymobiledevice3.exceptions as pmd3_exceptions
 from core.async_socket import ClientSocket
 from core.codec.socket_json_codec import SocketMessageJSONCodec
 from core.device.i_device import IDevice
-from core.test_session.xctest import Xctest
+from core.xc.xctest import Xctest
 from core.tunnel.client import get_tunnel_client
 from core.tunnel.interface import TunnelResult
 

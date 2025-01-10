@@ -13,7 +13,7 @@ from core.test_session.plan import (
     SessionTestPlan,
     XctestrunConfig,
 )
-from core.test_session.xctest import Xctest
+from core.xc.xctest import Xctest
 from core.test_session.xctestrun import XcTestTarget, Xctestrun, XcTestConfiguration
 
 logger = logging.getLogger(__name__)
