@@ -9,7 +9,7 @@ import uuid
 
 import pytest
 
-from core.build.app_builder import (
+from core.xc.app_builder import (
     AppBuilder,
     XcodeBuildArtefacts,
     XcodeTestBuildArtefacts,

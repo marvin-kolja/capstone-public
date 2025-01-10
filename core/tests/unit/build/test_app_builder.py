@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from core.build.app_builder import AppBuilder
+from core.xc.app_builder import AppBuilder
 from core.subprocesses.process import Process
 from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.xc_project import XcProject
