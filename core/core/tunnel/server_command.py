@@ -15,7 +15,7 @@ class TunnelServerCommand(ProcessCommand):
         command = [
             "python",
             "-m",
-            "core.subprocesses.tunnel_server_executable",
+            "core.tunnel.server_executable",
             str(self.__port),
         ]
         if self.__log_level:

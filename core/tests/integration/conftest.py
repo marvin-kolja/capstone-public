@@ -10,7 +10,7 @@ def tunnel_server_subprocess_port():
 
 @pytest.fixture(scope="module")
 async def tunnel_server_subprocess(tunnel_server_subprocess_port):
-    from core.subprocesses.tunnel_server_command import TunnelServerCommand
+    from core.tunnel.server_command import TunnelServerCommand
     from core.subprocesses.process import Process
 
     command = TunnelServerCommand(port=tunnel_server_subprocess_port)
