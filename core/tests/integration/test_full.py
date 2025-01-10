@@ -51,7 +51,6 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
     """
     if os.geteuid() == 0:
         xcodebuild_command_parse = XcodebuildCommand.parse
-        xctrace_command_parse = XctraceCommand.parse
 
         def create_new_parse(original_parse):
             def new_parse(self):
@@ -62,7 +61,6 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
             return new_parse
 
         XcodebuildCommand.parse = create_new_parse(xcodebuild_command_parse)
-        XctraceCommand.parse = create_new_parse(xctrace_command_parse)
 
         test_output_dir_path = pathlib.Path(test_output_dir)
         build_output_dir_path = pathlib.Path(build_output_dir)
@@ -74,6 +72,10 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
                     os.chmod(path, 0o777)
                 if path.parent.stat().st_uid == 0:
                     os.chmod(path.parent, 0o777)
+
+        yield
+
+        XcodebuildCommand.parse = xcodebuild_command_parse
 
 
 @pytest.fixture(scope="module")
