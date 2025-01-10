@@ -358,3 +358,13 @@ async def test_execute_tests(ios_device, test_output_dir, test_plan):
         assert file.stem == hash_session_execution_step(
             session_id=session_id, execution_step=execution_plan.execution_steps[0]
         )
+
+@pytest.mark.skip("Requires trace file parsing")
+@pytest.mark.asyncio
+async def test_parse_trace_file(test_output_dir):
+    pass
+
+@pytest.mark.skip("Requires xcresult file parsing")
+@pytest.mark.asyncio
+async def test_parse_xcresult_file(test_output_dir):
+    pass
