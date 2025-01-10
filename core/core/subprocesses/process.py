@@ -7,6 +7,8 @@ from abc import ABC, abstractmethod
 from asyncio import subprocess
 from typing import Optional
 
+file_scoped_logger = logging.getLogger(__name__)
+
 
 class ProcessCommand(ABC):
     """
@@ -56,8 +58,6 @@ class Process:
         - Waiting for the process to finish
             - Exposes the stdout and stderr as lists of strings
     """
-
-    _default_logger = logging.getLogger(__name__)
 
     def __init__(self, command: ProcessCommand):
         """
@@ -155,7 +155,8 @@ class Process:
 
     @staticmethod
     async def _read_stream(
-        stream: asyncio.StreamReader, logger: Optional[logging.Logger] = _default_logger
+        stream: asyncio.StreamReader,
+        logger: Optional[logging.Logger] = file_scoped_logger,
     ) -> list[str]:
         """
         Read a stream, line by line and decode it.
@@ -175,7 +176,7 @@ class Process:
     def _send_signal(
         pid: int,
         sig: signal.Signals,
-        logger: Optional[logging.Logger] = _default_logger,
+        logger: Optional[logging.Logger] = file_scoped_logger,
     ):
         """Uses the `os.kill` to send a signal to the process group."""
         logger.debug(f"Sending {sig} to process with PID: {pid}")
@@ -221,7 +222,7 @@ async def async_run_process(
         await process.execute(cwd=cwd)
         await wait()
     except asyncio.CancelledError:
-        process.logger.debug("Process execution was cancelled")
+        file_scoped_logger.debug("Process execution was cancelled")
         process.send_signal(signal_on_cancel)
         raise  # Re-raise the CancelledError
     finally:
