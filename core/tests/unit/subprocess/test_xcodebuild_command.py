@@ -332,6 +332,7 @@ class TestXcodebuildBuildCommand:
                 "10",
                 "-derivedDataPath",
                 "/tmp/derived_data",
+                "-allowProvisioningUpdates",
                 "-IDECustomBuildProductsPath=",
                 "-IDECustomBuildIntermediatesPath=",
             ]

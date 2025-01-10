@@ -284,6 +284,15 @@ class XcodebuildOptions:
             value,
         )
 
+    @staticmethod
+    @xcodebuild_option("-allowProvisioningUpdates")
+    def allow_provisioning_updates():
+        return XcodebuildOption(
+            XcodebuildOptions.__get_option_name(
+                XcodebuildOptions.allow_provisioning_updates
+            )
+        )
+
 
 def _valid_option_names():
     option_names = []
@@ -414,6 +423,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         options.append(XcodebuildOptions.destination(destination))
         options.append(XcodebuildOptions.destination_timeout("10"))
         options.append(XcodebuildOptions.derived_data_path(derived_data_path))
+        options.append(XcodebuildOptions.allow_provisioning_updates())
 
         # NOTE: It seems that these options are needed for the derived data path to be used correctly
         # See https://stackoverflow.com/a/71550483 for more information
