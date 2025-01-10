@@ -7,10 +7,9 @@ from core.test_session.metrics import Metric
 from core.test_session.plan import (
     SessionTestPlan,
     XctestrunConfig,
-    StepTestCase,
     PlanStep,
 )
-from core.test_session.xctestrun import XcTestTarget
+from core.xc.xctestrun import XcTestTarget
 
 
 @pytest.fixture

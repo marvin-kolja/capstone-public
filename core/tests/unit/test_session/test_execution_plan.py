@@ -10,7 +10,7 @@ from core.test_session.plan import (
     PlanStep,
     StepTestCase,
 )
-from core.test_session.xctestrun import XcTestTarget
+from core.xc.xctestrun import XcTestTarget
 
 
 class TestExecutionPlan:

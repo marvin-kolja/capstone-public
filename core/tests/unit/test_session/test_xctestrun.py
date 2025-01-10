@@ -1,6 +1,6 @@
 import pytest
 
-from core.test_session.xctestrun import (
+from core.xc.xctestrun import (
     Xctestrun,
     ContainerInfo,
     XcTestPlan,

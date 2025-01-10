@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,9 +13,8 @@ from core.test_session.plan import StepTestCase
 from core.test_session.session import Session
 from core.test_session.session_state import ExecutionStepState
 from core.test_session.session_step_hasher import hash_session_execution_step
-from core.test_session.xctestrun import XcTestTarget
+from core.xc.xctestrun import XcTestTarget
 from tests.conftest import fake_udid
-from tests.unit.conftest import i_device_mocked_lockdown
 from tests.unit.test_session.conftest import mock_execution_plan
 
 
