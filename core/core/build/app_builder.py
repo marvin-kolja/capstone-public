@@ -79,6 +79,10 @@ class AppBuilder:
             logger.error(f"Failed to build xcode project: {e}")
             raise
 
+        logger.debug(
+            f"Successfully built xcode project: {self.xc_project.path_to_project}"
+        )
+
         return XcodeBuildArtefacts(
             build_dir=self.build_dir(output_dir).as_posix(),
             products_dir=self.products_dir(output_dir).as_posix(),
@@ -113,6 +117,10 @@ class AppBuilder:
         except ProcessException as e:
             logger.error(f"Failed to build xcode project: {e}")
             raise
+
+        logger.debug(
+            f"Successfully built xcode project for testing: {self.xc_project.path_to_project}"
+        )
 
         return XcodeTestBuildArtefacts(
             build_dir=self.build_dir(output_dir).as_posix(),
