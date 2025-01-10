@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from core.app.info_plist import InfoPlist
+from core.xc.app.info_plist import InfoPlist
 from core.common.plist_reader import read_plist
 
 logger = logging.getLogger(__name__)

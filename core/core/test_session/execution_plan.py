@@ -3,8 +3,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from core.app.info_plist import InfoPlist
-from core.app.xc_app import XcApp
+from core.xc.app.info_plist import InfoPlist
+from core.xc.app.xc_app import XcApp
 from core.xc.commands.xctrace_command import Instrument
 from core.test_session.metrics import Metric, parse_metrics_to_instruments
 from core.test_session.plan import (

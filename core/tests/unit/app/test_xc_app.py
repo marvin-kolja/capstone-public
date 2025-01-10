@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from core.app.xc_app import XcApp
+from core.xc.app.xc_app import XcApp
 
 
 class TestXcApp:
