@@ -12,6 +12,7 @@ build/
 !core/build/
 !tests/unit/build/
 !tests/integration/build/
+tests/test_data/build_output_dir
 develop-eggs/
 dist/
 downloads/
