@@ -7,8 +7,6 @@ from abc import ABC, abstractmethod
 from asyncio import subprocess
 from typing import Optional
 
-logger = logging.getLogger(__name__)
-
 
 class ProcessCommand(ABC):
     """
@@ -59,12 +57,18 @@ class Process:
             - Exposes the stdout and stderr as lists of strings
     """
 
+    _default_logger = logging.getLogger(__name__)
+
     def __init__(self, command: ProcessCommand):
         """
         :param command: The command to be executed by the process.
         """
+        self.logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__ + ":" + command.__class__.__name__
+        )
+
         if not isinstance(command, ProcessCommand):
-            logger.critical(
+            self.logger.critical(
                 f"Provided command is not an instance of ProcessCommand: {command.__class__.__name__}"
             )
             raise CommandError()
@@ -107,7 +111,7 @@ class Process:
             raise ProcessAlreadyRunningError()
 
         args = self.command.parse()
-        logger.info(f"Executing command: {' '.join(args)}")
+        self.logger.info(f"Executing command: {' '.join(args)}")
 
         self.__process = await asyncio.create_subprocess_exec(
             *args,
@@ -115,22 +119,22 @@ class Process:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        logger.debug(f"Process started with PID: {self.__process.pid}")
+        self.logger.debug(f"Process started with PID: {self.__process.pid}")
 
         atexit.register(self.kill)
-        logger.debug("Registered kill at exit handler")
+        self.logger.debug("Registered kill at exit handler")
 
     def terminate(self):
         if self.is_running:
-            self._send_signal(self.__process.pid, signal.SIGTERM)
+            self._send_signal(self.__process.pid, signal.SIGTERM, self.logger)
 
     def kill(self):
         if self.is_running:
-            self._send_signal(self.__process.pid, signal.SIGKILL)
+            self._send_signal(self.__process.pid, signal.SIGKILL, self.logger)
 
     def send_signal(self, sig: signal.Signals):
         if self.is_running:
-            self._send_signal(self.__process.pid, sig)
+            self._send_signal(self.__process.pid, sig, self.logger)
 
     async def wait(self) -> tuple[list[str], list[str]]:
         """
@@ -139,18 +143,20 @@ class Process:
         :return: A tuple containing the stdout and stderr as lists of strings.
         """
         if self.is_running:
-            stdout = await self._read_stream(self.__process.stdout)
-            stderr = await self._read_stream(self.__process.stderr)
-            logger.debug("Waiting for process to finish")
+            stdout = await self._read_stream(self.__process.stdout, self.logger)
+            stderr = await self._read_stream(self.__process.stderr, self.logger)
+            self.logger.debug("Waiting for process to finish")
             await self.__process.wait()
-            logger.debug("Process finished")
+            self.logger.debug("Process finished")
             atexit.unregister(self.kill)
-            logger.debug("Unregistered kill at exit handler")
+            self.logger.debug("Unregistered kill at exit handler")
             return stdout, stderr
         return [], []
 
     @staticmethod
-    async def _read_stream(stream: asyncio.StreamReader) -> list[str]:
+    async def _read_stream(
+        stream: asyncio.StreamReader, logger: Optional[logging.Logger] = _default_logger
+    ) -> list[str]:
         """
         Read a stream, line by line and decode it.
         """
@@ -166,7 +172,11 @@ class Process:
         return lines
 
     @staticmethod
-    def _send_signal(pid: int, sig: signal.Signals):
+    def _send_signal(
+        pid: int,
+        sig: signal.Signals,
+        logger: Optional[logging.Logger] = _default_logger,
+    ):
         """Uses the `os.kill` to send a signal to the process group."""
         logger.debug(f"Sending {sig} to process with PID: {pid}")
         os.kill(pid, sig)
@@ -211,7 +221,7 @@ async def async_run_process(
         await process.execute(cwd=cwd)
         await wait()
     except asyncio.CancelledError:
-        logger.debug("Process execution was cancelled")
+        process.logger.debug("Process execution was cancelled")
         process.send_signal(signal_on_cancel)
         raise  # Re-raise the CancelledError
     finally:
