@@ -3,12 +3,12 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from core.subprocesses.process import Process
-from core.xc_project import XcProject
+from core.xc.xc_project import XcProject
 
 
 @pytest.fixture
 def mock_pathlib_exists():
-    with patch("core.xc_project.pathlib.Path.exists") as mock_exists:
+    with patch("core.xc.xc_project.pathlib.Path.exists") as mock_exists:
         mock_exists.return_value = True
         yield mock_exists
 

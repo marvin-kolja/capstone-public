@@ -32,7 +32,7 @@ from core.test_session.plan import (
 from core.test_session.session import Session
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.test_session.xctest import Xctest
-from core.xc_project import XcProject
+from core.xc.xc_project import XcProject
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -359,10 +359,12 @@ async def test_execute_tests(ios_device, test_output_dir, test_plan):
             session_id=session_id, execution_step=execution_plan.execution_steps[0]
         )
 
+
 @pytest.mark.skip("Requires trace file parsing")
 @pytest.mark.asyncio
 async def test_parse_trace_file(test_output_dir):
     pass
+
 
 @pytest.mark.skip("Requires xcresult file parsing")
 @pytest.mark.asyncio
