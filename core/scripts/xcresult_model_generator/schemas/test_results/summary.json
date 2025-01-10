@@ -51,10 +51,16 @@
                     }
                 },
                 "devicesAndConfigurations": {
-                    "$ref": "#/schemas/DeviceAndConfigurationSummary"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/schemas/DeviceAndConfigurationSummary"
+                    }
                 },
                 "testFailures": {
-                    "$ref": "#/schemas/TestFailure"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/schemas/TestFailure"
+                    }
                 }
             },
             "required": [
