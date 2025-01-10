@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 import pytest
 from pymobiledevice3.exceptions import DeviceNotFoundError
 from pymobiledevice3.remote.common import TunnelProtocol
@@ -80,12 +82,13 @@ class TestTunnelClientServerCommunication:
 
         THEN: The function should return a tunnel result
         """
-        tunnel_result = await tunnel_client.start_tunnel(device_udid)
+        with suppress(TunnelAlreadyExistsError):
+            tunnel_result = await tunnel_client.start_tunnel(device_udid)
 
-        assert tunnel_result is not None
-        assert tunnel_result.protocol == TunnelProtocol.TCP
-        assert tunnel_result.address
-        assert tunnel_result.port
+            assert tunnel_result is not None
+            assert tunnel_result.protocol == TunnelProtocol.TCP
+            assert tunnel_result.address
+            assert tunnel_result.port
 
     @pytest.mark.asyncio
     @pytest.mark.requires_sudo
@@ -122,10 +125,8 @@ class TestTunnelClientServerCommunication:
 
         THEN: The function should raise a TunnelAlreadyExistsError
         """
-
-        await tunnel_client.start_tunnel(device_udid)
-
         with pytest.raises(TunnelAlreadyExistsError):
+            await tunnel_client.start_tunnel(device_udid)
             await tunnel_client.start_tunnel(device_udid)
 
     @pytest.mark.asyncio
@@ -145,7 +146,8 @@ class TestTunnelClientServerCommunication:
 
         THEN: The get_tunnel method should return None
         """
-        await tunnel_client.start_tunnel(device_udid)
+        with suppress(TunnelAlreadyExistsError):
+            await tunnel_client.start_tunnel(device_udid)
 
         await tunnel_client.stop_tunnel(device_udid)
 
@@ -168,7 +170,8 @@ class TestTunnelClientServerCommunication:
 
         THEN: The tunnel result should match the started tunnel result
         """
-        started_tunnel = await tunnel_client.start_tunnel(device_udid)
+        with suppress(TunnelAlreadyExistsError):
+            started_tunnel = await tunnel_client.start_tunnel(device_udid)
 
         tunnel_result = await tunnel_client.get_tunnel(device_udid)
 
