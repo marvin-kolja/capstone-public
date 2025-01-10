@@ -113,7 +113,7 @@ class Xctest:
         host path. These are then installed on the target device, and it is checked which tests the testing bundle
         contains.
 
-        This uses the :class:`core.subprocesses.XcodebuildTestEnumerationCommand` command to enumerate the tests.
+        This uses the :class:`core.xc.commands.xcodebuild_command.XcodebuildTestEnumerationCommand` command to enumerate the tests.
 
         *Note: This does not check if the destination is ready. If it's a physical device you may want to prepare it
         before calling this method.*
@@ -180,7 +180,7 @@ class Xctest:
         """
         Starts executing the tests using the xctestrun file. The xctestrun file contains the testing bundle path and
         testing host path. These are then installed on the target device, and the tests are executed. This happens by
-        using the :class:`core.subprocesses.XcodebuildTestCommand` command.
+        using the :class:`core.xc.commands.xcodebuild_command.XcodebuildTestCommand` command.
 
         *Note: This does not check if the destination is ready. If it's a physical device you may want to prepare it
         before calling this method.*
