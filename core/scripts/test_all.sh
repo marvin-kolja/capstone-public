@@ -20,4 +20,4 @@ if [ $verbose ]; then
     OPTIONS+=("--log-cli-level=DEBUG")
 fi
 
-poetry run pytest tests/ --device ${OPTIONS[@]}
+poetry run coverage run -m pytest tests/ --log-level=DEBUG --device ${OPTIONS[@]} && poetry run coverage report -m
