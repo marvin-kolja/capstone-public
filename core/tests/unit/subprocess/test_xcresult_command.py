@@ -11,12 +11,12 @@ class TestXcresultToolCommand:
         """
         GIVEN: A XcresultToolCommand class
 
-        WHEN: calling `get_tests_structure`
+        WHEN: calling `get_test_result_tests`
         AND: then calling `parse` on the returned command
 
         THEN: The correct list of strings should be returned
         """
-        command = XcresultToolCommand.get_tests_structure(
+        command = XcresultToolCommand.get_test_result_tests(
             xcresult_path="/tmp/test_results.xcresult",
         )
 

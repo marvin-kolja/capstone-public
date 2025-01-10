@@ -22,7 +22,7 @@ class XcresultToolCommand(ProcessCommand):
         ]
 
     @classmethod
-    def get_tests_structure(cls, xcresult_path: str):
+    def get_test_result_tests(cls, xcresult_path: str):
         """
         Gets the tests structure from the test results.
         """
