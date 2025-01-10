@@ -2,6 +2,7 @@
 Test the whole process from building the app to parsing the test results (.trace, .xcresult).
 """
 
+import contextlib
 import os
 import pathlib
 import tempfile
@@ -20,7 +21,6 @@ from core.xc.commands.xcodebuild_command import (
     IOSDestination,
     XcodebuildCommand,
 )
-from core.xc.commands.xctrace_command import XctraceCommand
 from core.test_session.execution_plan import ExecutionPlan
 from core.test_session.metrics import Metric
 from core.test_session.plan import (
@@ -46,8 +46,8 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
 
     This leads to another issue as then the process does not have access to the paths created by the sudo user. Thus, we
     also need to change the permission of:
-    - build_output_dir
-    - test_output_dir
+    - `test_output_dir`
+    - temporary dir for the test enumeration command
     """
     if os.geteuid() == 0:
         xcodebuild_command_parse = XcodebuildCommand.parse
@@ -62,6 +62,17 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
 
         XcodebuildCommand.parse = create_new_parse(xcodebuild_command_parse)
 
+        xctest__temporary_file_path = Xctest._temporary_file_path
+
+        @contextlib.contextmanager
+        def _temporary_file_path(suffix: str = ""):
+            with xctest__temporary_file_path(suffix) as tmp_file:
+                if os.geteuid() == 0:
+                    tmp_file.parent.chmod(0o777)
+                yield tmp_file
+
+        Xctest._temporary_file_path = _temporary_file_path
+
         test_output_dir_path = pathlib.Path(test_output_dir)
         for path in [test_output_dir_path]:
             if path.exists():
@@ -75,6 +86,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
         yield
 
         XcodebuildCommand.parse = xcodebuild_command_parse
+        Xctest._temporary_file_path = xctest__temporary_file_path
 
 
 @pytest.fixture(scope="module")
