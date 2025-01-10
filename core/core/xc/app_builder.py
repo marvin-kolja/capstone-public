@@ -3,7 +3,7 @@ import pathlib
 
 from pydantic import BaseModel
 
-from core.subprocesses.process import async_run_process, ProcessException
+from core.subprocess import async_run_process, ProcessException
 from core.xc.commands.xcodebuild_command import (
     IOSDestination,
     XcodebuildBuildCommand,

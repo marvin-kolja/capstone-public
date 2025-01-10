@@ -1,6 +1,6 @@
 import pytest
 
-from core.subprocesses.process import CommandError
+from core.subprocess import CommandError
 from core.xc.commands.xctrace_command import XctraceCommand, Instrument
 from tests.conftest import fake_udid
 

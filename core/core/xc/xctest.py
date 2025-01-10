@@ -9,7 +9,7 @@ from pydantic import BaseModel, field_validator
 from core.common.plist_reader import read_plist
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
-from core.subprocesses.process import async_run_process, ProcessException
+from core.subprocess import async_run_process, ProcessException
 from core.xc.commands.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,

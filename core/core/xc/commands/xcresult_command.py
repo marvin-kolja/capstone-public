@@ -1,4 +1,4 @@
-from core.subprocesses.process import ProcessCommand
+from core.subprocess import ProcessCommand
 
 
 class XcresultToolCommand(ProcessCommand):

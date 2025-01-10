@@ -1,6 +1,6 @@
 import logging
 
-from core.subprocesses.process import async_run_process
+from core.subprocess import async_run_process
 from core.xc.commands.xcresult_command import XcresultToolCommand
 from core.xc.xcresult.models.test_results.summary import Summary
 from core.xc.xcresult.models.test_results.tests import Tests

@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Optional, Literal
 
-from core.subprocesses.process import ProcessCommand, CommandError
+from core.subprocess import ProcessCommand, CommandError
 
 
 class Instrument(StrEnum):

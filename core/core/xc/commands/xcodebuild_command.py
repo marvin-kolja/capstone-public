@@ -1,9 +1,9 @@
 import functools
 from typing import Literal, get_args, Optional, Self
 
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator
 
-from core.subprocesses.process import ProcessCommand, CommandError
+from core.subprocess import ProcessCommand, CommandError
 
 
 class XcodebuildOption:

@@ -6,7 +6,7 @@ import pytest
 
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
-from core.subprocesses.process import ProcessException
+from core.subprocess import ProcessException
 from core.xc.commands.xcodebuild_command import (
     XcodebuildTestEnumerationCommand,
     IOSDestination,

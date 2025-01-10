@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from core.subprocesses.process import ProcessCommand
+from core.subprocess import ProcessCommand
 
 logger = logging.getLogger(__name__)
 

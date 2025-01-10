@@ -4,7 +4,7 @@ from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 
-from core.subprocesses.process import (
+from core.subprocess import (
     CommandError,
     Process,
     ProcessCommand,
@@ -261,7 +261,7 @@ async def test_async_run_process_cancel():
     async def sleep(*args, **kwargs):
         await asyncio.sleep(0.1)
 
-    with patch("core.subprocesses.process.Process") as mock_process:
+    with patch("core.subprocess.Process") as mock_process:
         mock_process_instance = AsyncMock(spec=Process)
         mock_process_instance.failed = False
         mock_process_instance.execute.side_effect = sleep
@@ -296,7 +296,7 @@ async def test_async_run_process_exception():
     async def sleep(*args, **kwargs):
         await asyncio.sleep(0.1)
 
-    with patch("core.subprocesses.process.Process") as mock_process:
+    with patch("core.subprocess.Process") as mock_process:
         mock_process_instance = AsyncMock(spec=Process)
         mock_process_instance.failed = False
         mock_process_instance.execute.side_effect = ValueError
@@ -319,7 +319,7 @@ async def test_async_run_process_failed():
     """
     command = MagicMock(spec=ProcessCommand)
 
-    with patch("core.subprocesses.process.Process") as mock_process:
+    with patch("core.subprocess.Process") as mock_process:
         mock_process_instance = AsyncMock(spec=Process)
         mock_process_instance.failed = True
         mock_process.return_value = mock_process_instance

@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from core.subprocesses.process import Process
+from core.subprocess import Process
 from core.xc.xc_project import XcProject
 
 
@@ -59,7 +59,7 @@ class TestXcProject:
             "}",
         ]
 
-        with patch("core.subprocesses.process.Process") as mock_process:
+        with patch("core.subprocess.Process") as mock_process:
             mock_process_instance = MagicMock(spec=Process)
             mock_process_instance.failed = False
             mock_process_instance.execute.return_value = None
@@ -94,7 +94,7 @@ class TestXcProject:
             "}",
         ]
 
-        with patch("core.subprocesses.process.Process") as mock_process:
+        with patch("core.subprocess.Process") as mock_process:
             mock_process_instance = MagicMock(spec=Process)
             mock_process_instance.failed = False
             mock_process_instance.execute.return_value = None

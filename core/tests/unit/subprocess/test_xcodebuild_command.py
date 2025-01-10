@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from core.subprocesses.process import CommandError
+from core.subprocess import CommandError
 from core.xc.commands.xcodebuild_command import (
     XcodebuildOptions,
     XcodebuildOption,
