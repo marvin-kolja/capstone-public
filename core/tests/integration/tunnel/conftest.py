@@ -23,8 +23,27 @@ def server(request):
 
 
 @pytest.fixture
-def tunnel_client(port):
+def tunnel_client(request):
+    """
+    Instead of using the port fixture, we can determine the port dynamically based on the fixtures in the request.
+
+    Some integration tests use the function scoped `tunnel_server` fixture and module scoped `tunnel_server_subprocess`
+    fixture. The problem is that the `tunnel_server_subprocess` fixture is module wide and cannot use the same port as
+    the `tunnel_server` fixture. Thus, we need to determine the port dynamically based on the fixtures in the request.
+
+    If this fixture is used without the `tunnel_server` or `tunnel_server_subprocess` fixtures, it will default to the
+    `port` fixture.
+    """
     from core.tunnel.client import get_tunnel_client
 
-    with get_tunnel_client(port=port, timeout=timedelta(seconds=4)) as client:
+    _port = None
+
+    if "tunnel_server_subprocess" in request.fixturenames:
+        _port = request.getfixturevalue("tunnel_server_subprocess_port")
+    elif "tunnel_server" in request.fixturenames:
+        _port = request.getfixturevalue("port")
+    else:
+        _port = request.getfixturevalue("port")
+
+    with get_tunnel_client(port=_port, timeout=timedelta(seconds=2)) as client:
         yield client

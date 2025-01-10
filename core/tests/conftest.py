@@ -39,11 +39,26 @@ def pytest_runtest_setup(item):
         pytest.skip("Test requires a real device. Use --device to run")
 
 
-@pytest.fixture
-def port():
-    # max user-defined port
-    # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
-    return 49151
+@pytest.fixture(scope="session")
+def gen_available_port():
+    """
+    A fixture that returns a function that generates an available port on the system.
+    """
+    import socket
+
+    def _gen_available_port():
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("", 0))
+        addr = s.getsockname()
+        s.close()
+        return addr[1]
+
+    return _gen_available_port
+
+
+@pytest.fixture(scope="function")
+def port(gen_available_port):
+    return gen_available_port()
 
 
 @pytest.fixture
