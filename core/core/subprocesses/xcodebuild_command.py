@@ -20,11 +20,17 @@ class XcodebuildOptionWithValue(XcodebuildOption):
     A xcodebuild option that requires a value
     """
 
-    def __init__(self, name: str, value: str):
+    def __init__(
+        self,
+        name: str,
+        value: str,
+        use_equals_sign: bool = False,
+    ):
         super().__init__(name)
         if not isinstance(value, str):
             raise ValueError("Value must be either True or of type str")
         self.value = value
+        self.use_equals_sign = use_equals_sign
 
 
 def xcodebuild_option(option_name: str):
@@ -354,7 +360,10 @@ class XcodebuildCommand(ProcessCommand):
                 )
 
             if isinstance(option, XcodebuildOptionWithValue):
-                command.extend([option.name, option.value])
+                if option.use_equals_sign:
+                    command.append(f"{option.name}={option.value}")
+                else:
+                    command.extend([option.name, option.value])
             elif isinstance(option, XcodebuildOption):
                 command.append(option.name)
             else:
