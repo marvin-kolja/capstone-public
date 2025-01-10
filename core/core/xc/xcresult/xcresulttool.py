@@ -2,8 +2,8 @@ import logging
 
 from core.subprocesses.process import async_run_process
 from core.subprocesses.xcresult_command import XcresultToolCommand
-from core.xcresult.models.test_results.summary import Summary
-from core.xcresult.models.test_results.tests import Tests
+from core.xc.xcresult.models.test_results.summary import Summary
+from core.xc.xcresult.models.test_results.tests import Tests
 
 logger = logging.getLogger(__name__)
 
