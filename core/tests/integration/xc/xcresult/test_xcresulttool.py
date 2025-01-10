@@ -10,7 +10,7 @@ from core.xc.xcresult.xcresulttool import XcresultTool
 @pytest.fixture
 def example_xcresult_path():
     current_path = pathlib.Path(__file__).parent
-    return current_path / ".." / ".." / "test_data" / "Example.xcresult"
+    return current_path / ".." / ".." / ".." / "test_data" / "Example.xcresult"
 
 
 class TestXcresultTool:
