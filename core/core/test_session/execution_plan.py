@@ -3,8 +3,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from core.xc.app.info_plist import InfoPlist
-from core.xc.app.xc_app import XcApp
+from core.xc.app_bundle.info_plist import InfoPlist
+from core.xc.app_bundle.bundle_interface import AppBundle
 from core.xc.commands.xctrace_command import Instrument
 from core.test_session.metrics import Metric, parse_metrics_to_instruments
 from core.test_session.plan import (
@@ -361,7 +361,7 @@ class ExecutionPlan:
             for path in app_paths:
                 if path not in info_plists:
                     logger.debug(f"Extracting Info plist for app: '{path}'")
-                    app = XcApp(path)
+                    app = AppBundle(path)
                     info_plist = app.parse_info_plist()
                     info_plists[path] = info_plist
                 else:

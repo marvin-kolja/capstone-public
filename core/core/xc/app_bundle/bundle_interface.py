@@ -1,20 +1,20 @@
 import logging
 import pathlib
 
-from core.xc.app.info_plist import InfoPlist
+from core.xc.app_bundle.info_plist import InfoPlist
 from core.common.plist_reader import read_plist
 
 logger = logging.getLogger(__name__)
 
 
-class XcApp:
+class AppBundle:
     """
-    Allows to interact with a .app package.
+    Allows to interact with a .app bundle.
     """
 
     def __init__(self, path: str):
         """
-        :param path: The path to the .app package.
+        :param path: The path to the .app bundle.
         """
         logger.debug(f"Initializing XcApp with path: {path}")
         self._path = path
@@ -22,13 +22,13 @@ class XcApp:
     @property
     def path(self) -> str:
         """
-        The path to the .app package.
+        The path to the .app bundle.
         """
         return self._path
 
     def parse_info_plist(self) -> InfoPlist:
         """
-        Reads the Info.plist file from the .app package and parses it.
+        Reads the Info.plist file from the .app bundle and parses it.
 
         :return: The parsed Info.plist file
 

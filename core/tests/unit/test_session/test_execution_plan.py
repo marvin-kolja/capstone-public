@@ -44,8 +44,11 @@ class TestExecutionPlan:
         """
         test_configuration = example_xctestrun.TestConfigurations[0]
 
-        with patch("core.xc.app.xc_app.read_plist") as mock_read_plist, patch(
-            "core.xc.app.xc_app.InfoPlist.model_validate", return_value=None
+        with patch(
+            "core.xc.app_bundle.bundle_interface.read_plist"
+        ) as mock_read_plist, patch(
+            "core.xc.app_bundle.bundle_interface.InfoPlist.model_validate",
+            return_value=None,
         ) as mock_info_plist_model_validate:
             info_plists = ExecutionPlan._extract_info_plists(
                 test_configuration.TestTargets

@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from core.xc.app.xc_app import XcApp
+from core.xc.app_bundle.bundle_interface import AppBundle
 
 
 class TestXcApp:
@@ -21,7 +21,7 @@ class TestXcApp:
         # Copy file example `Info.plist` to the fake app path.
         shutil.copyfile(example_info_plist_path, fake_app_path.joinpath("Info.plist"))
 
-        app = XcApp(fake_app_path.absolute().as_posix())
+        app = AppBundle(fake_app_path.absolute().as_posix())
 
         info_plist = app.parse_info_plist()
 
@@ -44,7 +44,7 @@ class TestXcApp:
         fake_app_path = pathlib.Path(tmp_path, "Placeholder.app")
         fake_app_path.mkdir()
 
-        app = XcApp(fake_app_path.absolute().as_posix())
+        app = AppBundle(fake_app_path.absolute().as_posix())
 
         with pytest.raises(FileNotFoundError):
             app.parse_info_plist()
@@ -60,6 +60,6 @@ class TestXcApp:
         fake_app_path = pathlib.Path(tmp_path, "Placeholder.app")
         fake_app_path.mkdir()
 
-        app = XcApp(fake_app_path.absolute().as_posix())
+        app = AppBundle(fake_app_path.absolute().as_posix())
 
         assert app.path == fake_app_path.absolute().as_posix()
