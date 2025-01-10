@@ -7,8 +7,8 @@ from uuid import UUID
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
 from core.subprocesses.process import ProcessException
-from core.subprocesses.xcodebuild_command import IOSDestination
-from core.subprocesses.xctrace_command import Instrument
+from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.commands.xctrace_command import Instrument
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import XctestrunConfig
 from core.test_session.session_state import SessionState

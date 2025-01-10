@@ -4,7 +4,10 @@ import pathlib
 from pydantic import BaseModel
 
 from core.subprocesses.process import async_run_process, ProcessException
-from core.subprocesses.xcodebuild_command import IOSDestination, XcodebuildBuildCommand
+from core.xc.commands.xcodebuild_command import (
+    IOSDestination,
+    XcodebuildBuildCommand,
+)
 from core.xc.xc_project import XcProject
 
 logger = logging.getLogger(__name__)

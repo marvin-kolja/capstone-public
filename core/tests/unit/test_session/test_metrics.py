@@ -1,6 +1,6 @@
 import pytest
 
-from core.subprocesses.xctrace_command import Instrument
+from core.xc.commands.xctrace_command import Instrument
 from core.test_session.metrics import (
     Metric,
     parse_metric_to_instrument,

@@ -6,8 +6,8 @@ import pytest
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
 from core.exceptions.i_device import DeviceNotReadyForDvt
-from core.subprocesses.xcodebuild_command import IOSDestination
-from core.subprocesses.xctrace_command import Instrument
+from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.commands.xctrace_command import Instrument
 from core.test_session.metrics import Metric
 from core.test_session.plan import StepTestCase
 from core.test_session.session import Session

@@ -1,4 +1,4 @@
-from core.subprocesses.xcresult_command import XcresultToolCommand
+from core.xc.commands.xcresult_command import XcresultToolCommand
 from tests.conftest import fake_udid
 
 

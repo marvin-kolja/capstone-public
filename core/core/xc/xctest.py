@@ -10,7 +10,7 @@ from core.common.plist_reader import read_plist
 from core.exceptions.common import InvalidFileContent
 from core.exceptions.xctest import ListEnumerationFailure
 from core.subprocesses.process import async_run_process, ProcessException
-from core.subprocesses.xcodebuild_command import (
+from core.xc.commands.xcodebuild_command import (
     IOSDestination,
     XcodebuildTestEnumerationCommand,
     XcodebuildTestCommand,

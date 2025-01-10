@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from core.subprocesses.xctrace_command import Instrument
+from core.xc.commands.xctrace_command import Instrument
 
 
 class Metric(StrEnum):

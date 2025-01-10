@@ -16,11 +16,11 @@ from core.build.app_builder import (
 )
 from core.device.i_device_manager import IDeviceManager
 from core.device.i_services import IServices
-from core.subprocesses.xcodebuild_command import (
+from core.xc.commands.xcodebuild_command import (
     IOSDestination,
     XcodebuildCommand,
 )
-from core.subprocesses.xctrace_command import XctraceCommand
+from core.xc.commands.xctrace_command import XctraceCommand
 from core.test_session.execution_plan import ExecutionPlan
 from core.test_session.metrics import Metric
 from core.test_session.plan import (

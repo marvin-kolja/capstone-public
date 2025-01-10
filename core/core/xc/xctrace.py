@@ -3,7 +3,7 @@ import signal
 from typing import Optional
 
 from core.subprocesses.process import async_run_process
-from core.subprocesses.xctrace_command import Instrument, XctraceCommand
+from core.xc.commands.xctrace_command import Instrument, XctraceCommand
 
 logger = logging.getLogger(__name__)
 
