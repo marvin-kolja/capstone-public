@@ -12,7 +12,8 @@ build/
 !core/build/
 !tests/unit/build/
 !tests/integration/build/
-tests/test_data/build_output_dir
+tests/test_data/build_output_dir/*
+!tests/test_data/build_output_dir/.gitkeep
 develop-eggs/
 dist/
 downloads/

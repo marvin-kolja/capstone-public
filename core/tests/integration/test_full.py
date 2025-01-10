@@ -63,8 +63,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
         XcodebuildCommand.parse = create_new_parse(xcodebuild_command_parse)
 
         test_output_dir_path = pathlib.Path(test_output_dir)
-        build_output_dir_path = pathlib.Path(build_output_dir)
-        for path in [test_output_dir_path, build_output_dir_path]:
+        for path in [test_output_dir_path]:
             if path.exists():
                 # if the dir is created by sudo, the current user does not have access to it thus we need to change the
                 # permissions
@@ -89,7 +88,7 @@ def build_output_dir():
     test_root = pathlib.Path(__file__).parent.parent
     build_path = test_root.joinpath("test_data/build_output_dir")
     if not build_path.exists():
-        build_path.mkdir()
+        pytest.fail(f"Build output dir does not exist: {build_path}")
     return build_path.resolve().as_posix()
 
 
