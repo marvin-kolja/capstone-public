@@ -97,9 +97,9 @@ class Xctrace:
         Exports data from a trace file to an output file in XML format using the specified XPath
 
         The XPath should be in the following format
-        ``'/trace-toc/run[@number="1"]/data/table[@schema="sysmon-process"]'``. ``'run[@number="1"]'`` selects the run
-        to export data from. ``'table[@schema="sysmon-process"]'`` selects the data to export from the run by providing
-        the schema name. You can also select multiple schemas by separating them with an `or` operator like so:
+        ``'/trace-toc/run[1]/data/table[@schema="sysmon-process"]'``. ``'run[1]'`` selects the run to export data from.
+        Starts from 1. ``'table[@schema="sysmon-process"]'`` selects the data to export from the run by providing the
+        schema name. You can also select multiple schemas by separating them with an `or` operator like so:
         ``'table[@schema="sysmon-process" or @schema="stdouterr-output"]'``
 
         :param trace_path: The path to the trace file
