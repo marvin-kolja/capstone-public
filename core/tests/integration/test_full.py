@@ -31,6 +31,7 @@ from core.test_session.plan import (
 )
 from core.test_session.session import Session
 from core.test_session.session_step_hasher import hash_session_execution_step
+from core.xc.commands.xctrace_command import XctraceCommand
 from core.xc.xctest import Xctest
 from core.xc.xc_project import XcProject
 
@@ -51,6 +52,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
     """
     if os.geteuid() == 0:
         xcodebuild_command_parse = XcodebuildCommand.parse
+        xctrace_command_parse = XctraceCommand.parse
 
         def create_new_parse(original_parse):
             def new_parse(self):
@@ -61,6 +63,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
             return new_parse
 
         XcodebuildCommand.parse = create_new_parse(xcodebuild_command_parse)
+        XctraceCommand.parse = create_new_parse(xctrace_command_parse)
 
         xctest__temporary_file_path = Xctest._temporary_file_path
 
@@ -86,6 +89,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
         yield
 
         XcodebuildCommand.parse = xcodebuild_command_parse
+        XctraceCommand.parse = xctrace_command_parse
         Xctest._temporary_file_path = xctest__temporary_file_path
 
 
