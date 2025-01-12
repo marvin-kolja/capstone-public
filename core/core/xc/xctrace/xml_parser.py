@@ -196,21 +196,19 @@ class XctraceXMLParser:
         self,
         element: ElementTree.Element,
         xpath: str,
-    ) -> ElementTree.Element:
+    ) -> Optional[ElementTree.Element]:
         """
-        Retrieve the element that matches the xpath from the cache. The xpath must match exactly one element.
+        Retrieve the element that matches the xpath from the cache. Uses the first element if multiple elements are
+        found and returns None if no elements are found.
 
         :param element: The element to search for the element in
         :param xpath: The xpath to match the element
         :return: The matched element
-        :raises ValueError: If no or multiple elements are found for the xpath
         :raises KeyError: If the element is not found in the cache. If this happens, the cache is not properly built.
         """
         elements = element.findall(xpath)
         if len(elements) == 0:
-            raise ValueError(f"No elements found for xpath: {xpath}")
-        if len(elements) > 1:
-            raise ValueError(f"Multiple elements found for xpath: {xpath}")
+            return None
         element = elements[0]
         attrib = element.attrib
         if attrib.get("id"):

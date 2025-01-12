@@ -382,13 +382,13 @@ class TestXctraceXMLParser:
 
         WHEN: The get_cached_element method is called with the parent element.
 
-        THEN: The method should raise a ValueError.
+        THEN: The method should return None.
         """
         element_to_search_in = MagicMock(spec=ElementTree.Element)
         element_to_search_in.findall.return_value = []
 
-        with pytest.raises(ValueError):
-            parser._get_cached_element(element_to_search_in, "any_xpath")
+        element = parser._get_cached_element(element_to_search_in, "any_xpath")
+        assert element is None
 
     def test_get_cached_element_multiple_elements_found(self, parser):
         """
@@ -397,7 +397,7 @@ class TestXctraceXMLParser:
 
         WHEN: The get_cached_element method is called with the parent element.
 
-        THEN: The method should raise a ValueError.
+        THEN: The method should return the first element.
         """
         element_to_search_in = MagicMock(spec=ElementTree.Element)
         element_to_search_in.findall.return_value = [
@@ -405,8 +405,8 @@ class TestXctraceXMLParser:
             MagicMock(spec=ElementTree.Element),
         ]
 
-        with pytest.raises(ValueError):
-            parser._get_cached_element(element_to_search_in, "any_xpath")
+        element = parser._get_cached_element(element_to_search_in, "any_xpath")
+        assert element == element_to_search_in.findall.return_value[0]
 
     def test_get_table_number_for_schema(self, parser, mock_toc):
         """
