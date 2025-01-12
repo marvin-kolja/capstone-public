@@ -151,6 +151,37 @@ class XctraceXMLParser:
                     f"Selected element for caching that does not have an `id` attribute."
                 )
 
+    def _get_cached_element(
+        self,
+        element: ElementTree.Element,
+        xpath: str,
+    ) -> ElementTree.Element:
+        """
+        Retrieve the element that matches the xpath from the cache. The xpath must match exactly one element.
+
+        :param element: The element to search for the element in
+        :param xpath: The xpath to match the element
+        :return: The matched element
+        :raises ValueError: If no or multiple elements are found for the xpath
+        :raises KeyError: If the element is not found in the cache. If this happens, the cache is not properly built.
+        """
+        elements = element.findall(xpath)
+        if len(elements) == 0:
+            raise ValueError(f"No elements found for xpath: {xpath}")
+        if len(elements) > 1:
+            raise ValueError(f"Multiple elements found for xpath: {xpath}")
+        element = elements[0]
+        attrib = element.attrib
+        if attrib.get("id"):
+            logger.debug(
+                "No need to get element from cache as it has an `id` attribute."
+            )
+            return element
+        else:
+            ref = attrib.get("ref")
+            logger.debug(f"Trying to get element from cache using ref '{ref}'")
+            return self.__cache_map[ref]
+
 
 def table_xpath(run: int, table_selector: str) -> str:
     """

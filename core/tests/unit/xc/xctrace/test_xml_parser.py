@@ -152,6 +152,98 @@ class TestXctraceXMLParser:
                 any_order=True,
             )
 
+    def test_get_cached_element_cache_lookup(self, parser):
+        """
+        GIVEN: A parser instance
+        AND: A cached element with the given id.
+        AND: An element that references the cached element.
+        AND: A parent element that contains the element
+
+        WHEN: The get_cached_element method is called with an element that references the cached element.
+
+        THEN: The method should return the cached element.
+        AND: The cache_map should be accessed.
+        """
+        mock_element = MagicMock(spec=ElementTree.Element)
+
+        element_to_search_for = MagicMock(
+            spec=ElementTree.Element, attrib={"ref": "test"}
+        )
+
+        element_to_search_in = MagicMock(spec=ElementTree.Element)
+        element_to_search_in.findall.return_value = [element_to_search_for]
+
+        with patch.object(
+            parser, "_XctraceXMLParser__cache_map"
+        ) as mock_cache_elements:
+            mock_cache_elements.__getitem__.side_effect = {
+                "test": mock_element
+            }.__getitem__
+
+            assert (
+                parser._get_cached_element(element_to_search_in, "any_xpath")
+                == mock_element
+            )
+            mock_cache_elements.__getitem__.assert_called_once_with("test")
+
+    def test_get_cached_element_no_cache_lookup(self, parser):
+        """
+        GIVEN: A parser instance
+        AND: An element that has an id attribute.
+        AND: A parent element that contains the element.
+
+        WHEN: The get_cached_element method is called with the element.
+
+        THEN: The method should return the element.
+        AND: The cache_map should not be accessed.
+        """
+        mock_element = MagicMock(spec=ElementTree.Element, attrib={"id": "test"})
+
+        element_to_search_in = MagicMock(spec=ElementTree.Element)
+        element_to_search_in.findall.return_value = [mock_element]
+
+        with patch.object(
+            parser, "_XctraceXMLParser__cache_map"
+        ) as mock_cache_elements:
+            assert (
+                parser._get_cached_element(element_to_search_in, "any_xpath")
+                == mock_element
+            )
+            mock_cache_elements.__getitem__.assert_not_called()
+
+    def test_get_cached_element_no_elements_found(self, parser):
+        """
+        GIVEN: A parser instance
+        AND: A parent element that contains no elements.
+
+        WHEN: The get_cached_element method is called with the parent element.
+
+        THEN: The method should raise a ValueError.
+        """
+        element_to_search_in = MagicMock(spec=ElementTree.Element)
+        element_to_search_in.findall.return_value = []
+
+        with pytest.raises(ValueError):
+            parser._get_cached_element(element_to_search_in, "any_xpath")
+
+    def test_get_cached_element_multiple_elements_found(self, parser):
+        """
+        GIVEN: A parser instance
+        AND: A parent element that contains multiple elements.
+
+        WHEN: The get_cached_element method is called with the parent element.
+
+        THEN: The method should raise a ValueError.
+        """
+        element_to_search_in = MagicMock(spec=ElementTree.Element)
+        element_to_search_in.findall.return_value = [
+            MagicMock(spec=ElementTree.Element),
+            MagicMock(spec=ElementTree.Element),
+        ]
+
+        with pytest.raises(ValueError):
+            parser._get_cached_element(element_to_search_in, "any_xpath")
+
 
 class TestTableXpath:
     @pytest.mark.parametrize(
