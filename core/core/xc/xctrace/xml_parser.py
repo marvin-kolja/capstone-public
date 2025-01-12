@@ -321,7 +321,20 @@ class XctraceXMLParser:
         :param rows: The rows to extract the core animation data from.
         :return: A list of CoreAnimation objects containing the extracted data.
         """
-        raise NotImplementedError
+        fps_values = []
+        for row in rows:
+            timestamp = int(self._get_cached_element(row, "start-time").text)
+            fps_text = self._get_cached_element(row, "fps").text
+            gpu_utilization_text = self._get_cached_element(row, "percent").text
+            fps_values.append(
+                CoreAnimation(
+                    timestamp=timestamp,
+                    fps=float(fps_text),
+                    gpu_utilization=float(gpu_utilization_text),
+                )
+            )
+
+        return fps_values
 
     def _extract_stdout_err(
         self, rows: list[ElementTree.Element]
