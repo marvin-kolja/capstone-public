@@ -1,12 +1,12 @@
 import logging
 import pathlib
 import signal
-from typing import Optional
+from typing import Optional, Any
 
 from core.subprocess import async_run_process
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
 from core.xc.xctrace.toc import parse_toc_xml, TOC
-from core.xc.xctrace.xml_parser import Schema, table_schemas_xpath
+from core.xc.xctrace.xml_parser import Schema, table_schemas_xpath, XctraceXMLParser
 
 logger = logging.getLogger(__name__)
 
@@ -124,3 +124,18 @@ class Xctrace:
     @staticmethod
     def parse_toc_xml(path: str) -> TOC:
         return parse_toc_xml(pathlib.Path(path))
+
+    @staticmethod
+    def parse_data_xml(path: str, toc: TOC) -> list[dict[str, Any]]:
+        """
+        Parses the data in an XML file for each run in the TOC (typically only one run, but can be multiple).
+
+        :param path: The path to the data XML file
+        :param toc: The Table of Contents
+        :return: A list of parsed data
+        """
+        parser = XctraceXMLParser(pathlib.Path(path), toc)
+        run_data = []
+        for index, _ in enumerate(toc.runs):
+            run_data.append(parser.parse_multiple(index + 1))
+        return run_data

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
+from core.xc.xctrace.toc import TOC, TOCRun
 from core.xc.xctrace.xctrace_interface import Xctrace
 from core.xc.xctrace.xml_parser import Schema
 
@@ -167,3 +168,24 @@ class TestXctraceInterface:
             Xctrace.parse_toc_xml(path)
 
             mock_toc_parser.assert_called_once_with(pathlib.Path(path))
+
+    def test_parse_data_xml(self):
+        """
+        GIVEN: A path to a data XML file and a TOC object
+
+        WHEN: The data XML file is parsed
+
+        THEN: The underlying XctraceXMLParser is instantiated with the path and TOC
+        AND: The `parse_multiple` method is called for the amount of runs in the TOC
+        """
+        path = MagicMock(spec=str)
+        toc = MagicMock(spec=TOC)
+        toc.runs = [MagicMock(spec=TOCRun) for _ in range(3)]
+
+        with mock.patch(
+            "core.xc.xctrace.xctrace_interface.XctraceXMLParser"
+        ) as mock_parser:
+            Xctrace.parse_data_xml(path, toc)
+
+            mock_parser.assert_called_once_with(pathlib.Path(path), toc)
+            assert mock_parser.return_value.parse_multiple.call_count == 3
