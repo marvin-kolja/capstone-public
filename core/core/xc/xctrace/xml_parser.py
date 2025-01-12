@@ -155,7 +155,22 @@ class XctraceXMLParser:
 
         return data
 
-    __relevant_tag_xpaths = []
+    __relevant_tag_xpaths = [
+        # SYSMON_PROCESS
+        ".//size-in-bytes",  # For referencing memory and disk writes
+        ".//system-cpu-percent",  # For referencing CPU usage
+        # STDOUTERR_OUTPUT
+        ".//console-text",  # For referencing console text elements
+        # CORE_ANIMATION_FPS_ESTIMATE
+        ".//fps",  # For referencing FPS values
+        ".//percent",  # For referencing GPU utilization
+        # General
+        ".//process",  # For referencing process entries (name, pid)
+        ".//pid",  # For referencing process IDs (which are not always in the process element)
+        ".//start-time",  # For referencing start time of e.g. events
+        ".//event-time",  # For referencing event time of e.g. events
+        ".//boolean",  # For referencing any boolean values (e.g. recently died)
+    ]
     """
     Relevant xpaths that will be accessed during parsing and should be cached.
     """
@@ -250,7 +265,53 @@ class XctraceXMLParser:
         :param target_process: The target process to extract the sysmon data for.
         :return: A list of Sysmon objects containing the extracted data.
         """
-        raise NotImplementedError
+        values = []
+
+        for i, row in enumerate(rows):
+            process = self._get_cached_element(row, "process")
+            process_name = process.attrib["fmt"]
+
+            if not process_name.startswith(
+                target_process.name,
+            ) or not process_name.endswith(
+                f"({target_process.pid})",
+            ):
+                # Skip if the process name does not match the target process name or the PID does not match.
+                continue
+
+            timestamp = int(self._get_cached_element(row, "start-time").text)
+            cpu = self._get_cached_element(row, "system-cpu-percent")
+            cpu_text = None
+            if cpu is not None:
+                cpu_text = float(cpu.text)
+
+            memory_element = self._get_cached_element(row, ".//size-in-bytes[3]")
+            memory = None
+            if memory_element is not None:
+                memory = float(memory_element.text) / 1024 / 1024
+            # anonymous = self.__get_cached_element(row, ".//size-in-bytes[4]", cache_map).text
+            # compressed = self.__get_cached_element(row, ".//size-in-bytes[5]", cache_map).text
+            # purgeable = self.__get_cached_element(row, ".//size-in-bytes[6]", cache_map).text
+            # real_private = self.__get_cached_element(row, ".//size-in-bytes[7]", cache_map).text
+            # real_shared = self.__get_cached_element(row, ".//size-in-bytes[8]", cache_map).text
+            resident_size_element = self._get_cached_element(row, ".//size-in-bytes[9]")
+            resident_size = None
+            if resident_size_element is not None:
+                resident_size = float(resident_size_element.text) / 1024 / 1024
+
+            recently_died = self._get_cached_element(row, ".//boolean[1]").text
+
+            values.append(
+                Sysmon(
+                    timestamp=timestamp,
+                    cpu=cpu_text,
+                    memory=memory,
+                    resident_size=resident_size,
+                    recently_died=self._parse_boolean(recently_died),
+                )
+            )
+
+        return values
 
     def _extract_core_animation(
         self, rows: list[ElementTree.Element]
@@ -292,6 +353,11 @@ class XctraceXMLParser:
             f'[@xpath="{node_xpath_attrib}"]' if node_xpath_attrib is not None else ""
         )
         return root.findall(f".//node{node_selector_parsed}/row{row_selector_parsed}")
+
+    @staticmethod
+    def _parse_boolean(value: str) -> bool:
+        bool_as_int = int(value)
+        return bool_as_int == 1
 
 
 def table_xpath(run: int, table_selector: str) -> str:
