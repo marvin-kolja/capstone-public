@@ -1,0 +1,393 @@
+<?xml version="1.0"?>
+
+<trace-toc>
+    <run number="1">
+        <info>
+            <target>
+                <device uuid="00000000-0000000000000000" model="iPhone SE" name="iPhone (17.5.1)" os-version="17.5.1 (21F90)" platform="iOS"/>
+                <host-device uuid="***REDACTED***" model="MacBook Pro" name="MacBook Pro" os-version="15.1.1 (24B91)" platform="macOS"/>
+                <process return-exit-status="0" name="RP Swift" pid="10945" termination-reason="exit(0)"/>
+            </target>
+            <summary>
+                <start-date>2025-01-12T15:42:37.727+01:00</start-date>
+                <end-date>2025-01-12T15:42:40.686+01:00</end-date>
+                <duration>2.958856</duration>
+                <end-reason>Time limit reached</end-reason>
+                <instruments-version>16.0 (16A242d)</instruments-version>
+                <template-name>Blank</template-name>
+                <recording-mode>Deferred</recording-mode>
+                <time-limit>2 seconds</time-limit>
+            </summary>
+        </info>
+        <processes>
+            <process name="safetyalertsd" pid="88" path="/usr/libexec/safetyalertsd"/>
+            <process name="audioaccessoryd" pid="73" path="/usr/libexec/audioaccessoryd"/>
+            <process name="sharingd" pid="68" path="/usr/libexec/sharingd"/>
+            <process name="FindMyDeviceBluetoothExtension" pid="222" path="/Applications/FindMyExtensionContainer.app/PlugIns/FindMyDeviceBluetoothExtension.app"/>
+            <process name="installcoordinationd" pid="215" path="/System/Library/PrivateFrameworks/InstallCoordination.framework/Support/installcoordinationd"/>
+            <process name="imagent" pid="71" path="/System/Library/PrivateFrameworks/IMCore.framework/imagent.app"/>
+            <process name="swcd" pid="232" path="/usr/libexec/swcd"/>
+            <process name="remoted" pid="51" path="/usr/libexec/remoted"/>
+            <process name="remotepairingdeviced" pid="277" path="/usr/libexec/remotepairingdeviced"/>
+            <process name="intelligenceplatformd" pid="521" path="/System/Library/PrivateFrameworks/IntelligencePlatformCore.framework/intelligenceplatformd"/>
+            <process name="kbd" pid="343" path="/System/Library/TextInput/kbd"/>
+            <process name="automationmode-writer" pid="10370" path="/System/Library/PrivateFrameworks/AutomationMode.framework/automationmode-writer"/>
+            <process name="coreduetd" pid="167" path="/usr/libexec/coreduetd"/>
+            <process name="driverkitd" pid="75" path="/usr/libexec/driverkitd"/>
+            <process name="nanoregistryd" pid="136" path="/usr/libexec/nanoregistryd"/>
+            <process name="filecoordinationd" pid="293" path="/usr/sbin/filecoordinationd"/>
+            <process name="WorkoutKitXPCService" pid="10373" path="/System/Library/PrivateFrameworks/WorkoutKitServices.framework/XPCServices/WorkoutKitXPCService.xpc"/>
+            <process name="profiled" pid="156" path="/usr/libexec/profiled"/>
+            <process name="CommCenterRootHelper" pid="572" path="/System/Library/Frameworks/CoreTelephony.framework/Support/CommCenterRootHelper"/>
+            <process name="adid" pid="246" path="/usr/libexec/adid"/>
+            <process name="replayd" pid="198" path="/usr/libexec/replayd"/>
+            <process name="webbookmarksd" pid="191" path="/private/preboot/Cryptexes/App/usr/libexec/webbookmarksd"/>
+            <process name="mmaintenanced" pid="348" path="/usr/libexec/mmaintenanced"/>
+            <process name="apsd" pid="134" path="/System/Library/PrivateFrameworks/ApplePushService.framework/apsd"/>
+            <process name="coreidvd" pid="164" path="/usr/libexec/coreidvd"/>
+            <process name="attributionkitd" pid="10349" path="/System/Library/Frameworks/AdAttributionKit.framework/Support/attributionkitd"/>
+            <process name="mobileactivationd" pid="139" path="/usr/libexec/mobileactivationd"/>
+            <process name="fseventsd" pid="95" path="/usr/libexec/fseventsd"/>
+            <process name="donotdisturbd" pid="146" path="/System/Library/PrivateFrameworks/DoNotDisturbServer.framework/Support/donotdisturbd"/>
+            <process name="InputUI" pid="9579" path="/Applications/InputUI.app"/>
+            <process name="mobile_installation_proxy" pid="9635" path="/usr/libexec/mobile_installation_proxy"/>
+            <process name="sleepd" pid="77" path="/System/Library/PrivateFrameworks/SleepDaemon.framework/sleepd"/>
+            <process name="PerfPowerServices" pid="9594" path="/usr/libexec/PerfPowerServices"/>
+            <process name="AMDEngagementExtension" pid="493" path="/System/Library/PrivateFrameworks/AppleMediaDiscovery.framework/PlugIns/AMDEngagementExtension.app"/>
+            <process name="timed" pid="67" path="/usr/libexec/timed"/>
+            <process name="parsecd" pid="213" path="/System/Library/PrivateFrameworks/CoreParsec.framework/parsecd"/>
+            <process name="CMFSyncAgent" pid="303" path="/System/Library/PrivateFrameworks/CommunicationsFilter.framework/CMFSyncAgent"/>
+            <process name="AuthenticationServicesAgent" pid="10330" path="/private/preboot/Cryptexes/App/usr/libexec/AuthenticationServicesAgent"/>
+            <process name="FPCKService" pid="720" path="/System/Library/PrivateFrameworks/FileProviderDaemon.framework/XPCServices/FPCKService.xpc"/>
+            <process name="mobile_storage_proxy" pid="10102" path="/usr/libexec/mobile_storage_proxy"/>
+            <process name="com.apple.dt.instruments.dtsecurity" pid="10382" path="/private/var/db/com.apple.xpc.roleaccountd.staging/exec/838860801.1152921500312158440.xpc/com.apple.dt.instruments.dtsecurity"/>
+            <process name="sirittsd" pid="178" path="/System/Library/PrivateFrameworks/SiriTTSService.framework/sirittsd"/>
+            <process name="intelligentroutingd" pid="282" path="/usr/libexec/intelligentroutingd"/>
+            <process name="contactsd" pid="190" path="/System/Library/Frameworks/Contacts.framework/Support/contactsd"/>
+            <process name="coresymbolicationd" pid="376" path="/System/Library/PrivateFrameworks/CoreSymbolication.framework/coresymbolicationd"/>
+            <process name="com.apple.Safari.History" pid="10486" path="/private/preboot/Cryptexes/App/usr/libexec/com.apple.Safari.History"/>
+            <process name="siriinferenced" pid="181" path="/System/Library/PrivateFrameworks/SiriInference.framework/Support/siriinferenced"/>
+            <process name="mlhostd" pid="480" path="/usr/libexec/mlhostd"/>
+            <process name="feedbackd" pid="10314" path="/usr/libexec/feedbackd"/>
+            <process name="wirelessinsightsd" pid="127" path="/System/Library/PrivateFrameworks/WirelessInsights.framework/Support/wirelessinsightsd"/>
+            <process name="PassKitEngagementExtension" pid="10797" path="/System/Library/Frameworks/PassKit.framework/PlugIns/PassKitEngagementExtension.app"/>
+            <process name="DPSubmissionService" pid="556" path="/System/Library/PrivateFrameworks/DifferentialPrivacy.framework/XPCServices/DPSubmissionService.xpc"/>
+            <process name="sysdiagnosed" pid="570" path="/usr/libexec/sysdiagnosed"/>
+            <process name="facetimemessagestored" pid="611" path="/System/Library/PrivateFrameworks/FaceTimeMessageStore.framework/facetimemessagestored"/>
+            <process name="carkitd" pid="10404" path="/usr/libexec/carkitd"/>
+            <process name="LocalStorageFileProvider" pid="548" path="/System/Library/Frameworks/FileProvider.framework/PlugIns/LocalStorageFileProvider.app"/>
+            <process name="ANEStorageMaintainer" pid="723" path="/System/Library/PrivateFrameworks/AppleNeuralEngine.framework/XPCServices/ANEStorageMaintainer.xpc"/>
+            <process name="akd" pid="187" path="/System/Library/PrivateFrameworks/AuthKit.framework/akd"/>
+            <process name="nanotimekitcompaniond" pid="10944" path="nanotimekitcompaniond"/>
+            <process name="com.apple.AppleUserHIDDrivers" pid="185" path="/System/Library/DriverExtensions/com.apple.AppleUserHIDDrivers.dext/com.apple.AppleUserHIDDrivers"/>
+            <process name="findmybeaconingd" pid="227" path="/usr/libexec/findmybeaconingd"/>
+            <process name="ospredictiond" pid="9775" path="/usr/libexec/ospredictiond"/>
+            <process name="revisiond" pid="306" path="/System/Library/PrivateFrameworks/GenerationalStorage.framework/revisiond"/>
+            <process name="containermanagerd" pid="72" path="/usr/libexec/containermanagerd"/>
+            <process name="sensorkitd" pid="403" path="/usr/libexec/sensorkitd"/>
+            <process name="dmd" pid="9575" path="/usr/libexec/dmd"/>
+            <process name="ContextService" pid="175" path="/System/Library/PrivateFrameworks/ContextKit.framework/XPCServices/ContextService.xpc"/>
+            <process name="DTServiceHub" pid="607" path="/System/Library/PrivateFrameworks/DVTInstrumentsFoundation.framework/DTServiceHub"/>
+            <process name="EAUpdaterService" pid="659" path="/System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/XPCServices/EAUpdaterService.xpc"/>
+            <process name="lsd" pid="119" path="/usr/libexec/lsd"/>
+            <process name="trustd" pid="128" path="/usr/libexec/trustd"/>
+            <process name="ciphermld" pid="553" path="/usr/libexec/ciphermld"/>
+            <process name="contactsdonationagent" pid="9288" path="/System/Library/PrivateFrameworks/ContactsDonation.framework/Versions/A/Support/contactsdonationagent"/>
+            <process name="stickersd" pid="9289" path="/System/Library/PrivateFrameworks/Stickers.framework/Support/stickersd"/>
+            <process name="extensionkitservice" pid="298" path="/System/Library/Frameworks/ExtensionFoundation.framework/XPCServices/extensionkitservice.xpc"/>
+            <process name="nsurlsessiond" pid="110" path="/usr/libexec/nsurlsessiond"/>
+            <process name="spaceattributiond" pid="206" path="/System/Library/PrivateFrameworks/SpaceAttribution.framework/spaceattributiond"/>
+            <process name="UARPUpdaterServiceHID" pid="260" path="/System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/XPCServices/UARPUpdaterServiceHID.xpc"/>
+            <process name="appinstallationmetricsd" pid="10770" path="/System/Library/PrivateFrameworks/AppInstallationMetrics.framework/Support/appinstallationmetricsd"/>
+            <process name="AccessibilityUIServer" pid="150" path="/System/Library/CoreServices/AccessibilityUIServer.app"/>
+            <process name="CollectionsPoster" pid="197" path="/System/Library/PrivateFrameworks/WallpaperKit.framework/PlugIns/CollectionsPoster.app"/>
+            <process name="seld" pid="56" path="/usr/libexec/seld"/>
+            <process name="rapportd" pid="89" path="/usr/libexec/rapportd"/>
+            <process name="nfcd" pid="60" path="/usr/libexec/nfcd"/>
+            <process name="mediaserverd" pid="36" path="/usr/sbin/mediaserverd"/>
+            <process name="installd" pid="9606" path="/usr/libexec/installd"/>
+            <process name="mediaremoted" pid="39" path="/System/Library/PrivateFrameworks/MediaRemote.framework/Support/mediaremoted"/>
+            <process name="cloudd" pid="137" path="/System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/cloudd"/>
+            <process name="ASPCarryLog" pid="9290" path="/usr/libexec/ASPCarryLog"/>
+            <process name="followupd" pid="141" path="/System/Library/PrivateFrameworks/CoreFollowUp.framework/followupd"/>
+            <process name="Spotlight" pid="287" path="/Applications/Spotlight.app"/>
+            <process name="rtcreportingd" pid="243" path="/usr/libexec/rtcreportingd"/>
+            <process name="businessservicesd" pid="613" path="/System/Library/PrivateFrameworks/BusinessChatService.framework/businessservicesd"/>
+            <process name="CategoriesService" pid="9577" path="/System/Library/PrivateFrameworks/Categories.framework/XPCServices/CategoriesService.xpc"/>
+            <process name="chronod" pid="124" path="/System/Library/PrivateFrameworks/ChronoCore.framework/Support/chronod"/>
+            <process name="testmanagerd" pid="10362" path="/System/Developer/usr/libexec/testmanagerd"/>
+            <process name="proactiveeventtrackerd" pid="563" path="/usr/libexec/proactiveeventtrackerd"/>
+            <process name="MobileGestaltHelper" pid="118" path="/usr/libexec/MobileGestaltHelper"/>
+            <process name="cloudphotod" pid="328" path="/System/Library/PrivateFrameworks/CloudPhotoLibrary.framework/Support/cloudphotod"/>
+            <process name="accountsd" pid="106" path="/System/Library/Frameworks/Accounts.framework/accountsd"/>
+            <process name="managedappdistributiond" pid="248" path="/System/Library/Frameworks/ManagedAppDistribution.framework/Support/managedappdistributiond"/>
+            <process name="com.apple.StreamingUnzipService" pid="292" path="/System/Library/PrivateFrameworks/StreamingZip.framework/XPCServices/com.apple.StreamingUnzipService.xpc"/>
+            <process name="ScreenTimeAgent" pid="205" path="/System/Library/PrivateFrameworks/ScreenTimeCore.framework/ScreenTimeAgent"/>
+            <process name="AutomationModeUI" pid="10372" path="/System/Library/PrivateFrameworks/AutomationMode.framework/AutomationModeUI.app"/>
+            <process name="atc" pid="47" path="/usr/libexec/atc"/>
+            <process name="analyticsd" pid="114" path="/System/Library/PrivateFrameworks/CoreAnalytics.framework/Support/analyticsd"/>
+            <process name="fmflocatord" pid="147" path="/usr/libexec/fmflocatord"/>
+            <process name="PerfPowerTelemetryReaderService" pid="568" path="/System/Library/PrivateFrameworks/PerfPowerServicesReader.framework/XPCServices/PerfPowerTelemetryReaderService.xpc"/>
+            <process name="promotedcontentd" pid="391" path="/usr/libexec/promotedcontentd"/>
+            <process name="dprivacyd" pid="554" path="/usr/libexec/dprivacyd"/>
+            <process name="backboardd" pid="65" path="/usr/libexec/backboardd"/>
+            <process name="securityd" pid="125" path="/usr/libexec/securityd"/>
+            <process name="healthappd" pid="481" path="/System/Library/PrivateFrameworks/HealthPluginHost.framework/healthappd"/>
+            <process name="corespeechd" pid="169" path="/System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd"/>
+            <process name="passd" pid="79" path="/System/Library/PrivateFrameworks/PassKitCore.framework/passd"/>
+            <process name="xpcroleaccountd" pid="10383" path="/usr/libexec/xpcroleaccountd"/>
+            <process name="EscrowSecurityAlert" pid="482" path="/System/Library/CoreServices/EscrowSecurityAlert.app"/>
+            <process name="dasd" pid="76" path="/usr/libexec/dasd"/>
+            <process name="RemoteManagementAgent" pid="555" path="/System/Library/PrivateFrameworks/RemoteManagement.framework/RemoteManagementAgent"/>
+            <process name="WidgetRenderer_Default" pid="321" path="/Applications/WidgetRenderer_Default.app"/>
+            <process name="applecamerad" pid="10413" path="/usr/sbin/applecamerad"/>
+            <process name="siriactionsd" pid="144" path="/System/Library/PrivateFrameworks/VoiceShortcuts.framework/Support/siriactionsd"/>
+            <process name="CoreAuthUI" pid="333" path="/Applications/CoreAuthUI.app"/>
+            <process name="osanalyticshelper" pid="229" path="/System/Library/CoreServices/osanalyticshelper"/>
+            <process name="com.apple.FaceTime.FTConversationService" pid="296" path="/System/Library/PrivateFrameworks/TelephonyUtilities.framework/XPCServices/com.apple.FaceTime.FTConversationService.xpc"/>
+            <process name="mediaparserd" pid="474" path="/usr/libexec/mediaparserd"/>
+            <process name="batteryintelligenced" pid="567" path="/usr/libexec/batteryintelligenced"/>
+            <process name="asd" pid="457" path="/usr/libexec/asd"/>
+            <process name="coreauthd" pid="192" path="/System/Library/Frameworks/LocalAuthentication.framework/Support/coreauthd"/>
+            <process name="cdpd" pid="166" path="/System/Library/PrivateFrameworks/CoreCDP.framework/cdpd"/>
+            <process name="iconservicesagent" pid="9576" path="/System/Library/CoreServices/iconservicesagent"/>
+            <process name="mediasetupd" pid="317" path="/usr/libexec/mediasetupd"/>
+            <process name="StatusKitAgent" pid="278" path="/System/Library/PrivateFrameworks/StatusKit.framework/StatusKitAgent"/>
+            <process name="com.apple.CloudDocs.iCloudDriveFileProvider" pid="354" path="/System/Library/PrivateFrameworks/CloudDocs.framework/PlugIns/com.apple.CloudDocs.iCloudDriveFileProvider.appex/com.apple.CloudDocs.iCloudDriveFileProvider"/>
+            <process name="logd" pid="32" path="/usr/libexec/logd"/>
+            <process name="ProtectedCloudKeySyncing" pid="311" path="/System/Library/PrivateFrameworks/ProtectedCloudStorage.framework/Helpers/ProtectedCloudKeySyncing"/>
+            <process name="siriknowledged" pid="180" path="/usr/libexec/siriknowledged"/>
+            <process name="Unknown" pid="0"/>
+            <process name="wifid" pid="50" path="/usr/sbin/wifid"/>
+            <process name="containermanagerd_system" pid="100" path="/usr/libexec/containermanagerd_system"/>
+            <process name="privacyaccountingd" pid="242" path="/System/Library/PrivateFrameworks/PrivacyAccounting.framework/Versions/A/Resources/privacyaccountingd"/>
+            <process name="diagnosticextensionsd" pid="394" path="/usr/libexec/diagnosticextensionsd"/>
+            <process name="backgroundassets.user" pid="531" path="/usr/libexec/backgroundassets.user"/>
+            <process name="dtappserviced" pid="10366" path="/System/Developer/usr/libexec/dtappserviced"/>
+            <process name="nearbyd" pid="176" path="/usr/libexec/nearbyd"/>
+            <process name="locationpushd" pid="10374" path="/usr/libexec/locationpushd"/>
+            <process name="logd_helper" pid="9477" path="/usr/libexec/logd_helper"/>
+            <process name="accessoryd" pid="109" path="/System/Library/PrivateFrameworks/CoreAccessories.framework/Support/accessoryd"/>
+            <process name="bookassetd" pid="369" path="/System/Library/PrivateFrameworks/BookLibraryCore.framework/Support/bookassetd"/>
+            <process name="deleted_helper" pid="383" path="/System/Library/PrivateFrameworks/CacheDelete.framework/deleted_helper"/>
+            <process name="extensionkitservice" pid="380" path="/System/Library/Frameworks/ExtensionFoundation.framework/XPCServices/extensionkitservice.xpc"/>
+            <process name="activityawardsd" pid="9695" path="/System/Library/PrivateFrameworks/ActivityAwardsServices.framework/activityawardsd"/>
+            <process name="remotemanagementd" pid="418" path="/System/Library/PrivateFrameworks/RemoteManagement.framework/remotemanagementd"/>
+            <process name="UserEventAgent" pid="31" path="/usr/libexec/UserEventAgent"/>
+            <process name="healthrecordsd" pid="445" path="/System/Library/PrivateFrameworks/HealthRecordServices.framework/healthrecordsd"/>
+            <process name="CategoriesService" pid="10354" path="/System/Library/PrivateFrameworks/Categories.framework/XPCServices/CategoriesService.xpc"/>
+            <process name="microstackshot" pid="565" path="/usr/libexec/microstackshot"/>
+            <process name="vmd" pid="10342" path="/System/Library/PrivateFrameworks/VisualVoicemail.framework/vmd"/>
+            <process name="apfs_iosd" pid="8949" path="/System/Library/Filesystems/apfs.fs/apfs_iosd"/>
+            <process name="SetStoreUpdateService" pid="271" path="/System/Library/PrivateFrameworks/CascadeSets.framework/XPCServices/SetStoreUpdateService.xpc"/>
+            <process name="softposreaderd" pid="10339" path="/usr/libexec/softposreaderd"/>
+            <process name="UsageTrackingAgent" pid="204" path="/System/Library/PrivateFrameworks/UsageTracking.framework/UsageTrackingAgent"/>
+            <process name="amfid" pid="54" path="/usr/libexec/amfid"/>
+            <process name="mobileassetd" pid="117" path="/usr/libexec/mobileassetd"/>
+            <process name="HeuristicInterpreter" pid="444" path="/System/Library/PrivateFrameworks/ActionPredictionHeuristics.framework/XPCServices/HeuristicInterpreter.xpc"/>
+            <process name="appleaccountd" pid="279" path="/usr/libexec/appleaccountd"/>
+            <process name="announced" pid="173" path="/usr/libexec/announced"/>
+            <process name="distnoted" pid="97" path="/usr/sbin/distnoted"/>
+            <process name="com.apple.MobileInstallationHelperService" pid="9607" path="/System/Library/PrivateFrameworks/MobileInstallation.framework/XPCServices/com.apple.MobileInstallationHelperService.xpc"/>
+            <process name="homed" pid="153" path="/System/Library/PrivateFrameworks/HomeKitDaemon.framework/Support/homed"/>
+            <process name="contextstored" pid="64" path="/System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/contextstored"/>
+            <process name="ckdiscretionaryd" pid="357" path="/System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/ckdiscretionaryd"/>
+            <process name="powerd" pid="46" path="/System/Library/CoreServices/powerd.bundle/powerd"/>
+            <process name="installcoordination_proxy" pid="10363" path="/System/Library/PrivateFrameworks/InstallCoordination.framework/Support/installcoordination_proxy"/>
+            <process name="appstored" pid="165" path="/System/Library/PrivateFrameworks/AppStoreDaemon.framework/Support/appstored"/>
+            <process name="diagnosticd" pid="10368" path="/usr/libexec/diagnosticd"/>
+            <process name="AssetCacheLocatorService" pid="308" path="/System/Library/PrivateFrameworks/AssetCacheServices.framework/XPCServices/AssetCacheLocatorService.xpc"/>
+            <process name="extensionkitservice" pid="746" path="/System/Library/Frameworks/ExtensionFoundation.framework/XPCServices/extensionkitservice.xpc"/>
+            <process name="UserFontManager" pid="244" path="/System/Library/PrivateFrameworks/FontServices.framework/XPCServices/UserFontManager.xpc"/>
+            <process name="assistant_cdmd" pid="174" path="/System/Library/PrivateFrameworks/ContinuousDialogManagerService.framework/assistant_cdmd"/>
+            <process name="amsengagementd" pid="203" path="/System/Library/PrivateFrameworks/AppleMediaServicesUI.framework/amsengagementd"/>
+            <process name="duetexpertd" pid="439" path="/usr/libexec/duetexpertd"/>
+            <process name="healthd" pid="5539" path="/System/Library/Frameworks/HealthKit.framework/healthd"/>
+            <process name="useractivityd" pid="195" path="/System/Library/PrivateFrameworks/UserActivity.framework/Agents/useractivityd"/>
+            <process name="CommCenterMobileHelper" pid="135" path="/System/Library/Frameworks/CoreTelephony.framework/Support/CommCenterMobileHelper"/>
+            <process name="clipserviced" pid="461" path="/System/Library/PrivateFrameworks/ClipServices.framework/clipserviced"/>
+            <process name="diskarbitrationd" pid="580" path="/usr/libexec/diskarbitrationd"/>
+            <process name="biometrickitd" pid="111" path="/usr/libexec/biometrickitd"/>
+            <process name="com.apple.NeighborhoodActivityConduitService" pid="193" path="/System/Library/PrivateFrameworks/NeighborhoodActivityConduit.framework/XPCServices/com.apple.NeighborhoodActivityConduitService.xpc"/>
+            <process name="WirelessRadioManagerd" pid="48" path="/usr/sbin/WirelessRadioManagerd"/>
+            <process name="nehelper" pid="116" path="/usr/libexec/nehelper"/>
+            <process name="betaenrollmentd" pid="533" path="/usr/libexec/betaenrollmentd"/>
+            <process name="com.apple.siri-distributed-evaluation" pid="495" path="/System/Library/PrivateFrameworks/DistributedEvaluation.framework/XPCServices/com.apple.siri-distributed-evaluation.xpc"/>
+            <process name="mobile_assertion_agent" pid="3965" path="/usr/libexec/mobile_assertion_agent"/>
+            <process name="networkserviceproxy" pid="138" path="/usr/libexec/networkserviceproxy"/>
+            <process name="fontservicesd" pid="199" path="/System/Library/PrivateFrameworks/FontServices.framework/Support/fontservicesd"/>
+            <process name="MobileSlideShow" pid="356" path="/Applications/MobileSlideShow.app"/>
+            <process name="videosubscriptionsd" pid="10346" path="/usr/libexec/videosubscriptionsd"/>
+            <process name="routined" pid="38" path="/usr/libexec/routined"/>
+            <process name="PosterBoard" pid="172" path="/Applications/PosterBoard.app"/>
+            <process name="ThreeBarsXPCService" pid="315" path="/System/Library/PrivateFrameworks/WiFiPolicy.framework/XPCServices/ThreeBarsXPCService.xpc"/>
+            <process name="ptpd" pid="10415" path="/usr/libexec/ptpd"/>
+            <process name="storekitd" pid="10348" path="/System/Library/Frameworks/StoreKit.framework/Support/storekitd"/>
+            <process name="HistoricalAnalyzerService" pid="8868" path="/System/Library/PrivateFrameworks/HealthAlgorithms.framework/XPCServices/HistoricalAnalyzerService.xpc"/>
+            <process name="identityservicesd" pid="61" path="/System/Library/PrivateFrameworks/IDS.framework/identityservicesd.app"/>
+            <process name="usernotificationsd" pid="133" path="/System/Library/PrivateFrameworks/UserNotificationsCore.framework/Support/usernotificationsd"/>
+            <process name="com.apple.sbd" pid="365" path="/System/Library/PrivateFrameworks/CloudServices.framework/Helpers/com.apple.sbd"/>
+            <process name="syncdefaultsd" pid="140" path="/System/Library/PrivateFrameworks/SyncedDefaults.framework/Support/syncdefaultsd"/>
+            <process name="mobilerepaird" pid="113" path="/usr/libexec/mobilerepaird"/>
+            <process name="financed" pid="300" path="/System/Library/Frameworks/FinanceKit.framework/financed"/>
+            <process name="itunesstored" pid="214" path="/System/Library/PrivateFrameworks/iTunesStore.framework/Support/itunesstored"/>
+            <process name="symptomsd" pid="145" path="/usr/libexec/symptomsd"/>
+            <process name="softwareupdateservicesd" pid="239" path="/System/Library/PrivateFrameworks/SoftwareUpdateServices.framework/Support/softwareupdateservicesd"/>
+            <process name="suggestd" pid="209" path="/System/Library/PrivateFrameworks/CoreSuggestions.framework/suggestd"/>
+            <process name="ReportCrash" pid="142" path="/System/Library/CoreServices/ReportCrash"/>
+            <process name="DASDelegateService" pid="769" path="/System/Library/PrivateFrameworks/DASDelegate.framework/XPCServices/DASDelegateService.xpc"/>
+            <process name="com.apple.StreamingUnzipService" pid="10364" path="/System/Library/PrivateFrameworks/StreamingZip.framework/XPCServices/com.apple.StreamingUnzipService.xpc"/>
+            <process name="CategoriesService" pid="10355" path="/System/Library/PrivateFrameworks/Categories.framework/XPCServices/CategoriesService.xpc"/>
+            <process name="watchdogd" pid="59" path="/usr/libexec/watchdogd"/>
+            <process name="pipelined" pid="223" path="/usr/libexec/pipelined"/>
+            <process name="localizationswitcherd" pid="157" path="/System/Library/PrivateFrameworks/IntlPreferences.framework/Support/localizationswitcherd"/>
+            <process name="MTLAssetUpgraderD" pid="566" path="/usr/libexec/MTLAssetUpgraderD"/>
+            <process name="CommCenter" pid="94" path="/System/Library/Frameworks/CoreTelephony.framework/Support/CommCenter"/>
+            <process name="SCHelper" pid="143" path="/System/Library/Frameworks/SystemConfiguration.framework/SCHelper"/>
+            <process name="geod" pid="152" path="/System/Library/PrivateFrameworks/GeoServices.framework/geod"/>
+            <process name="runningboardd" pid="33" path="/usr/libexec/runningboardd"/>
+            <process name="gpsd" pid="201" path="/usr/libexec/gpsd"/>
+            <process name="voiced" pid="405" path="/System/Library/PrivateFrameworks/VoiceServices.framework/Support/voiced"/>
+            <process name="WiFiCloudAssetsXPCService" pid="10407" path="/System/Library/PrivateFrameworks/WiFiPolicy.framework/XPCServices/WiFiCloudAssetsXPCService.xpc"/>
+            <process name="CategoriesService" pid="10356" path="/System/Library/PrivateFrameworks/Categories.framework/XPCServices/CategoriesService.xpc"/>
+            <process name="geocorrectiond" pid="542" path="/System/Library/PrivateFrameworks/MapsSupport.framework/geocorrectiond"/>
+            <process name="videocodecd" pid="200" path="/usr/libexec/videocodecd"/>
+            <process name="CacheDeleteAppContainerCaches" pid="402" path="/System/Library/CoreServices/CacheDeleteAppContainerCaches"/>
+            <process name="seserviced" pid="158" path="/usr/libexec/seserviced"/>
+            <process name="UARPUpdaterServiceLegacyAudio" pid="263" path="/System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/XPCServices/UARPUpdaterServiceLegacyAudio.xpc"/>
+            <process name="IntelligencePlatformComputeService" pid="386" path="/System/Library/PrivateFrameworks/IntelligencePlatformCompute.framework/XPCServices/IntelligencePlatformComputeService.xpc"/>
+            <process name="SpringBoard" pid="34" path="/System/Library/CoreServices/SpringBoard.app"/>
+            <process name="medialibraryd" pid="265" path="/System/Library/PrivateFrameworks/MusicLibrary.framework/Support/medialibraryd"/>
+            <process name="passwordbreachd" pid="426" path="/private/preboot/Cryptexes/App/usr/libexec/passwordbreachd"/>
+            <process name="fileproviderd" pid="266" path="/System/Library/Frameworks/FileProvider.framework/Support/fileproviderd"/>
+            <process name="dataaccessd" pid="526" path="/System/Library/PrivateFrameworks/DataAccess.framework/Support/dataaccessd"/>
+            <process name="triald" pid="179" path="/usr/libexec/triald"/>
+            <process name="DayStreamProcessorService" pid="8867" path="/System/Library/PrivateFrameworks/HealthAlgorithms.framework/XPCServices/DayStreamProcessorService.xpc"/>
+            <process name="PowerUIAgent" pid="108" path="/usr/libexec/PowerUIAgent"/>
+            <process name="launchd" pid="1" path="/sbin/launchd"/>
+            <process name="ContainerMetadataExtractor" pid="10353" path="/System/Library/PrivateFrameworks/iCloudDriveService.framework/XPCServices/ContainerMetadataExtractor.xpc"/>
+            <process name="assetsd" pid="294" path="/System/Library/Frameworks/AssetsLibrary.framework/Support/assetsd"/>
+            <process name="dtfileserviced" pid="10387" path="/System/Developer/usr/libexec/dtfileserviced"/>
+            <process name="ctkd" pid="221" path="/System/Library/Frameworks/CryptoTokenKit.framework/ctkd"/>
+            <process name="com.apple.CallKit.CallDirectoryMaintenance" pid="462" path="/System/Library/Frameworks/CallKit.framework/XPCServices/com.apple.CallKit.CallDirectoryMaintenance.xpc"/>
+            <process name="dtfilesandboxd" pid="650" path="/System/Developer/usr/libexec/dtfilesandboxd"/>
+            <process name="keybagd" pid="52" path="/usr/libexec/keybagd"/>
+            <process name="splashboardd" pid="10360" path="/usr/libexec/splashboardd"/>
+            <process name="mapssyncd" pid="10350" path="/System/Library/PrivateFrameworks/MapsSync.framework/mapssyncd"/>
+            <process name="transparencyd" pid="170" path="/usr/libexec/transparencyd"/>
+            <process name="liveactivitiesd" pid="122" path="/System/Library/PrivateFrameworks/SessionCore.framework/Support/liveactivitiesd"/>
+            <process name="FSTaskScheduler" pid="9209" path="/usr/libexec/FSTaskScheduler"/>
+            <process name="biomed" pid="49" path="/System/Library/PrivateFrameworks/BiomeStreams.framework/Support/biomed"/>
+            <process name="extensionkitservice" pid="484" path="/System/Library/Frameworks/ExtensionFoundation.framework/XPCServices/extensionkitservice.xpc"/>
+            <process name="configd" pid="43" path="/usr/libexec/configd"/>
+            <process name="keychainsharingmessagingd" pid="10331" path="/usr/libexec/keychainsharingmessagingd"/>
+            <process name="knowledgeconstructiond" pid="750" path="/System/Library/PrivateFrameworks/IntelligencePlatformCore.framework/knowledgeconstructiond"/>
+            <process name="tvremoted" pid="10347" path="/usr/libexec/tvremoted"/>
+            <process name="AppleCredentialManagerDaemon" pid="84" path="/System/Library/PrivateFrameworks/AppleCredentialManager.framework/AppleCredentialManagerDaemon"/>
+            <process name="thermalmonitord" pid="63" path="/usr/libexec/thermalmonitord"/>
+            <process name="mlruntimed" pid="379" path="/usr/libexec/mlruntimed"/>
+            <process name="tccd" pid="45" path="/System/Library/PrivateFrameworks/TCC.framework/Support/tccd"/>
+            <process name="MobilePhone" pid="10572" path="/Applications/MobilePhone.app"/>
+            <process name="familycircled" pid="183" path="/System/Library/PrivateFrameworks/FamilyCircle.framework/familycircled"/>
+            <process name="linkd" pid="211" path="/usr/libexec/linkd"/>
+            <process name="assistantd" pid="37" path="/System/Library/PrivateFrameworks/AssistantServices.framework/assistantd"/>
+            <process name="locationd" pid="70" path="/usr/libexec/locationd"/>
+            <process name="photoanalysisd" pid="8873" path="/System/Library/PrivateFrameworks/PhotoAnalysis.framework/Support/photoanalysisd"/>
+            <process name="diskimagesiod" pid="579" path="/usr/libexec/diskimagesiod"/>
+            <process name="Runner" pid="9356" path="/private/var/containers/Bundle/Application/882F199F-1DCC-49F6-8080-8EFB4F5C1B05/Runner.app"/>
+            <process name="cfprefsd" pid="102" path="/usr/sbin/cfprefsd"/>
+            <process name="tailspind" pid="10385" path="/usr/libexec/tailspind"/>
+            <process name="navd" pid="87" path="/System/Library/PrivateFrameworks/MapsSupport.framework/navd"/>
+            <process name="griddatad" pid="524" path="/usr/libexec/griddatad"/>
+            <process name="fmfd" pid="212" path="/usr/libexec/fmfd"/>
+            <process name="symptomsd-diag" pid="375" path="/usr/libexec/symptomsd-diag"/>
+            <process name="usermanagerd" pid="99" path="/usr/libexec/usermanagerd"/>
+            <process name="mobiletimerd" pid="57" path="/System/Library/PrivateFrameworks/MobileTimer.framework/Executables/mobiletimerd"/>
+            <process name="callservicesd" pid="132" path="/System/Library/PrivateFrameworks/TelephonyUtilities.framework/callservicesd"/>
+            <process name="avatarsd" pid="9284" path="/System/Library/PrivateFrameworks/AvatarPersistence.framework/Support/avatarsd"/>
+            <process name="deferredmediad" pid="724" path="/usr/libexec/deferredmediad"/>
+            <process name="accessoryupdaterd" pid="44" path="/System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/Support/accessoryupdaterd"/>
+            <process name="ind" pid="414" path="/System/Library/PrivateFrameworks/iCloudNotification.framework/ind"/>
+            <process name="peopled" pid="35" path="/System/Library/PrivateFrameworks/People.framework/peopled"/>
+            <process name="MTLCompilerService" pid="10329" path="/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc"/>
+            <process name="nesessionmanager" pid="234" path="/usr/libexec/nesessionmanager"/>
+            <process name="pasted" pid="334" path="/System/Library/PrivateFrameworks/Pasteboard.framework/Support/pasted"/>
+            <process name="bluetoothd" pid="91" path="/usr/sbin/bluetoothd"/>
+            <process name="fairplayd.H2" pid="93" path="/usr/sbin/fairplayd.H2"/>
+            <process name="mDNSResponder" pid="186" path="/usr/sbin/mDNSResponder"/>
+            <process name="CacheDeleteDaily" pid="573" path="/System/Library/CoreServices/CacheDeleteDaily"/>
+            <process name="mapspushd" pid="283" path="/System/Library/PrivateFrameworks/MapsSupport.framework/mapspushd"/>
+            <process name="eligibilityd" pid="346" path="/usr/libexec/eligibilityd"/>
+            <process name="axassetsd" pid="40" path="/System/Library/PrivateFrameworks/AXAssetLoader.framework/Support/axassetsd"/>
+            <process name="com.apple.quicklook.ThumbnailsAgent" pid="406" path="/System/Library/Frameworks/QuickLookThumbnailing.framework/Support/com.apple.quicklook.ThumbnailsAgent"/>
+            <process name="findmylocated" pid="220" path="/usr/libexec/findmylocated"/>
+            <process name="TrustedPeersHelper" pid="285" path="/System/Library/Frameworks/Security.framework/XPCServices/TrustedPeersHelper.xpc"/>
+            <process name="pkd" pid="159" path="/usr/libexec/pkd"/>
+            <process name="itunescloudd" pid="163" path="/System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd"/>
+            <process name="misagent" pid="155" path="/usr/libexec/misagent"/>
+            <process name="online-auth-agent" pid="393" path="/usr/libexec/online-auth-agent"/>
+            <process name="momentsd" pid="9619" path="/usr/libexec/momentsd"/>
+            <process name="countryd" pid="9554" path="/usr/libexec/countryd"/>
+            <process name="notification_proxy" pid="337" path="/usr/libexec/notification_proxy"/>
+            <process name="TrialArchivingService" pid="438" path="/System/Library/PrivateFrameworks/TrialServer.framework/XPCServices/TrialArchivingService.xpc"/>
+            <process name="com.apple.DriverKit-AppleBCMWLAN" pid="105" path="/System/Library/DriverExtensions/com.apple.DriverKit-AppleBCMWLAN.dext/com.apple.DriverKit-AppleBCMWLAN"/>
+            <process name="calaccessd" pid="126" path="/System/Library/PrivateFrameworks/CalendarDaemon.framework/Support/calaccessd"/>
+            <process name="extensionkitservice" pid="286" path="/System/Library/Frameworks/ExtensionFoundation.framework/XPCServices/extensionkitservice.xpc"/>
+            <process name="tipsd" pid="537" path="/usr/libexec/tipsd"/>
+            <process name="cfprefsd" pid="101" path="/usr/sbin/cfprefsd"/>
+            <process name="TelemetryDiskChecker" pid="9291" path="/System/Library/PrivateFrameworks/iCloudDriveService.framework/XPCServices/TelemetryDiskChecker.xpc"/>
+            <process name="aned" pid="397" path="/usr/libexec/aned"/>
+            <process name="UARPUpdaterServiceUSBPD" pid="10405" path="/System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/XPCServices/UARPUpdaterServiceUSBPD.xpc"/>
+            <process name="AmbientPhotoFramePosterProvider" pid="1688" path="/System/Library/PrivateFrameworks/PhotosUIPrivate.framework/PlugIns/AmbientPhotoFramePosterProvider.app"/>
+            <process name="SafariBookmarksSyncAgent" pid="420" path="/private/preboot/Cryptexes/App/System/Library/CoreServices/SafariSupport.bundle/SafariBookmarksSyncAgent"/>
+            <process name="AppPredictionIntentsHelperService" pid="448" path="/System/Library/PrivateFrameworks/AppPredictionFoundation.framework/XPCServices/AppPredictionIntentsHelperService.xpc"/>
+            <process name="Runner" pid="358" path="/private/var/containers/Bundle/Application/3C805B0C-F481-44C4-9ECD-A928EB8379F0/Runner.app"/>
+            <process name="adprivacyd" pid="281" path="/usr/libexec/adprivacyd"/>
+            <process name="lockdownd" pid="80" path="/usr/libexec/lockdownd"/>
+            <process name="com.apple.siri.embeddedspeech" pid="529" path="/System/Library/PrivateFrameworks/CoreEmbeddedSpeechRecognition.framework/XPCServices/com.apple.siri.embeddedspeech.xpc"/>
+            <process name="bird" pid="305" path="/System/Library/PrivateFrameworks/CloudDocsDaemon.framework/bird"/>
+            <process name="watchlistd" pid="161" path="/System/Library/PrivateFrameworks/WatchListKit.framework/Support/watchlistd"/>
+            <process name="logd_reporter" pid="718" path="/usr/libexec/logd_reporter"/>
+            <process name="dtdeviceinfod" pid="10103" path="/System/Developer/usr/libexec/dtdeviceinfod"/>
+            <process name="budd" pid="9604" path="/System/Library/PrivateFrameworks/SetupAssistant.framework/budd"/>
+            <process name="audioanalyticsd" pid="160" path="/usr/libexec/audioanalyticsd"/>
+            <process name="IMDPersistenceAgent" pid="9684" path="/System/Library/PrivateFrameworks/IMDPersistence.framework/XPCServices/IMDPersistenceAgent.xpc"/>
+            <process name="amsaccountsd" pid="92" path="/System/Library/PrivateFrameworks/AppleMediaServices.framework/amsaccountsd"/>
+            <process name="devicecheckd" pid="413" path="/System/Library/PrivateFrameworks/DeviceCheckInternal.framework/devicecheckd"/>
+            <process name="mediaplaybackd" pid="407" path="/usr/libexec/mediaplaybackd"/>
+            <process name="RP Swift" pid="10945" path="/private/var/containers/Bundle/Application/83A381A0-57AD-461C-8ADE-78AB647A6210/RP Swift.app"/>
+            <process name="wifianalyticsd" pid="217" path="/usr/libexec/wifianalyticsd"/>
+            <process name="audioclocksyncd" pid="171" path="/usr/libexec/audioclocksyncd"/>
+            <process name="MobileBackupCacheDeleteService" pid="404" path="/System/Library/PrivateFrameworks/MobileBackup.framework/MobileBackupCacheDeleteService"/>
+            <process name="deleted" pid="224" path="/System/Library/PrivateFrameworks/CacheDelete.framework/deleted"/>
+            <process name="sysmond" pid="648" path="/usr/libexec/sysmond"/>
+            <process name="audiomxd" pid="103" path="/usr/libexec/audiomxd"/>
+            <process name="companion_proxy" pid="339" path="/usr/libexec/companion_proxy"/>
+            <process name="searchpartyd" pid="219" path="/usr/libexec/searchpartyd"/>
+            <process name="afcd" pid="620" path="/usr/libexec/afcd"/>
+            <process name="FamilyControlsAgent" pid="10351" path="/System/Library/Frameworks/FamilyControls.framework/FamilyControlsAgent"/>
+            <process name="geoanalyticsd" pid="396" path="/System/Library/PrivateFrameworks/GeoAnalytics.framework/geoanalyticsd"/>
+            <process name="Preferences" pid="9354" path="/Applications/Preferences.app"/>
+            <process name="OTATaskingAgent" pid="9596" path="/usr/libexec/OTATaskingAgent"/>
+            <process name="searchd" pid="207" path="/System/Library/PrivateFrameworks/Search.framework/searchd"/>
+            <process name="findmydeviced" pid="148" path="/usr/libexec/findmydeviced"/>
+            <process name="notifyd" pid="98" path="/usr/sbin/notifyd"/>
+            <process name="CoreThreadCommissionerServiced" pid="384" path="/System/Library/PrivateFrameworks/CoreThreadCommissionerService.framework/CoreThreadCommissionerServiced"/>
+        </processes>
+        <data>
+            <table schema="activity-monitor-process-ledger"/>
+            <table schema="sysmon-system"/>
+            <table schema="tick" frequency="10"/>
+            <table schema="dyld-library-load" target-pid="SINGLE"/>
+            <table codes="&quot;0x1f,0x05&quot;" schema="kdebug-strings" target="SINGLE"/>
+            <table codes="&quot;0x07,0x00&quot; &quot;0x1f,0x05&quot;" schema="kdebug" target="SINGLE"/>
+            <table schema="core-animation-fps-estimate"/>
+            <table schema="graphics-statistic"/>
+            <table schema="activity-monitor-process-live"/>
+            <table schema="sysmon-process"/>
+            <table schema="stdouterr-output"/>
+            <table schema="activity-monitor-system"/>
+        </data>
+        <tracks/>
+    </run>
+</trace-toc>
