@@ -6,6 +6,7 @@ from typing import Optional
 from core.subprocess import async_run_process
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
 from core.xc.xctrace.toc import parse_toc_xml, TOC
+from core.xc.xctrace.xml_parser import Schema, table_schemas_xpath
 
 logger = logging.getLogger(__name__)
 
@@ -94,21 +95,23 @@ class Xctrace:
         await async_run_process(command)
 
     @staticmethod
-    async def export_data(trace_path: str, data_path: str, xpath: str):
+    async def export_data(trace_path: str, data_path: str, run: int, schemas: [Schema]):
         """
-        Exports data from a trace file to an output file in XML format using the specified XPath
+        Exports data from a trace file to an output file in XML format using the run number and schema names to select
+        the data to export.
 
-        The XPath should be in the following format
-        ``'/trace-toc/run[1]/data/table[@schema="sysmon-process"]'``. ``'run[1]'`` selects the run to export data from.
-        Starts from 1. ``'table[@schema="sysmon-process"]'`` selects the data to export from the run by providing the
-        schema name. You can also select multiple schemas by separating them with an `or` operator like so:
-        ``'table[@schema="sysmon-process" or @schema="stdouterr-output"]'``
+        This method calls :meth:`table_schemas_xpath` to generate the xpath for the data export.
 
         :param trace_path: The path to the trace file
         :param data_path: The path to the file to save the data to
-        :param xpath: The XPath to use to select the data to export
+        :param run: The run number to export the data from. The first run is 1.
+        :param schemas: The schema names to export the data for
         """
-        logger.debug(f"Exporting data from {trace_path} to {data_path}")
+        xpath = table_schemas_xpath(run=run, schemas=schemas)
+
+        logger.debug(
+            f"Exporting data from {trace_path} to {data_path} using xpath: {xpath}"
+        )
 
         command = XctraceCommand.export_data_command(
             input_path=trace_path,

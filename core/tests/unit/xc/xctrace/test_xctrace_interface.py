@@ -7,6 +7,7 @@ import pytest
 
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
 from core.xc.xctrace.xctrace_interface import Xctrace
+from core.xc.xctrace.xml_parser import Schema
 
 
 @pytest.fixture
@@ -137,13 +138,16 @@ class TestXctraceInterface:
         data_kwargs = {
             "trace_path": "input_path",
             "data_path": "output_path",
-            "xpath": "xpath",
+            "run": 1,
+            "schemas": [Schema.SYSMON_PROCESS],
         }
 
         await Xctrace.export_data(**data_kwargs)
 
         mock_xctrace_command.export_data_command.assert_called_once_with(
-            input_path="input_path", output_path="output_path", xpath="xpath"
+            input_path="input_path",
+            output_path="output_path",
+            xpath='//trace-toc[1]/run[1]/data[1]/table[@schema="sysmon-process"]',
         )
         mock_async_run_process.assert_awaited_once_with(mock_command_instance)
 
