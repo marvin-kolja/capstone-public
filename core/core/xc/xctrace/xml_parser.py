@@ -1,3 +1,4 @@
+import logging
 from enum import StrEnum
 from pathlib import Path
 from xml.etree import ElementTree
@@ -6,6 +7,8 @@ from typing import Optional, Any
 from pydantic import BaseModel
 
 from core.xc.xctrace.toc import TOC, ProcessEntry
+
+logger = logging.getLogger(__name__)
 
 
 class Schema(StrEnum):
@@ -70,6 +73,7 @@ class XctraceXMLParser:
         self.__root = self.__tree.getroot()
         self.__toc = toc
         self.__cache_map: dict[str, ElementTree.Element] = {}
+        self._cache_refs(self.__relevant_tag_xpaths)
 
     def parse_sysmon_for_target(
         self,
@@ -109,3 +113,40 @@ class XctraceXMLParser:
         :return: A dictionary containing the extracted data for each schema.
         """
         raise NotImplementedError
+
+    __relevant_tag_xpaths = []
+    """
+    Relevant xpaths that will be accessed during parsing and should be cached.
+    """
+
+    def _cache_refs(self, xpaths: list[str]):
+        """
+        Caches all elements with an `id` attribute in the XML tree by searching for elements that match the given
+        xpaths. All xpaths will be appended using the `[@id]` selector to only match elements with an `id` attribute.
+
+        :param xpaths: A list of xpaths to search for elements with an `id` attribute.
+        """
+        logger.debug(f"Caching elements with an `id` attribute using xpaths: {xpaths}")
+        for xpath in xpaths:
+            self._cache_elements(self.__root, f"{xpath}[@id]")
+        logger.debug(f"Cached {len(self.__cache_map)} elements.")
+
+    def _cache_elements(self, element: ElementTree.Element, xpath: str):
+        """
+        Caches all elements with an `id` attribute in the given element subtree by searching for elements that match
+        the given xpath.
+
+        :param element: A xml element to search for elements in.
+        :param xpath: The xpath to match elements in the element.
+        """
+        logger.debug(f"Searching for elements to cache matching xpath: {xpath}")
+        elements = element.findall(xpath)
+        logger.debug(f"Found {len(elements)} elements.")
+        for found_element in elements:
+            attrib = found_element.attrib
+            if attrib.get("id"):
+                self.__cache_map[attrib["id"]] = found_element
+            else:
+                logger.warning(
+                    f"Selected element for caching that does not have an `id` attribute."
+                )
