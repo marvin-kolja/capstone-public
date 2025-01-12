@@ -136,6 +136,8 @@ class Xctrace:
         """
         parser = XctraceXMLParser(pathlib.Path(path), toc)
         run_data = []
-        for index, _ in enumerate(toc.runs):
-            run_data.append(parser.parse_multiple(index + 1))
+        for index, run in enumerate(toc.runs):
+            run_data.append(
+                parser.parse_multiple(index + 1, target_process=run.info.target.process)
+            )
         return run_data
