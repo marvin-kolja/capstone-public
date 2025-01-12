@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
-from core.xc.xctrace.toc import TOC, TOCRun
+from core.xc.xctrace.toc import TOC, TOCRun, TOCRunInfo, ProcessEntry
 from core.xc.xctrace.xctrace_interface import Xctrace
 from core.xc.xctrace.xml_parser import Schema
 
@@ -180,7 +180,14 @@ class TestXctraceInterface:
         """
         path = MagicMock(spec=str)
         toc = MagicMock(spec=TOC)
-        toc.runs = [MagicMock(spec=TOCRun) for _ in range(3)]
+        process = MagicMock(spec=ProcessEntry)
+        process.name = "process_name"
+        process.pid = 123
+        run_target = MagicMock(spec=ProcessEntry, process=process)
+        toc_run_info = MagicMock(spec=TOCRunInfo, target=run_target)
+        toc_run = MagicMock(spec=TOCRun, info=toc_run_info)
+
+        toc.runs = [toc_run for _ in range(3)]
 
         with mock.patch(
             "core.xc.xctrace.xctrace_interface.XctraceXMLParser"
@@ -188,4 +195,9 @@ class TestXctraceInterface:
             Xctrace.parse_data_xml(path, toc)
 
             mock_parser.assert_called_once_with(pathlib.Path(path), toc)
-            assert mock_parser.return_value.parse_multiple.call_count == 3
+            mock_parser.return_value.parse_multiple.assert_has_calls(
+                [
+                    mock.call(idx + 1, target_process=toc_run.info.target.process)
+                    for idx in range(3)
+                ]
+            )
