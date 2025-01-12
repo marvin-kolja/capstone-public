@@ -437,15 +437,15 @@ class TestXctraceXMLParser:
         with pytest.raises(IndexError):
             parser._get_table_number_for_schema(2, Schema.SYSMON_PROCESS)
 
-    @pytest.mark.xfail
+    @pytest.mark.skip("Not implemented. Integration test exists though.")
     def test_extract_sysmon(self, parser):
-        parser._extract_sysmon([])
+        parser._extract_sysmon([], MagicMock(spec=ProcessEntry))
 
-    @pytest.mark.xfail
+    @pytest.mark.skip("Not implemented. Integration test exists though.")
     def test_extract_core_animation(self, parser):
         parser._extract_core_animation([])
 
-    @pytest.mark.xfail
+    @pytest.mark.skip("Not implemented. Integration test exists though.")
     def test_extract_stdout_err(self, parser):
         parser._extract_stdout_err([])
 
