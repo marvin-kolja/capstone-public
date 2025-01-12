@@ -331,7 +331,16 @@ class XctraceXMLParser:
         :param rows: The rows to extract the stdout and stderr data from.
         :return: A list of ProcessStdoutErr objects containing the extracted data.
         """
-        raise NotImplementedError
+        values = []
+        for row in rows:
+            console_text = self._get_cached_element(row, "console-text").get("fmt")
+            event_time = self._get_cached_element(row, "event-time")
+            timestamp = int(event_time.text)
+
+            values.append(
+                ProcessStdoutErr(timestamp=timestamp, console_text=console_text)
+            )
+        return values
 
     @staticmethod
     def _get_rows(
