@@ -108,9 +108,10 @@ class TestXctraceXMLParser:
             mock_get_rows.assert_called_once_with(
                 mock_xml_element_root,
                 node_xpath_attrib="//trace-toc[1]/run[1]/data[1]/table[1]",
-                row_selector='process[starts-with(@fmt, "any_name") or ends-with(@fmt, "(1)")]',
             )
-            mock_extract_sysmon.assert_called_once_with(mock_get_rows.return_value)
+            mock_extract_sysmon.assert_called_once_with(
+                mock_get_rows.return_value, process_entry_mock
+            )
             mock_get_table_number_for_schema.assert_called_once_with(
                 1, Schema.SYSMON_PROCESS
             )

@@ -89,11 +89,8 @@ class XctraceXMLParser:
         """
         table_number = self._get_table_number_for_schema(run, Schema.SYSMON_PROCESS)
         xpath = table_number_xpath(run=run, table_number=table_number)
-        row_selector = f'process[starts-with(@fmt, "{target_process.name}") or ends-with(@fmt, "({target_process.pid})")]'
-        rows = self._get_rows(
-            self.__root, node_xpath_attrib=xpath, row_selector=row_selector
-        )
-        return self._extract_sysmon(rows)
+        rows = self._get_rows(self.__root, node_xpath_attrib=xpath)
+        return self._extract_sysmon(rows, target_process)
 
     def parse_core_animation(self, run: int) -> list[CoreAnimation]:
         """
@@ -246,11 +243,13 @@ class XctraceXMLParser:
     def _extract_sysmon(
         self,
         rows: list[ElementTree.Element],
+        target_process: ProcessEntry,
     ) -> list[Sysmon]:
         """
         Extracts the sysmon data from the given rows, matching the target app name or PID.
 
         :param rows: The rows to extract the sysmon data from.
+        :param target_process: The target process to extract the sysmon data for.
         :return: A list of Sysmon objects containing the extracted data.
         """
         raise NotImplementedError
@@ -263,6 +262,7 @@ class XctraceXMLParser:
         :param rows: The rows to extract the core animation data from.
         :return: A list of CoreAnimation objects containing the extracted data.
         """
+        raise NotImplementedError
 
     def _extract_stdout_err(
         self, rows: list[ElementTree.Element]
