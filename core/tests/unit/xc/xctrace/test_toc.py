@@ -130,20 +130,26 @@ class TestTOCRun:
 
         THEN: it should correctly restructure the `processes` and `data` fields to lists
         """
-        info_mock = MagicMock(spec=dict)
-        process_mock = MagicMock(spec=dict)
-        table_mock = MagicMock(spec=dict)
+        info_mock = MagicMock(spec=TOCRunInfo)
+        process_mock = {
+            "name": "name",
+            "pid": 1,
+        }
+        table_mock = {
+            "schema_name": "schema",
+        }
 
         data = {
+            "number": 1,
             "processes": {"process": process_mock},
             "data": {"table": table_mock},
             "info": info_mock,
         }
 
-        restructured_data = TOCRun.model_validate(data)
+        toc_run = TOCRun.model_validate(data)
 
-        assert restructured_data["processes"] == [process_mock]
-        assert restructured_data["data"] == [table_mock]
+        assert toc_run.processes == [ProcessEntry(**process_mock)]
+        assert toc_run.data == [TOCDataTable(**table_mock)]
 
     def test_restructure_list_fields_list(self):
         """
@@ -154,20 +160,26 @@ class TestTOCRun:
 
         THEN: it should correctly restructure the `processes` and `data` fields to lists
         """
-        info_mock = MagicMock(spec=dict)
-        process_mock = MagicMock(spec=dict)
-        table_mock = MagicMock(spec=dict)
+        info_mock = MagicMock(spec=TOCRunInfo)
+        process_mock = {
+            "name": "name",
+            "pid": 1,
+        }
+        table_mock = {
+            "schema_name": "schema",
+        }
 
         data = {
+            "number": 1,
             "processes": {"process": [process_mock]},
             "data": {"table": [table_mock]},
             "info": info_mock,
         }
 
-        restructured_data = TOCRun.model_validate(data)
+        toc_run = TOCRun.model_validate(data)
 
-        assert restructured_data["processes"] == [process_mock]
-        assert restructured_data["data"] == [table_mock]
+        assert toc_run.processes == [ProcessEntry(**process_mock)]
+        assert toc_run.data == [TOCDataTable(**table_mock)]
 
 
 class TestTOC:
