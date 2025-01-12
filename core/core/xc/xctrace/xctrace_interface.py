@@ -1,9 +1,11 @@
 import logging
+import pathlib
 import signal
 from typing import Optional
 
 from core.subprocess import async_run_process
 from core.xc.commands.xctrace_command import Instrument, XctraceCommand
+from core.xc.xctrace.toc import parse_toc_xml, TOC
 
 logger = logging.getLogger(__name__)
 
@@ -115,3 +117,7 @@ class Xctrace:
         )
 
         await async_run_process(command)
+
+    @staticmethod
+    def parse_toc_xml(path: str) -> TOC:
+        return parse_toc_xml(pathlib.Path(path))
