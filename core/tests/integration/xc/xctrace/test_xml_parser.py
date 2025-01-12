@@ -38,7 +38,7 @@ class TestXMLParser:
         )
         assert len(sysmon_data) == 3
         assert sysmon_data[0].timestamp == 137338541
-        assert sysmon_data[0].cpu == 0.0
+        assert sysmon_data[0].cpu is None
         assert sysmon_data[0].memory == 0.07830047607421875
         assert sysmon_data[0].resident_size == 0.046875
         assert sysmon_data[0].recently_died is False
