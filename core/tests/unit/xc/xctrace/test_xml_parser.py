@@ -244,6 +244,35 @@ class TestXctraceXMLParser:
         with pytest.raises(ValueError):
             parser._get_cached_element(element_to_search_in, "any_xpath")
 
+    def test_get_table_number_for_schema(self, parser, mock_toc):
+        """
+        GIVEN: A parser instance
+        AND: A TOC instance with a run that contains two data tables with different schema names.
+        AND: A run number.
+        AND: A schema.
+
+        WHEN: The get_table_number_for_schema method is called with the run number and schema.
+
+        THEN: The method should return the correct table number.
+        AND: The method should raise a ValueError if the schema is not found.
+        AND: The method should raise an IndexError if the run number is out of bounds.
+        """
+        mock_toc.runs = [
+            MagicMock(
+                data=[
+                    MagicMock(schema_name="sysmon-process"),
+                    MagicMock(schema_name="stdouterr-output"),
+                ]
+            ),
+        ]
+
+        assert parser._get_table_number_for_schema(1, Schema.SYSMON_PROCESS) == 1
+        assert parser._get_table_number_for_schema(1, Schema.STDOUTERR_OUTPUT) == 2
+        with pytest.raises(ValueError):
+            parser._get_table_number_for_schema(1, Schema.CORE_ANIMATION_FPS_ESTIMATE)
+        with pytest.raises(IndexError):
+            parser._get_table_number_for_schema(2, Schema.SYSMON_PROCESS)
+
 
 class TestTableXpath:
     @pytest.mark.parametrize(

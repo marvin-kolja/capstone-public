@@ -182,6 +182,23 @@ class XctraceXMLParser:
             logger.debug(f"Trying to get element from cache using ref '{ref}'")
             return self.__cache_map[ref]
 
+    def _get_table_number_for_schema(self, run: int, schema: Schema) -> int:
+        """
+        Get the table number for the given schema by looking it up in the TOC.
+
+        :param run: The run number to get the table number for. The first run is 1.
+        :param schema: The schema to get the table number for.
+        :return: The table number for the given schema. The first table is 1.
+        :raises IndexError: If the run number is out of bounds.
+        :raises ValueError: If no table number is found for the schema.
+        """
+        single_run = self.__toc.runs[run - 1]
+        for index, data_table in enumerate(single_run.data):
+            if data_table.schema_name == schema.value:
+                return index + 1
+
+        raise ValueError(f"No table number found for schema {schema}")
+
 
 def table_xpath(run: int, table_selector: str) -> str:
     """
