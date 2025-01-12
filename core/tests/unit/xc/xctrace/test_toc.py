@@ -1,5 +1,6 @@
 import pathlib
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
@@ -117,3 +118,118 @@ def test_parse_toc_xml_invalid(fake_toc):
     with mock.patch.object(pathlib.Path, "open", mocked_open):
         with pytest.raises(ValidationError):
             assert parse_toc_xml(fake_path) == fake_toc
+
+
+class TestTOCRun:
+    def test_restructure_list_fields_dict(self):
+        """
+        GIVEN: processes field is a dictionary
+        AND: data field is a dictionary
+
+        WHEN: the `restructure_list_fields` method is called
+
+        THEN: it should correctly restructure the `processes` and `data` fields to lists
+        """
+        info_mock = MagicMock(spec=dict)
+        process_mock = MagicMock(spec=dict)
+        table_mock = MagicMock(spec=dict)
+
+        data = {
+            "processes": {"process": process_mock},
+            "data": {"table": table_mock},
+            "info": info_mock,
+        }
+
+        restructured_data = TOCRun.model_validate(data)
+
+        assert restructured_data["processes"] == [process_mock]
+        assert restructured_data["data"] == [table_mock]
+
+    def test_restructure_list_fields_list(self):
+        """
+        GIVEN: processes.process field is a list
+        AND: data.table field is a list
+
+        WHEN: the `restructure_list_fields` method is called
+
+        THEN: it should correctly restructure the `processes` and `data` fields to lists
+        """
+        info_mock = MagicMock(spec=dict)
+        process_mock = MagicMock(spec=dict)
+        table_mock = MagicMock(spec=dict)
+
+        data = {
+            "processes": {"process": [process_mock]},
+            "data": {"table": [table_mock]},
+            "info": info_mock,
+        }
+
+        restructured_data = TOCRun.model_validate(data)
+
+        assert restructured_data["processes"] == [process_mock]
+        assert restructured_data["data"] == [table_mock]
+
+
+class TestTOC:
+    def test_validate(self):
+        """
+        GIVEN: a TOC object with valid fields
+
+        WHEN: the object is validated
+
+        THEN: no exception should be raised
+        """
+        mock_run = MagicMock(spec=TOCRun)
+        TOC.model_validate({"runs": [mock_run]})
+
+    def test_restructure_runs_dict(self):
+        """
+        GIVEN: trace-toc.run field is a dictionary
+
+        WHEN: the TOC is validated
+
+        THEN: it should correctly restructure the nested field to a list and map it to the `runs` field
+        """
+        mock_run = {
+            "processes": [MagicMock(spec=ProcessEntry)],
+            "data": [MagicMock(spec=TOCDataTable)],
+            "info": MagicMock(spec=TOCRunInfo),
+            "number": 1,
+        }
+
+        data = {
+            "trace-toc": {"run": mock_run},
+        }
+
+        toc = TOC.model_validate(data)
+
+        assert toc.runs[0].processes == mock_run["processes"]
+        assert toc.runs[0].data == mock_run["data"]
+        assert toc.runs[0].info == mock_run["info"]
+        assert toc.runs[0].number == mock_run["number"]
+
+    def test_restructure_runs_list(self):
+        """
+        GIVEN: a dict with trace-toc.run field as a list
+
+        WHEN: the TOC is validated
+
+        THEN: it should correctly map the nested field to the `runs` field
+        """
+        mock_run_dict = {
+            "processes": [MagicMock(spec=ProcessEntry)],
+            "data": [MagicMock(spec=TOCDataTable)],
+            "info": MagicMock(spec=TOCRunInfo),
+            "number": 1,
+        }
+
+        data = {
+            "trace-toc": {"run": [mock_run_dict]},
+        }
+
+        toc = TOC.model_validate(data)
+
+        assert toc.runs[0].processes == mock_run_dict["processes"]
+        assert toc.runs[0].data == mock_run_dict["data"]
+        assert toc.runs[0].info == mock_run_dict["info"]
+        assert toc.runs[0].number == mock_run_dict["number"]

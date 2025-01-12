@@ -60,7 +60,8 @@ class TOCRun(BaseModel):
     data: list[TOCDataTable]
 
     @model_validator(mode="before")
-    def restructure_processes(cls, data: Any) -> dict:
+    @classmethod
+    def restructure_list_fields(cls, data: Any) -> dict:
         if not isinstance(data, dict):
             raise ValueError("TOC run must be a dictionary")
 
@@ -93,6 +94,7 @@ class TOC(BaseModel):
     runs: list[TOCRun]
 
     @model_validator(mode="before")
+    @classmethod
     def restructure_runs(cls, data: Any) -> dict:
         if not isinstance(data, dict):
             raise ValueError("TOC data must be a dictionary")
