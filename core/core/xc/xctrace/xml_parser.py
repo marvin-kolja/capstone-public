@@ -78,17 +78,22 @@ class XctraceXMLParser:
     def parse_sysmon_for_target(
         self,
         run: int,
-        target_process: Optional[ProcessEntry] = None,
+        target_process: ProcessEntry,
     ) -> list[Sysmon]:
         """
         Extracts the sysmon data for the target process from the given run.
 
         :param run: The run number to extract the sysmon data from. The first run is 1.
-        :param target_process: The target process to extract the sysmon data for. If None, it will use the target
-        process from the TOC, if available.
+        :param target_process: The target process to extract the sysmon data for.
         :return:
         """
-        raise NotImplementedError
+        table_number = self._get_table_number_for_schema(run, Schema.SYSMON_PROCESS)
+        xpath = table_number_xpath(run=run, table_number=table_number)
+        row_selector = f'process[starts-with(@fmt, "{target_process.name}") or ends-with(@fmt, "({target_process.pid})")]'
+        rows = self._get_rows(
+            self.__root, node_xpath_attrib=xpath, row_selector=row_selector
+        )
+        return self._extract_sysmon(rows)
 
     def parse_core_animation(self, run: int) -> list[CoreAnimation]:
         """
@@ -96,7 +101,12 @@ class XctraceXMLParser:
         :param run: The run number to extract the core animation data from. The first run is 1.
         :return: A list of CoreAnimation objects containing the extracted data.
         """
-        raise NotImplementedError
+        table_number = self._get_table_number_for_schema(
+            run, Schema.CORE_ANIMATION_FPS_ESTIMATE
+        )
+        xpath = table_number_xpath(run=run, table_number=table_number)
+        rows = self._get_rows(self.__root, node_xpath_attrib=xpath)
+        return self._extract_core_animation(rows)
 
     def parse_stdout_err(self, run: int) -> list[ProcessStdoutErr]:
         """
@@ -104,15 +114,49 @@ class XctraceXMLParser:
         :param run: The run number to extract the stdout and stderr data from. The first run is 1.
         :return: A list of ProcessStdoutErr objects containing the extracted data.
         """
-        raise NotImplementedError
+        table_number = self._get_table_number_for_schema(run, Schema.STDOUTERR_OUTPUT)
+        xpath = table_number_xpath(run=run, table_number=table_number)
+        rows = self._get_rows(self.__root, node_xpath_attrib=xpath)
+        return self._extract_stdout_err(rows)
 
-    def parse_multiple(self, run: int) -> dict[Schema, Any]:
+    def parse_multiple(
+        self,
+        run: int,
+        target_process: Optional[ProcessEntry] = None,
+    ) -> dict[Schema, Any]:
         """
         Extracts all data from the given run.
         :param run: The run number to extract the data from. The first run is 1.
+        :param target_process: The target process to extract the sysmon data for. Required if sysmon data is present in
+        the toc.
         :return: A dictionary containing the extracted data for each schema.
+        :raises ValueError: If the target process is not provided when extracting sysmon data.
         """
-        raise NotImplementedError
+        data = {
+            Schema.SYSMON_PROCESS: None,
+            Schema.STDOUTERR_OUTPUT: None,
+            Schema.CORE_ANIMATION_FPS_ESTIMATE: None,
+        }
+
+        toc_run = self.__toc.runs[run - 1]
+        tables = toc_run.data
+
+        schema_names_in_toc = [table.schema_name for table in tables]
+
+        if Schema.SYSMON_PROCESS in schema_names_in_toc:
+            if target_process is None:
+                raise ValueError(
+                    "Target process must be provided to extract sysmon data."
+                )
+            data[Schema.SYSMON_PROCESS] = self.parse_sysmon_for_target(
+                run, target_process
+            )
+        if Schema.STDOUTERR_OUTPUT in schema_names_in_toc:
+            data[Schema.STDOUTERR_OUTPUT] = self.parse_stdout_err(run)
+        if Schema.CORE_ANIMATION_FPS_ESTIMATE in schema_names_in_toc:
+            data[Schema.CORE_ANIMATION_FPS_ESTIMATE] = self.parse_core_animation(run)
+
+        return data
 
     __relevant_tag_xpaths = []
     """
@@ -198,6 +242,54 @@ class XctraceXMLParser:
                 return index + 1
 
         raise ValueError(f"No table number found for schema {schema}")
+
+    def _extract_sysmon(
+        self,
+        rows: list[ElementTree.Element],
+    ) -> list[Sysmon]:
+        """
+        Extracts the sysmon data from the given rows, matching the target app name or PID.
+
+        :param rows: The rows to extract the sysmon data from.
+        :return: A list of Sysmon objects containing the extracted data.
+        """
+        raise NotImplementedError
+
+    def _extract_core_animation(
+        self, rows: list[ElementTree.Element]
+    ) -> list[CoreAnimation]:
+        """
+        Extracts the core animation data from the given rows.
+        :param rows: The rows to extract the core animation data from.
+        :return: A list of CoreAnimation objects containing the extracted data.
+        """
+
+    def _extract_stdout_err(
+        self, rows: list[ElementTree.Element]
+    ) -> list[ProcessStdoutErr]:
+        """
+        Extracts the stdout and stderr data from the given rows.
+        :param rows: The rows to extract the stdout and stderr data from.
+        :return: A list of ProcessStdoutErr objects containing the extracted data.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_rows(
+        root: ElementTree.Element,
+        node_xpath_attrib: Optional[str] = None,
+        row_selector: Optional[str] = None,
+    ) -> list[ElementTree.Element]:
+        """
+        Get all rows from nodes where the xpath attribute matches the given xpath.
+
+        :param root: The root element to search for the nodes in.
+        :param node_xpath_attrib: The xpath to match the nodes with, if None all nodes will be matched.
+        :param row_selector: The selector to match the rows with (e.g. "1" to get the first row). Will be parsed to
+        "[<row_selector>]"_.
+        :return: A list of all rows from the matched nodes.
+        """
+        raise NotImplementedError
 
 
 def table_xpath(run: int, table_selector: str) -> str:

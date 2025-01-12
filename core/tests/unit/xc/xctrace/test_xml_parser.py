@@ -1,4 +1,6 @@
 import pathlib
+from itertools import chain, combinations
+from typing import Any
 from unittest.mock import patch, MagicMock, call, PropertyMock
 from xml.etree import ElementTree
 
@@ -58,13 +60,14 @@ class TestXctraceXMLParser:
         mock_path,
         mock_toc,
     ):
-        with patch.object(
-            XctraceXMLParser,
-            "_XctraceXMLParser__relevant_tag_xpaths",
-            new_callable=PropertyMock(return_value=["test"]),
-        ) as mock_relevant_tag_xpaths, patch.object(
-            XctraceXMLParser, "_cache_refs"
-        ) as mock_cache_refs:
+        with (
+            patch.object(
+                XctraceXMLParser,
+                "_XctraceXMLParser__relevant_tag_xpaths",
+                new_callable=PropertyMock(return_value=["test"]),
+            ) as mock_relevant_tag_xpaths,
+            patch.object(XctraceXMLParser, "_cache_refs") as mock_cache_refs,
+        ):
             parser = XctraceXMLParser(mock_path, mock_toc)
 
             assert parser._XctraceXMLParser__tree == mock_xml_element_tree
@@ -76,22 +79,182 @@ class TestXctraceXMLParser:
             assert parser._XctraceXMLParser__cache_map == {}
             mock_cache_refs.assert_called_once_with(mock_relevant_tag_xpaths)
 
-    @pytest.mark.xfail
-    def test_parse_sysmon_for_target(self, parser):
+    def test_parse_sysmon_for_target(self, parser, mock_xml_element_root):
+        """
+        GIVEN: A parser instance
+        AND: An XML element root.
+
+        WHEN: The parse_sysmon_for_target method is called with a run number and a process entry.
+
+        AND: The method should call _get_table_number_for_schema with the correct arguments.
+        THEN: The method should call _get_rows with the correct arguments.
+        AND: The method should call _extract_sysmon with the result of _get_rows.
+        """
         process_entry_mock = MagicMock(spec=ProcessEntry)
-        parser.parse_sysmon_for_target(1, process_entry_mock)
+        process_entry_mock.name = "any_name"
+        process_entry_mock.pid = 1
 
-    @pytest.mark.xfail
-    def test_parse_core_animation(self, parser):
-        parser.parse_core_animation(1)
+        with (
+            patch.object(parser, "_get_rows") as mock_get_rows,
+            patch.object(parser, "_extract_sysmon") as mock_extract_sysmon,
+            patch.object(
+                parser, "_get_table_number_for_schema", return_value=1
+            ) as mock_get_table_number_for_schema,
+        ):
+            mock_get_rows.return_value = MagicMock()
 
-    @pytest.mark.xfail
-    def test_parse_stdout_err(self, parser):
-        parser.parse_stdout_err(1)
+            parser.parse_sysmon_for_target(1, process_entry_mock)
 
-    @pytest.mark.xfail
-    def test_parse_multiple(self, parser):
-        parser.parse_multiple(1)
+            mock_get_rows.assert_called_once_with(
+                mock_xml_element_root,
+                node_xpath_attrib="//trace-toc[1]/run[1]/data[1]/table[1]",
+                row_selector='process[starts-with(@fmt, "any_name") or ends-with(@fmt, "(1)")]',
+            )
+            mock_extract_sysmon.assert_called_once_with(mock_get_rows.return_value)
+            mock_get_table_number_for_schema.assert_called_once_with(
+                1, Schema.SYSMON_PROCESS
+            )
+
+    def test_parse_core_animation(self, parser, mock_xml_element_root):
+        """
+        GIVEN: A parser instance
+        AND: An XML element root.
+
+        WHEN: The parse_core_animation method is called with a run number.
+
+        AND: The method should call _get_table_number_for_schema with the correct arguments.
+        THEN: The method should call _get_rows with the correct arguments.
+        AND: The method should call _extract_core_animation with the result of _get_rows.
+        """
+        with (
+            patch.object(
+                parser, "_get_table_number_for_schema", return_value=2
+            ) as mock_get_table_number_for_schema,
+            patch.object(parser, "_get_rows") as mock_get_rows,
+            patch.object(
+                parser, "_extract_core_animation"
+            ) as mock_extract_core_animation,
+        ):
+            mock_get_rows.return_value = MagicMock()
+
+            parser.parse_core_animation(1)
+
+            mock_get_rows.assert_called_once_with(
+                mock_xml_element_root,
+                node_xpath_attrib="//trace-toc[1]/run[1]/data[1]/table[2]",
+            )
+            mock_extract_core_animation.assert_called_once_with(
+                mock_get_rows.return_value
+            )
+            mock_get_table_number_for_schema.assert_called_once_with(
+                1, Schema.CORE_ANIMATION_FPS_ESTIMATE
+            )
+
+    def test_parse_stdout_err(self, parser, mock_xml_element_root):
+        """
+        GIVEN: A parser instance
+        AND: An XML element root.
+
+        WHEN: The parse_stdout_err method is called with a run number.
+
+        AND: The method should call _get_table_number_for_schema with the correct arguments.
+        THEN: The method should call _get_rows with the correct arguments.
+        AND: The method should call _extract_stdout_err with the result of _get_rows.
+        """
+        with (
+            patch.object(
+                parser, "_get_table_number_for_schema", return_value=3
+            ) as mock_get_table_number_for_schema,
+            patch.object(parser, "_get_rows") as mock_get_rows,
+            patch.object(parser, "_extract_stdout_err") as mock_extract_stdout_err,
+        ):
+            mock_get_rows.return_value = MagicMock()
+
+            parser.parse_stdout_err(1)
+
+            mock_get_rows.assert_called_once_with(
+                mock_xml_element_root,
+                node_xpath_attrib="//trace-toc[1]/run[1]/data[1]/table[3]",
+            )
+            mock_extract_stdout_err.assert_called_once_with(mock_get_rows.return_value)
+            mock_get_table_number_for_schema.assert_called_once_with(
+                1, Schema.STDOUTERR_OUTPUT
+            )
+
+    @staticmethod
+    def _generate_combinations(values: list[Any]):
+        return list(
+            chain.from_iterable(combinations(values, r) for r in range(len(values) + 1))
+        )
+
+    @pytest.mark.parametrize(
+        "schema_names_in_toc",
+        _generate_combinations(
+            ["sysmon-process", "stdouterr-output", "core-animation-fps-estimate"]
+        ),
+    )
+    def test_parse_multiple(self, parser, mock_toc, schema_names_in_toc):
+        """
+        GIVEN: A parser instance
+        AND: A TOC instance with a run that contains data tables with the given schema names.
+
+        WHEN: The parse_multiple method is called with the run number.
+
+        THEN: The method should call the correct parsing methods.
+        AND: The method should return a dictionary with the correct schema names as keys and values.
+        """
+        mock_toc.runs = [
+            MagicMock(
+                data=[
+                    MagicMock(schema_name=schema_name)
+                    for schema_name in schema_names_in_toc
+                ]
+            ),
+        ]
+
+        process_entry_mock = MagicMock(spec=ProcessEntry)
+
+        with (
+            patch.object(
+                parser, "parse_sysmon_for_target"
+            ) as mock_parse_sysmon_for_target,
+            patch.object(parser, "parse_stdout_err") as mock_parse_stdout_err,
+            patch.object(parser, "parse_core_animation") as mock_parse_core_animation,
+        ):
+            mock_parse_sysmon_for_target.return_value = MagicMock()
+            mock_parse_stdout_err.return_value = MagicMock()
+            mock_parse_core_animation.return_value = MagicMock()
+
+            data = parser.parse_multiple(1, process_entry_mock)
+
+            if Schema.SYSMON_PROCESS in schema_names_in_toc:
+                mock_parse_sysmon_for_target.assert_called_once_with(
+                    1, process_entry_mock
+                )
+                assert (
+                    data[Schema.SYSMON_PROCESS]
+                    == mock_parse_sysmon_for_target.return_value
+                )
+            else:
+                mock_parse_sysmon_for_target.assert_not_called()
+                assert data[Schema.SYSMON_PROCESS] is None
+            if Schema.STDOUTERR_OUTPUT in schema_names_in_toc:
+                mock_parse_stdout_err.assert_called_once_with(1)
+                assert (
+                    data[Schema.STDOUTERR_OUTPUT] == mock_parse_stdout_err.return_value
+                )
+            else:
+                mock_parse_stdout_err.assert_not_called()
+                assert data[Schema.STDOUTERR_OUTPUT] is None
+            if Schema.CORE_ANIMATION_FPS_ESTIMATE in schema_names_in_toc:
+                mock_parse_core_animation.assert_called_once_with(1)
+                assert (
+                    data[Schema.CORE_ANIMATION_FPS_ESTIMATE]
+                    == mock_parse_core_animation.return_value
+                )
+            else:
+                mock_parse_core_animation.assert_not_called()
+                assert data[Schema.CORE_ANIMATION_FPS_ESTIMATE] is None
 
     def test_cache_elements(self, parser):
         """
@@ -273,6 +436,21 @@ class TestXctraceXMLParser:
         with pytest.raises(IndexError):
             parser._get_table_number_for_schema(2, Schema.SYSMON_PROCESS)
 
+    @pytest.mark.xfail
+    def test_extract_sysmon(self, parser):
+        parser._extract_sysmon([])
+
+    @pytest.mark.xfail
+    def test_extract_core_animation(self, parser):
+        parser._extract_core_animation([])
+
+    @pytest.mark.xfail
+    def test_extract_stdout_err(self, parser):
+        parser._extract_stdout_err([])
+
+    @pytest.mark.xfail
+    def test_get_rows(self, parser):
+        parser._get_rows()
 
 class TestTableXpath:
     @pytest.mark.parametrize(
