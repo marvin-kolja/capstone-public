@@ -5,7 +5,13 @@ from xml.etree import ElementTree
 import pytest
 
 from core.xc.xctrace.toc import ProcessEntry, TOC
-from core.xc.xctrace.xml_parser import XctraceXMLParser
+from core.xc.xctrace.xml_parser import (
+    XctraceXMLParser,
+    table_xpath,
+    table_number_xpath,
+    table_schemas_xpath,
+    Schema,
+)
 
 
 @pytest.fixture
@@ -145,3 +151,66 @@ class TestXctraceXMLParser:
                 ],
                 any_order=True,
             )
+
+
+class TestTableXpath:
+    @pytest.mark.parametrize(
+        "run, selector, expected",
+        [
+            (1, "test", "//trace-toc[1]/run[1]/data[1]/table[test]"),
+            (2, "test2", "//trace-toc[1]/run[2]/data[1]/table[test2]"),
+            (10, "test3", "//trace-toc[1]/run[10]/data[1]/table[test3]"),
+        ],
+    )
+    def test_table_xpath(self, run, selector, expected):
+        """
+        GIVEN: A run number and a table selector.
+
+        WHEN: The table_xpath method is called with the run number and table selector.
+
+        THEN: The method should return the correct xpath.
+        """
+        assert table_xpath(run=run, table_selector=selector) == expected
+
+    @pytest.mark.parametrize(
+        "run, table_number, expected",
+        [
+            (1, 1, "//trace-toc[1]/run[1]/data[1]/table[1]"),
+            (2, 2, "//trace-toc[1]/run[2]/data[1]/table[2]"),
+            (10, 3, "//trace-toc[1]/run[10]/data[1]/table[3]"),
+        ],
+    )
+    def test_table_number_xpath(self, run, table_number, expected):
+        """
+        GIVEN: A run number and a table number.
+
+        WHEN: The table_number_xpath method is called with the run number and table number.
+
+        THEN: The method should return the correct xpath.
+        """
+        assert table_number_xpath(run=run, table_number=table_number) == expected
+
+    @pytest.mark.parametrize(
+        "run, schemas, expected",
+        [
+            (
+                1,
+                [Schema.SYSMON_PROCESS, Schema.STDOUTERR_OUTPUT],
+                '//trace-toc[1]/run[1]/data[1]/table[@schema="sysmon-process" or @schema="stdouterr-output"]',
+            ),
+            (
+                2,
+                [Schema.CORE_ANIMATION_FPS_ESTIMATE],
+                '//trace-toc[1]/run[2]/data[1]/table[@schema="core-animation-fps-estimate"]',
+            ),
+        ],
+    )
+    def test_table_schemas_xpath(self, run, schemas, expected):
+        """
+        GIVEN: A run number and a list of schema names.
+
+        WHEN: The table_schemas_xpath method is called with the run number and list of schema names.
+
+        THEN: The method should return the correct xpath.
+        """
+        assert table_schemas_xpath(run=run, schemas=schemas) == expected
