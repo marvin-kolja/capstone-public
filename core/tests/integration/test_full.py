@@ -32,8 +32,11 @@ from core.test_session.plan import (
 from core.test_session.session import Session
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.xc.commands.xctrace_command import XctraceCommand
+from core.xc.xcresult.xcresulttool import XcresultTool
 from core.xc.xctest import Xctest
 from core.xc.xc_project import XcProject
+from core.xc.xctrace.xctrace_interface import Xctrace
+from core.xc.xctrace.xml_parser import Schema
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -91,6 +94,8 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
         XcodebuildCommand.parse = xcodebuild_command_parse
         XctraceCommand.parse = xctrace_command_parse
         Xctest._temporary_file_path = xctest__temporary_file_path
+    else:
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -318,8 +323,8 @@ async def test_enabled_tests(
     assert xc_test_case in enabled_tests
 
 
-@pytest.fixture
-def test_plan(build_app_for_testing_artefacts, xc_test_case):
+@pytest.fixture(scope="module")
+def session_test_plan(build_app_for_testing_artefacts, xc_test_case):
     return SessionTestPlan(
         name="Test Plan",
         reinstall_app=False,
@@ -347,21 +352,34 @@ def test_plan(build_app_for_testing_artefacts, xc_test_case):
     )
 
 
-@pytest.mark.requires_sudo
-@pytest.mark.real_device
-async def test_execute_tests(ios_device, test_output_dir, test_plan):
-    execution_plan = ExecutionPlan(test_plan=test_plan)
-    execution_plan.plan()
+@pytest.fixture(scope="module")
+def execution_plan(session_test_plan):
+    plan = ExecutionPlan(test_plan=session_test_plan)
+    plan.plan()
+    return plan
 
-    session_id = uuid.uuid4()
-    test_session = Session(
+
+@pytest.fixture(scope="module")
+def session_id():
+    return uuid.uuid4()
+
+
+@pytest.fixture(scope="module")
+def session(test_output_dir, ios_device, session_id, execution_plan):
+    return Session(
         session_id=session_id,
         output_dir=test_output_dir,
         device=ios_device,
         execution_plan=execution_plan,
     )
 
-    await test_session.run()
+
+@pytest.mark.requires_sudo
+@pytest.mark.real_device
+async def test_execute_tests(
+    ios_device, session, execution_plan, test_output_dir, session_id
+):
+    await session.run()
 
     assert pathlib.Path(test_output_dir).exists()
 
@@ -376,14 +394,50 @@ async def test_execute_tests(ios_device, test_output_dir, test_plan):
             session_id=session_id, execution_step=execution_plan.execution_steps[0]
         )
 
+    for execution_step in execution_plan.execution_steps:
+        trace_path = pathlib.Path(
+            test_output_dir,
+            f"{hash_session_execution_step(session_id, execution_step)}.trace",
+        )
+        toc_path = pathlib.Path(
+            test_output_dir,
+            f"{hash_session_execution_step(session_id, execution_step)}_toc.xml",
+        )
+        data_path = pathlib.Path(
+            test_output_dir,
+            f"{hash_session_execution_step(session_id, execution_step)}_data.xml",
+        )
+        await Xctrace.export_toc(trace_path.as_posix(), toc_path.as_posix())
+        await Xctrace.export_data(
+            trace_path.as_posix(),
+            data_path.as_posix(),
+            run=1,
+            schemas=[Schema.SYSMON_PROCESS, Schema.CORE_ANIMATION_FPS_ESTIMATE],
+        )
 
-@pytest.mark.skip("Requires trace file parsing")
-@pytest.mark.asyncio
-async def test_parse_trace_file(test_output_dir):
-    pass
+        assert trace_path.exists()
+        assert toc_path.exists()
 
+        toc = Xctrace.parse_toc_xml(toc_path.as_posix())
+        assert toc is not None
+        assert toc.runs is not None
+        assert len(toc.runs) == 1
 
-@pytest.mark.skip("Requires xcresult file parsing")
-@pytest.mark.asyncio
-async def test_parse_xcresult_file(test_output_dir):
-    pass
+        data = Xctrace.parse_data_xml(data_path.as_posix(), toc)
+        assert data is not None
+        assert len(data) == 1
+        assert data[0].get("sysmon-process") is not None
+        assert data[0].get("core-animation-fps-estimate") is not None
+        assert data[0].get("stdouterr-output") is None
+
+        xcresult_path = pathlib.Path(
+            test_output_dir,
+            f"{hash_session_execution_step(session_id, execution_step)}.xcresult",
+        )
+        xcresult_tool = XcresultTool(xcresult_path.as_posix())
+
+        tests_result = await xcresult_tool.get_tests()
+        assert tests_result is not None
+
+        test_summary = await xcresult_tool.get_test_summary()
+        assert test_summary is not None
