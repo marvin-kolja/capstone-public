@@ -42,13 +42,34 @@ class XctraceXMLParser:
     Parses data from an XML file containing data that was exported from a trace file using xctrace.
 
     To parse TOC data, please take a look at :mod:`core.xc.xctrace.toc`.
+
+    **About Cache Map:**
+    Xctrace exports data in a tree structure where elements can reference other elements using a `ref` attribute,
+    while the `id` attribute uniquely identifies the referenced element. This mechanism helps reduce redundancy
+    in the data. For example, a CPU usage percentage element may have a usage value of `0%`. If another element
+    has the same value, instead of duplicating the value, it references the first element using its `ref`.
+
+    To avoid repeatedly traversing the tree to resolve these references, we cache all elements with an `id`
+    attribute in a dictionary. This allows for `O(1)` access to elements using their `id`.
+
+    Complexity Analysis:
+        - Cache Access: `O(1)`, as lookups in the dictionary are constant-time operations.
+        - Cache Construction: `O(m)`, where `m` is the number of elements with an `id` attribute. Typically,
+          `m << n`, where `n` is the total number of elements in the tree.
+        - Space Complexity: `O(m)`, as the cache stores references to `m` elements with `id` attributes.
+
+    Attributes:
+        __tree: The ElementTree object containing the parsed XML data.
+        __toc: The TOC object containing the passed TOC data.
+        __cache_map: A dictionary mapping the schema to the corresponding XML element.
+        __root: The root element of the XML tree.
     """
 
     def __init__(self, path: Path, toc: TOC) -> None:
         self.__tree = ElementTree.parse(path.absolute().as_posix())
+        self.__root = self.__tree.getroot()
         self.__toc = toc
         self.__cache_map: dict[str, ElementTree.Element] = {}
-        self.__root = self.__tree.getroot()
 
     def parse_sysmon_for_target(
         self,
