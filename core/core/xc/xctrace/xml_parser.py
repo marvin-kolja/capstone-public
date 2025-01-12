@@ -150,3 +150,47 @@ class XctraceXMLParser:
                 logger.warning(
                     f"Selected element for caching that does not have an `id` attribute."
                 )
+
+
+def table_xpath(run: int, table_selector: str) -> str:
+    """
+    When exporting data from the trace file the data is stored in nodes. In order to retrieve the correct node we
+    need to provide the correct xpath. This method returns the xpath for a specific run and table number.
+
+    The xpath is in the following format: ``//trace-toc[1]/run[1]/data[1]/table[<table_selector>]``.
+    Where the numbers for trace-toc, and data seem to be constant. The run number defines the run to be parsed and
+    the table selector which data to extract. The exported data uses a number to identify the table. When exporting
+    one can use the schema name to identify the table.
+
+    :param run: The number of the run in the trace file. The first run is 1.
+    :param table_selector: The selector to identify the table to extract data from.
+
+    :return: The xpath for the data node
+    """
+    return f"//trace-toc[1]/run[{run}]/data[1]/table[{table_selector}]"
+
+
+def table_number_xpath(run: int, table_number: int) -> str:
+    """
+    Convenience method for the `table_xpath` method to select a specific table number.
+
+    :param run:
+    :param table_number: The table number to select the data for.
+    """
+    return table_xpath(run=run, table_selector=str(table_number))
+
+
+def table_schemas_xpath(run: int, schemas: list[Schema]) -> str:
+    """
+    Convenience method for the `table_xpath` method to select multiple schemas.
+
+    :param run:
+    :param schemas: The schema names to select the data for.
+    """
+
+    if len(schemas) == 0:
+        raise ValueError("At least one schema name must be provided")
+
+    table_selector = f"{' or '.join([f'@schema="{schema}"' for schema in schemas])}"
+
+    return table_xpath(run=run, table_selector=table_selector)
