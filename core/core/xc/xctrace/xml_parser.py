@@ -289,7 +289,11 @@ class XctraceXMLParser:
         "[<row_selector>]"_.
         :return: A list of all rows from the matched nodes.
         """
-        raise NotImplementedError
+        row_selector_parsed = f"[{row_selector}]" if row_selector is not None else ""
+        node_selector_parsed = (
+            f'[@xpath="{node_xpath_attrib}"]' if node_xpath_attrib is not None else ""
+        )
+        return root.findall(f".//node{node_selector_parsed}/row{row_selector_parsed}")
 
 
 def table_xpath(run: int, table_selector: str) -> str:

@@ -448,9 +448,56 @@ class TestXctraceXMLParser:
     def test_extract_stdout_err(self, parser):
         parser._extract_stdout_err([])
 
-    @pytest.mark.xfail
+    @pytest.mark.parametrize(
+        "row_selector, expected",
+        [
+            ('@some="attr"', './/node[@xpath="test_xpath"]/row[@some="attr"]'),
+            (None, './/node[@xpath="test_xpath"]/row'),
+        ],
+    )
+    def test_get_rows_find_all_call(self, parser, row_selector, expected):
+        """
+        GIVEN: A parser instance
+        AND: An XML element root.
+        AND: An xpath identifying the node to search for.
+
+        WHEN: The get_rows method is called with the XML element root and the xpath.
+
+        THEN: The method should call the findall method with the xpath.
+        """
+        element_mock = MagicMock(spec=ElementTree.Element)
+        xpath = "test_xpath"
+
+        parser._get_rows(element_mock, xpath, row_selector=row_selector)
+        element_mock.findall.assert_called_once_with(expected)
+
     def test_get_rows(self, parser):
-        parser._get_rows()
+        """
+        GIVEN: A parser instance
+        AND: An XML element root.
+        AND: A XML element (node) in the root element, containing two rows.
+        AND: An xpath identifying the node to search for.
+
+        WHEN: The get_rows method is called with the XML element root and the xpath.
+
+        THEN: The method should return the correct rows.
+        """
+        element = ElementTree.Element("root")
+        xpath = "test_xpath"
+        node_element = ElementTree.SubElement(element, "node", attrib={"xpath": xpath})
+
+        row_1 = ElementTree.SubElement(node_element, "row")
+        row_2 = ElementTree.SubElement(node_element, "row", attrib={"some": "attr"})
+
+        rows = parser._get_rows(element, xpath)
+        assert rows == [row_1, row_2]
+
+        rows = parser._get_rows(element, xpath, row_selector='@some="attr"')
+        assert rows == [row_2]
+
+        rows = parser._get_rows(element, "non_existent_xpath")
+        assert rows == []
+
 
 class TestTableXpath:
     @pytest.mark.parametrize(
