@@ -2,7 +2,7 @@ import pathlib
 from typing import Optional, Any
 
 import xmltodict
-from pydantic import BaseModel, Field, AliasPath, AliasChoices, model_validator
+from pydantic import BaseModel, Field, AliasChoices, model_validator
 
 
 class ProcessEntry(BaseModel):
@@ -26,21 +26,21 @@ class TOCRunInfoTarget(BaseModel):
 
 
 class TOCRunInfoSummary(BaseModel):
-    start_date: str = Field(validation_alias=AliasChoices("start_date", "@start-date"))
-    end_date: str = Field(validation_alias=AliasChoices("end_date", "@end-date"))
-    duration: float = Field(validation_alias=AliasChoices("duration", "@duration"))
-    end_reason: str = Field(validation_alias=AliasChoices("end_reason", "@end-reason"))
+    start_date: str = Field(validation_alias=AliasChoices("start_date", "start-date"))
+    end_date: str = Field(validation_alias=AliasChoices("end_date", "end-date"))
+    duration: float = Field(validation_alias=AliasChoices("duration", "duration"))
+    end_reason: str = Field(validation_alias=AliasChoices("end_reason", "end-reason"))
     instruments_version: str = Field(
-        validation_alias=AliasChoices("instruments_version", "@instruments-version")
+        validation_alias=AliasChoices("instruments_version", "instruments-version")
     )
     template_name: str = Field(
-        validation_alias=AliasChoices("template_name", "@template-name")
+        validation_alias=AliasChoices("template_name", "template-name")
     )
     recording_mode: str = Field(
-        validation_alias=AliasChoices("recording_mode", "@recording-mode")
+        validation_alias=AliasChoices("recording_mode", "recording-mode")
     )
     time_limit: Optional[str] = Field(
-        validation_alias=AliasChoices("time_limit", "@time-limit"), default=None
+        validation_alias=AliasChoices("time_limit", "time-limit"), default=None
     )
 
 

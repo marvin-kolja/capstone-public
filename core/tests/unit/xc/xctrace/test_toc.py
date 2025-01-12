@@ -26,7 +26,16 @@ def fake_trace_xml():
                 <target>
                     <process name="name" pid="1" return-exit-status="0" termination-reason="reason" path="path"/>
                 </target>
-                <summary start-date="start" end-date="end" duration="1.0" end-reason="reason" instruments-version="version" template-name="template" recording-mode="mode" time-limit="limit"/>
+                <summary>
+                    <start-date>start</start-date>
+                    <end-date>end</end-date>
+                    <duration>1.0</duration>
+                    <end-reason>reason</end-reason>
+                    <instruments-version>version</instruments-version>
+                    <template-name>template</template-name>
+                    <recording-mode>mode</recording-mode>
+                    <time-limit>limit</time-limit>
+                </summary>
             </info>
             <processes>
                 <process name="name" pid="1" return-exit-status="0" termination-reason="reason" path="path"/>
