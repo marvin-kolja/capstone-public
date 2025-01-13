@@ -404,7 +404,7 @@ extras = ["arrow", "cloudpickle", "cryptography", "lz4", "numpy", "ruamel.yaml"]
 [[package]]
 name = "core"
 version = "0.1.0"
-description = ""
+description = "Core implementation of the project"
 optional = false
 python-versions = "^3.13"
 files = []
@@ -2054,13 +2054,13 @@ files = [
 
 [[package]]
 name = "pymobiledevice3"
-version = "4.18.2"
+version = "4.18.3"
 description = "Pure python3 implementation for working with iDevices (iPhone, etc...)"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pymobiledevice3-4.18.2-py3-none-any.whl", hash = "sha256:02499514f305e3464e2e4aa8f407030b90c44ec3a346b7d816d07c910c18a639"},
-    {file = "pymobiledevice3-4.18.2.tar.gz", hash = "sha256:138b906735ef1cbe196852661a14aee8e1f13152f4d09fbf534b517c75d9ed05"},
+    {file = "pymobiledevice3-4.18.3-py3-none-any.whl", hash = "sha256:9c5021a9baff014ecc41477a92ad41b70585490a1374d6d0f791d80b3dac350e"},
+    {file = "pymobiledevice3-4.18.3.tar.gz", hash = "sha256:d38ba6d6fab483c1f882ecc20e3c22bbb507cad4a4508dae2373126432872afc"},
 ]
 
 [package.dependencies]
@@ -3223,17 +3223,17 @@ files = [
 
 [[package]]
 name = "xonsh"
-version = "0.19.0"
+version = "0.19.1"
 description = "Python-powered shell. Full-featured and cross-platform."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "xonsh-0.19.0-py310-none-any.whl", hash = "sha256:5dbfd992bafc7a6c7d058d3eb5d659c18654ac587c0cec1c2ce70d9b479d11ec"},
-    {file = "xonsh-0.19.0-py311-none-any.whl", hash = "sha256:53304e2b29fef5792280292f064377cf978d1479ffb119d9cfe0cd908714c437"},
-    {file = "xonsh-0.19.0-py312-none-any.whl", hash = "sha256:8d56613e08d1bba04c2f3079a47772c003f3bc933c977ab9f4d96f0ee09083f0"},
-    {file = "xonsh-0.19.0-py313-none-any.whl", hash = "sha256:7ba38ad9e662ce12099718a8a7cd5f3a352629e3cc4aa553e90b6501509270bc"},
-    {file = "xonsh-0.19.0-py39-none-any.whl", hash = "sha256:f0a628316006198809bdd5f5923398a06b8c040addf32bbe8de75f03bbb5162d"},
-    {file = "xonsh-0.19.0.tar.gz", hash = "sha256:e90cd1a5d7f3ad576c9572b161cb37a1c27872fbb1f5707566bb4a38c6c897af"},
+    {file = "xonsh-0.19.1-py310-none-any.whl", hash = "sha256:83eb6610ed3535f8542abd80af9554fb7e2805b0b3f96e445f98d4b5cf1f7046"},
+    {file = "xonsh-0.19.1-py311-none-any.whl", hash = "sha256:c176e515b0260ab803963d1f0924f1e32f1064aa6fd5d791aa0cf6cda3a924ae"},
+    {file = "xonsh-0.19.1-py312-none-any.whl", hash = "sha256:fe1266c86b117aced3bdc4d5972420bda715864435d0bd3722d63451e8001036"},
+    {file = "xonsh-0.19.1-py313-none-any.whl", hash = "sha256:3f158b6fc0bba954e0b989004d4261bafc4bd94c68c2abd75b825da23e5a869c"},
+    {file = "xonsh-0.19.1-py39-none-any.whl", hash = "sha256:a900a6eb87d881a7ef90b1ac8522ba3699582f0bcb1e9abd863d32f6d63faf04"},
+    {file = "xonsh-0.19.1.tar.gz", hash = "sha256:5d3de649c909f6d14bc69232219bcbdb8152c830e91ddf17ad169c672397fb97"},
 ]
 
 [package.extras]
