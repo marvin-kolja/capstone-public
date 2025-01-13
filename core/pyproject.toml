@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Marvin Willms <marvin.willms@code.berlin>"]
 readme = "README.md"
+packages = [{include = "core"}]
 
 [tool.poetry.dependencies]
 python = "^3.13"
