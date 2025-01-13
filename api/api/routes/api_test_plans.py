@@ -20,7 +20,7 @@ async def create_test_plan():
 
 
 @router.get("/{test_plan_id}")
-async def read_test_plan(test_plan_id: int):
+async def read_test_plan(test_plan_id: str):
     """
     Get a test plan.
     """
@@ -28,7 +28,7 @@ async def read_test_plan(test_plan_id: int):
 
 
 @router.patch("/{test_plan_id}")
-async def update_test_plan(test_plan_id: int):
+async def update_test_plan(test_plan_id: str):
     """
     Update a test plan.
     """
@@ -36,7 +36,7 @@ async def update_test_plan(test_plan_id: int):
 
 
 @router.delete("/{test_plan_id}")
-async def delete_test_plan(test_plan_id: int):
+async def delete_test_plan(test_plan_id: str):
     """
     Delete a test plan.
     """

@@ -20,7 +20,7 @@ async def create_execution_plan():
 
 
 @router.get("/{execution_plan_id}")
-async def read_execution_plan(execution_plan_id: int):
+async def read_execution_plan(execution_plan_id: str):
     """
     Get the details of an execution plan.
     """

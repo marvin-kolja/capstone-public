@@ -20,7 +20,7 @@ async def add_project():
 
 
 @router.get("/{project_id}")
-async def read_project(project_id: int):
+async def read_project(project_id: str):
     """
     Get the details of a project.
     """
@@ -28,7 +28,7 @@ async def read_project(project_id: int):
 
 
 @router.post("/{project_id}/refresh")
-async def refresh_project(project_id: int):
+async def refresh_project(project_id: str):
     """
     Refreshes the data of a project.
     """
@@ -36,7 +36,7 @@ async def refresh_project(project_id: int):
 
 
 @router.get("/{project_id}/builds")
-async def list_builds(project_id: int):
+async def list_builds(project_id: str):
     """
     List builds that belong to a project.
     """
@@ -44,7 +44,7 @@ async def list_builds(project_id: int):
 
 
 @router.post("/{project_id}/builds")
-async def start_build(project_id: int):
+async def start_build(project_id: str):
     """
     Start a new build for a project.
     """
@@ -52,14 +52,14 @@ async def start_build(project_id: int):
 
 
 @router.get("/{project_id}/builds/{build_id}")
-async def read_build(project_id: int, build_id: int):
+async def read_build(project_id: str, build_id: str):
     """
     Get the details of a build.
     """
 
 
 @router.get("/{project_id}/builds/{build_id}/update-stream")
-async def stream_build_updates(project_id: int, build_id: int):
+async def stream_build_updates(project_id: str, build_id: str):
     """
     Stream build status updates.
     """

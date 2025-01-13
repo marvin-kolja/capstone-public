@@ -20,7 +20,7 @@ async def create_test_session():
 
 
 @router.get("/{test_session_id}")
-async def read_test_session(test_session_id: int):
+async def read_test_session(test_session_id: str):
     """
     Get the details of a test session.
     """
@@ -28,7 +28,7 @@ async def read_test_session(test_session_id: int):
 
 
 @router.post("/{test_session_id}/start")
-async def start_test_session(test_session_id: int):
+async def start_test_session(test_session_id: str):
     """
     Starts running a test session.
     """
@@ -36,7 +36,7 @@ async def start_test_session(test_session_id: int):
 
 
 @router.post("/{test_session_id}/cancel")
-async def cancel_test_session(test_session_id: int):
+async def cancel_test_session(test_session_id: str):
     """
     Cancels a running test session.
     """
@@ -44,7 +44,7 @@ async def cancel_test_session(test_session_id: int):
 
 
 @router.get("/{test_session_id}/update-stream")
-async def stream_test_session_updates(test_session_id: int):
+async def stream_test_session_updates(test_session_id: str):
     """
     Stream test session updates.
     """
@@ -52,7 +52,7 @@ async def stream_test_session_updates(test_session_id: int):
 
 
 @router.get("/{test_session_id}/results")
-async def list_test_session_results(test_session_id: int):
+async def list_test_session_results(test_session_id: str):
     """
     Get the results of a test session.
     """
@@ -60,7 +60,7 @@ async def list_test_session_results(test_session_id: int):
 
 
 @router.post("/{test_session_id}/results/export")
-async def export_test_session_results(test_session_id: int):
+async def export_test_session_results(test_session_id: str):
     """
     Start exporting the results of a test session.
     """
