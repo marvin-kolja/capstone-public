@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "core"
 version = "0.1.0"
-description = ""
+description = "Core implementation of the project"
 authors = ["Marvin Willms <marvin.willms@code.berlin>"]
 readme = "README.md"
 packages = [{include = "core"}]
