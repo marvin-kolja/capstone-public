@@ -2,6 +2,4 @@
 
 BASEDIR=$(dirname "$0")
 
-cd $BASEDIR/../
-
-poetry run python scripts/xcresult_model_generator
+python scripts/xcresult_model_generator

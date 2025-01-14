@@ -40,4 +40,4 @@ if [ ${#TEST_DIRS[@]} -eq 0 ]; then
     TEST_DIRS+=("tests/unit" "tests/integration")
 fi
 
-poetry run coverage run -m pytest ${TEST_DIRS[@]} --log-level=DEBUG ${OPTIONS[@]} && poetry run coverage report -m
+coverage run -m pytest ${TEST_DIRS[@]} --log-level=DEBUG ${OPTIONS[@]} && poetry run coverage report -m
