@@ -4,10 +4,14 @@ import pytest
 from packaging.version import Version
 from pymobiledevice3 import exceptions as pmd3_exceptions
 from pymobiledevice3.exceptions import DeviceHasPasscodeSetError
+from pymobiledevice3.lockdown import UsbmuxLockdownClient
+from pymobiledevice3.remote.remote_service_discovery import (
+    RemoteServiceDiscoveryService,
+)
 from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterService
 
 from core.codec.socket_json_codec import SuccessResponse
-from core.device.i_device import IDevice
+from core.device.i_device import IDevice, IDeviceStatus
 from core.exceptions.i_device import (
     PairingError,
     DeveloperModeNotEnabled,
@@ -734,3 +738,114 @@ class TestIDeviceDVT:
         else:
             # If the device does not require RSD, the check should pass at this point.
             i_device_mocked_lockdown.check_dvt_ready()
+
+
+class TestIDeviceProperties:
+    def test_udid_property(self):
+        """
+        GIVEN: a lockdown client with an udid
+        AND: an IDevice instance with the lockdown client
+
+        WHEN: udid is called
+
+        THEN: the udid of the lockdown client should be returned
+        """
+        udid = "1234567890"
+        lockdown_service = MagicMock(spec=UsbmuxLockdownClient, udid=udid)
+        i_device = IDevice(lockdown_service)
+        assert i_device.udid == udid
+
+    def test_udid_property_when_rsd(self):
+        """
+        GIVEN: a lockdown client with an udid
+        AND: an IDevice instance with the lockdown client
+        AND: an RSD service with a different udid assigned to the IDevice instance
+
+        WHEN: udid is called
+
+        THEN: the udid of the RSD service should be returned
+        """
+        udid = "1234567890"
+        udid2 = "0987654321"
+        lockdown_service = MagicMock(spec=UsbmuxLockdownClient, udid=udid)
+        i_device = IDevice(lockdown_service)
+        i_device._rsd = MagicMock(spec=RemoteServiceDiscoveryService, udid=udid2)
+        assert i_device.udid == udid2
+
+    @pytest.mark.parametrize(
+        "paired,product_version,developer_mode_enabled,ddi_mounted,rsd_connected",
+        [
+            (False, "15.0", None, False, None),
+            (True, "15.0", None, False, None),
+            (True, "15.0", None, False, None),
+            (False, "16.0", False, False, None),
+            (True, "16.0", False, False, None),
+            (True, "16.0", True, False, None),
+            (True, "16.0", True, True, None),
+            (False, "17.0", False, False, False),
+            (True, "17.0", True, False, False),
+            (True, "17.0", True, True, False),
+            (True, "17.0", True, True, True),
+        ],
+    )
+    def test_status_property(
+        self,
+        i_device_mocked_lockdown,
+        patched_i_device_mounter,
+        paired,
+        product_version,
+        developer_mode_enabled,
+        ddi_mounted,
+        rsd_connected,
+    ):
+        """
+        GIVEN: a lockdown client with a certain state
+
+        WHEN: status is called
+
+        THEN: the correct status of the device should be returned
+        """
+        patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
+        if rsd_connected:
+            i_device_mocked_lockdown._rsd = MagicMock(
+                spec=RemoteServiceDiscoveryService
+            )
+
+        result = i_device_mocked_lockdown.status
+
+        assert result == IDeviceStatus(
+            paired=paired,
+            ddi_mounted=ddi_mounted,
+            developer_mode_enabled=developer_mode_enabled,
+            tunnel_connected=rsd_connected,
+        )
+
+    def test_info_property(self):
+        """
+        GIVEN: a lockdown client with a short info
+
+        WHEN: info is called
+
+        THEN: the parsed info of the lockdown client should be returned
+        """
+        short_info = {
+            "BuildVersion": "22B91",
+            "ConnectionType": "USB",
+            "DeviceClass": "iPhone",
+            "DeviceName": "iPhone",
+            "Identifier": "00000000-0000000000000000",
+            "ProductType": "iPhone14,4",
+            "ProductVersion": "18.1.1",
+            "UniqueDeviceID": "00000000-0000000000000000",
+        }  # Real data from an iPhone
+
+        lockdown_service = MagicMock(spec=UsbmuxLockdownClient, short_info=short_info)
+        i_device = IDevice(lockdown_service)
+
+        info = i_device.info
+
+        assert info.build_version == short_info["BuildVersion"]
+        assert info.device_class == short_info["DeviceClass"]
+        assert info.device_name == short_info["DeviceName"]
+        assert info.product_version == short_info["ProductVersion"]
+        assert info.product_type == short_info["ProductType"]

@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Optional
 
 from packaging.version import Version
+from pydantic import BaseModel, Field, AliasChoices
 from pymobiledevice3.lockdown import UsbmuxLockdownClient, LockdownClient
 from pymobiledevice3.lockdown_service_provider import LockdownServiceProvider
 from pymobiledevice3.remote.remote_service_discovery import (
@@ -22,6 +23,29 @@ from core.exceptions import i_device as device_exceptions
 from core.tunnel.client import get_tunnel_client
 
 logger = logging.getLogger(__name__)
+
+
+class IDeviceStatus(BaseModel):
+    paired: bool
+    developer_mode_enabled: Optional[bool]
+    ddi_mounted: bool
+    tunnel_connected: Optional[bool]
+
+
+class IDeviceInfo(BaseModel):
+    device_class: str = Field(
+        validation_alias=AliasChoices("DeviceClass", "device_class")
+    )
+    device_name: str = Field(validation_alias=AliasChoices("DeviceName", "device_name"))
+    build_version: str = Field(
+        validation_alias=AliasChoices("BuildVersion", "build_version")
+    )
+    product_version: str = Field(
+        validation_alias=AliasChoices("ProductVersion", "product_version")
+    )
+    product_type: str = Field(
+        validation_alias=AliasChoices("ProductType", "product_type")
+    )
 
 
 class IDevice:
@@ -354,3 +378,73 @@ class IDevice:
             raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.DdiNotMounted
         if self.requires_tunnel_for_developer_tools and self.rsd is None:
             raise device_exceptions.DeviceNotReadyForDvt() from device_exceptions.RsdNotConnected
+
+    @property
+    def udid(self) -> str:
+        """
+        Get the UDID of the device.
+        :return: str
+        """
+        return self.lockdown_service.udid
+
+    @property
+    def info(self) -> IDeviceInfo:
+        """
+        Get the device information.
+
+        :return: A `IDeviceInfo` object.
+        """
+        return IDeviceInfo.model_validate(self.lockdown_client.short_info)
+
+    @property
+    def status(self) -> IDeviceStatus:
+        """
+        Get the various statuses of the device.
+
+        - `paired`: If the device is paired.
+        - `developer_mode_enabled`: If developer mode is enabled. None if the device does not require developer mode.
+        - `ddi_mounted`: If the DDI is mounted.
+        - `tunnel_connected`: If the tunnel is connected. None if the device does not require a tunnel.
+
+        :return: A `IDeviceStatus` object.
+        """
+        paired = False
+        developer_mode_enabled = (
+            False if self.requires_developer_mode else None
+        )  # If not required it should be None
+        ddi_mounted = False
+        tunnel_connected = (
+            False if self.requires_tunnel_for_developer_tools else None
+        )  # If not required it should be None
+
+        def build_status():
+            return IDeviceStatus(
+                paired=paired,
+                developer_mode_enabled=developer_mode_enabled,
+                ddi_mounted=ddi_mounted,
+                tunnel_connected=tunnel_connected,
+            )
+
+        if not self.paired:
+            return build_status()
+
+        paired = True
+
+        if self.requires_developer_mode:
+            if not self.developer_mode_enabled:
+                return build_status()
+
+            developer_mode_enabled = True
+
+        if not self.ddi_mounted:
+            return build_status()
+
+        ddi_mounted = True
+
+        if self.requires_tunnel_for_developer_tools:
+            if not self.rsd:
+                return build_status()
+
+            tunnel_connected = True
+
+        return build_status()
