@@ -1,5 +1,6 @@
 from typing import Generator, Annotated
 
+from core.device.i_device_manager import IDeviceManager
 from fastapi import Depends
 from sqlmodel import Session
 
@@ -12,3 +13,12 @@ def get_db() -> Generator[Session, None, None]:
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
+
+device_manager = IDeviceManager()
+
+
+def get_device_manager() -> IDeviceManager:
+    return device_manager
+
+
+DeviceManagerDep = Annotated[IDeviceManager, Depends(get_device_manager)]
