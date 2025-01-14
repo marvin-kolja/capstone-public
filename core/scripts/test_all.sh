@@ -4,7 +4,6 @@ set -e
 set -x
 
 # Get positional args
-
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -v|--verbose) verbose=1; shift ;;
@@ -16,10 +15,6 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
-
-BASEDIR=$(dirname "$0")
-
-cd $BASEDIR/../
 
 OPTIONS=()
 
