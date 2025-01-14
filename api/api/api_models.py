@@ -2,9 +2,12 @@ from typing import Optional
 
 from core.device.i_device import IDeviceStatus
 
-from api.db_models import Device
+from api.db_models import DeviceBase
 
 
-class DeviceResponse(Device):
+class DeviceWithStatus(DeviceBase):
+    id: str
+    udid: str
+
     connected: bool = False
     status: Optional[IDeviceStatus] = None

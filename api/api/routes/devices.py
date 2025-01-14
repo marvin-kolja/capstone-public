@@ -1,13 +1,13 @@
 from fastapi import APIRouter
 
-from api.api_models import DeviceResponse
+from api.api_models import DeviceWithStatus
 from api.depends import SessionDep
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 
 
 @router.get("/")
-async def list_devices(*, db_session: SessionDep) -> list[DeviceResponse]:
+async def list_devices(*, db_session: SessionDep) -> list[DeviceWithStatus]:
     """
     List all devices.
     """
@@ -15,7 +15,7 @@ async def list_devices(*, db_session: SessionDep) -> list[DeviceResponse]:
 
 
 @router.get("/{device_id}")
-async def read_device(*, db_session: SessionDep, device_id: str) -> DeviceResponse:
+async def read_device(*, db_session: SessionDep, device_id: str) -> DeviceWithStatus:
     """
     Get the details of a device.
     """
