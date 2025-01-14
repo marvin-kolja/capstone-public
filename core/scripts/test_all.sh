@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -x
+
 # Get positional args
 
 while [[ "$#" -gt 0 ]]; do
