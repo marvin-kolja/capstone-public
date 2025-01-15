@@ -261,7 +261,7 @@ class IDevice:
         """
         Mount Developer Disk Image
 
-        :raises DdiMountingError:
+        :raises DdiAlreadyMounted:
 
         :raises DeveloperModeNotEnabled:
         :raises DeveloperModeError:
@@ -319,7 +319,6 @@ class IDevice:
         :raises DdiNotMounted:
         :raises RsdNotSupported:
         :raises asyncio.TimeoutError:
-        :raises TunnelAlreadyExistsError:
         :raises TunnelCreationFailure:
         """
         if not self.requires_tunnel_for_developer_tools:
