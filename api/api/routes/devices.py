@@ -82,31 +82,11 @@ async def enable_developer_mode(*, device_id: str, device_manager: DeviceManager
     )
 
 
-@router.post("/{device_id}/developer-mode/disable")
-async def disable_developer_mode(*, device_id: str, device_manager: DeviceManagerDep):
-    """
-    Disable developer mode on a device.
-    """
-    return device_service.disable_developer_mode(
-        device_id=device_id, device_manager=device_manager
-    )
-
-
 @router.post("/{device_id}/tunnel/connect")
 async def connect_tunnel(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Establish a tunnel connection to a device.
     """
     return device_service.connect_tunnel(
-        device_id=device_id, device_manager=device_manager
-    )
-
-
-@router.post("/{device_id}/tunnel/close")
-async def close_tunnel(*, device_id: str, device_manager: DeviceManagerDep):
-    """
-    Close a tunnel connection to a device.
-    """
-    return device_service.disconnect_tunnel(
         device_id=device_id, device_manager=device_manager
     )

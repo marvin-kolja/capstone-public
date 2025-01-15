@@ -92,10 +92,6 @@ def enable_developer_mode(*, device_id: str, device_manager: IDeviceManager):
     raise NotImplementedError
 
 
-def disable_developer_mode(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
-
-
 def mount_ddi(*, device_id: str, device_manager: IDeviceManager):
     raise NotImplementedError
 
@@ -105,10 +101,6 @@ def unmount_ddi(*, device_id: str, device_manager: IDeviceManager):
 
 
 def connect_tunnel(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
-
-
-def disconnect_tunnel(*, device_id: str, device_manager: IDeviceManager):
     raise NotImplementedError
 
 
