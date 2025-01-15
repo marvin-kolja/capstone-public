@@ -87,6 +87,6 @@ async def connect_tunnel(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Establish a tunnel connection to a device.
     """
-    return device_service.connect_tunnel(
+    return await device_service.connect_tunnel(
         device_id=device_id, device_manager=device_manager
     )

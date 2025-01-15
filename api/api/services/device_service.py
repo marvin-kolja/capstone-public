@@ -100,7 +100,7 @@ def unmount_ddi(*, device_id: str, device_manager: IDeviceManager):
     raise NotImplementedError
 
 
-def connect_tunnel(*, device_id: str, device_manager: IDeviceManager):
+async def connect_tunnel(*, device_id: str, device_manager: IDeviceManager):
     raise NotImplementedError
 
 
