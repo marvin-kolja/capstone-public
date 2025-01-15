@@ -5,6 +5,7 @@ from api.db_models import DeviceBase, Device
 
 # noinspection PyProtectedMember
 from api.services.device_service import _update_device_fields, _update_or_add
+from tests.conftest import assert_base_device_equal
 
 
 def test_update_device_fields():
@@ -44,11 +45,8 @@ def test_update_device_fields():
 
     assert updated_device.id == device.id
     assert updated_device.udid == device.udid
-    assert updated_device.device_name == new_device.device_name
-    assert updated_device.device_class == new_device.device_class
-    assert updated_device.build_version == new_device.build_version
-    assert updated_device.product_version == new_device.product_version
-    assert updated_device.product_type == new_device.product_type
+
+    assert_base_device_equal(updated_device, new_device)
 
 
 @pytest.mark.parametrize(
@@ -103,8 +101,4 @@ def test_update_or_add(device_from_db):
         assert isinstance(updated_device, Device)
         assert updated_device.id == device_with_status.id
         assert updated_device.udid == device_with_status.udid
-        assert updated_device.device_name == device_with_status.device_name
-        assert updated_device.device_class == device_with_status.device_class
-        assert updated_device.build_version == device_with_status.build_version
-        assert updated_device.product_version == device_with_status.product_version
-        assert updated_device.product_type == device_with_status.product_type
+        assert_base_device_equal(updated_device, device_with_status)

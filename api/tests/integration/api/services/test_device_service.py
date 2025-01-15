@@ -1,8 +1,9 @@
 from sqlmodel import select
 
 from api.api_models import DeviceWithStatus
-from api.db_models import Device
+from api.db_models import Device, DeviceBase
 from api.services import device_service
+from tests.conftest import assert_base_device_equal_to_idevice
 
 
 def test_list_devices_connected(
@@ -30,16 +31,9 @@ def test_list_devices_connected(
     device = matching_devices[0]
 
     assert device.udid == random_device_id
-    assert device.device_name == "DeviceName"
-    assert device.device_class == "iPhone"
-    assert device.build_version == "22B91"
-    assert device.product_type == "iPhone14,4"
-    assert device.product_version == "18.1.1"
+    assert_base_device_equal_to_idevice(device, mock_i_device)
     assert device.connected is True
-    assert device.status.paired is True
-    assert device.status.developer_mode_enabled is True
-    assert device.status.ddi_mounted is True
-    assert device.status.tunnel_connected is True
+    assert device.status == mock_i_device.status
 
     statement = select(Device).where(Device.udid == random_device_id)
     db_entry = db.exec(statement).all()
@@ -120,11 +114,7 @@ def test_list_devices_db_update(
     device = matching_devices[0]
 
     assert device.udid == mock_i_device.udid
-    assert device.device_name == mock_i_device.info.device_name
-    assert device.device_class == mock_i_device.info.device_class
-    assert device.build_version == mock_i_device.info.build_version
-    assert device.product_type == mock_i_device.info.product_type
-    assert device.product_version == mock_i_device.info.product_version
+    assert_base_device_equal_to_idevice(device, mock_i_device)
     assert device.connected is True
     assert device.status == mock_i_device.status
 
@@ -183,11 +173,7 @@ def test_get_device_by_id_connected(
 
     assert device.id == random_device_id
     assert device.udid == random_device_id
-    assert device.device_name == mock_i_device.info.device_name
-    assert device.device_class == mock_i_device.info.device_class
-    assert device.build_version == mock_i_device.info.build_version
-    assert device.product_type == mock_i_device.info.product_type
-    assert device.product_version == mock_i_device.info.product_version
+    assert_base_device_equal_to_idevice(device, mock_i_device)
     assert device.connected is True
     assert device.status == mock_i_device.status
 
