@@ -13,7 +13,6 @@ from pymobiledevice3.remote.remote_service_discovery import (
 from pymobiledevice3 import exceptions as pmd3_exceptions
 from pymobiledevice3.services.amfi import AmfiService
 from pymobiledevice3.services.mobile_image_mounter import (
-    MobileImageMounterService,
     DeveloperDiskImageMounter,
     PersonalizedImageMounter,
     auto_mount,
@@ -225,7 +224,7 @@ class IDevice:
             raise device_exceptions.DeveloperModeError from e
 
     @property
-    def _mounter(self) -> MobileImageMounterService:
+    def _mounter(self) -> DeveloperDiskImageMounter | PersonalizedImageMounter:
         if Version(self.lockdown_service.product_version) < Version("17.0"):
             return DeveloperDiskImageMounter(self.lockdown_service)
         return PersonalizedImageMounter(self.lockdown_service)
@@ -296,7 +295,7 @@ class IDevice:
             logger.debug(
                 f"Unmounting Developer Disk Image for device {self.lockdown_client.udid}"
             )
-            self._mounter.unmount_image(self._mounter.IMAGE_TYPE)
+            self._mounter.umount()
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
 

@@ -8,7 +8,7 @@ from pymobiledevice3.lockdown import UsbmuxLockdownClient
 from pymobiledevice3.remote.remote_service_discovery import (
     RemoteServiceDiscoveryService,
 )
-from pymobiledevice3.services.mobile_image_mounter import MobileImageMounterService
+from pymobiledevice3.services.mobile_image_mounter import PersonalizedImageMounter
 
 from core.codec.socket_json_codec import SuccessResponse
 from core.device.i_device import IDevice, IDeviceStatus
@@ -34,7 +34,7 @@ from core.exceptions.i_device import (
 @pytest.fixture()
 def patched_i_device_mounter(i_device_mocked_lockdown):
     with patch.object(
-        IDevice, "_mounter", MagicMock(spec=MobileImageMounterService)
+        IDevice, "_mounter", MagicMock(spec=PersonalizedImageMounter)
     ) as mock_mounter:
         yield mock_mounter
 
@@ -432,7 +432,7 @@ class TestIDeviceDdiMounting:
                 - If developer_mode_enabled=False and product_version >= 16.0, DeveloperModeNotEnabled is raised.
                 - Else if ddi_mounted=False, DdiNotMounted is raised.
                 - Else, no exception is raised.
-                    - And `MobileImageMounterService.unmount_image` should be called.
+                    - And `PersonalizedImageMounter.unmount` should be called.
             """
             patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
             if not paired:
@@ -448,7 +448,7 @@ class TestIDeviceDdiMounting:
                     i_device_mocked_lockdown.unmount_ddi()
             else:
                 i_device_mocked_lockdown.unmount_ddi()
-                patched_i_device_mounter.unmount_image.assert_called_once()
+                patched_i_device_mounter.umount.assert_called_once()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -507,14 +507,14 @@ class TestIDeviceDdiMounting:
         AND: An unexpected error occurs.
 
         THEN: A `DdiMountingError` exception should be raised.
-        AND: `MobileImageMounterService.unmount_image` should be called.
+        AND: `PersonalizedImageMounter.umount` should be called.
         """
         patched_i_device_mounter.is_image_mounted.return_value = ddi_mounted
-        patched_i_device_mounter.unmount_image.side_effect = Exception
+        patched_i_device_mounter.umount.side_effect = Exception
 
         with pytest.raises(DdiMountingError):
             i_device_mocked_lockdown.unmount_ddi()
-        patched_i_device_mounter.unmount_image.assert_called_once()
+        patched_i_device_mounter.umount.assert_called_once()
 
 
 @pytest.mark.parametrize("paired,developer_mode_enabled", [(True, True)])
