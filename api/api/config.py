@@ -24,7 +24,5 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         return "sqlite:///" + self.SQLITE_PATH
 
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
-
 
 settings = Settings()  # type: ignore
