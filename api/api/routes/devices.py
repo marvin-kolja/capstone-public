@@ -59,7 +59,9 @@ async def mount_ddi(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Mount a device DDI (Developer Disk Image).
     """
-    return device_service.mount_ddi(device_id=device_id, device_manager=device_manager)
+    return await device_service.mount_ddi(
+        device_id=device_id, device_manager=device_manager
+    )
 
 
 @router.post("/{device_id}/ddi/unmount")

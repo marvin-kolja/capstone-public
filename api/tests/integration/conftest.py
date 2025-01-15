@@ -1,15 +1,12 @@
-import random
-import string
 from typing import Generator
-from unittest.mock import patch
 
 import pytest
 from core.device.i_device import IDevice
 from core.device.i_device_manager import IDeviceManager
 from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 from sqlmodel import Session, delete
 
-from api.config import settings
 from api.db import engine
 from api.db_models import Device
 from api.main import app
@@ -31,20 +28,19 @@ def client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture(scope="module")
+async def async_client() -> Generator[AsyncClient, None, None]:
+    async with AsyncClient(
+        transport=ASGITransport(
+            app=app,
+        ),
+        base_url="http://test",
+    ) as ac:
+        yield ac
+
+
+@pytest.fixture(scope="session")
 def real_device() -> IDevice:
     device_manager = IDeviceManager()
     devices = device_manager.list_devices()
     if devices:
         return devices[0]
-
-
-@pytest.fixture
-def random_device_id():
-    """
-    Generate a random device ID like "00000000-0000000000000000"
-    """
-    return (
-        "".join(random.choices(string.digits, k=8))
-        + "-"
-        + "".join(random.choices(string.digits + string.ascii_uppercase, k=16))
-    )

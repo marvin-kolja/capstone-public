@@ -2,6 +2,8 @@ import logging
 from typing import Optional
 
 from core.device.i_device_manager import IDeviceManager
+from core.exceptions import i_device as core_device_exceptions
+from fastapi import HTTPException
 from sqlmodel import Session, select, col
 
 from api.api_models import DeviceWithStatus
@@ -81,27 +83,112 @@ def get_device_by_id(
 
 
 def pair_device(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+    device = _get_connected_device_or_raise(device_id, device_manager)
+    try:
+        device.pair()
+    except (
+        core_device_exceptions.UserDeniedPairing,
+        core_device_exceptions.PasswordRequired,
+    ) as e:
+        logger.error(f"Failed to pair device {device_id}", exc_info=e)
+
+        raise HTTPException(
+            status_code=400, detail="Pairing failed, user denied or password required"
+        )
 
 
 def unpair_device(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+    device = _get_connected_device_or_raise(device_id, device_manager)
+    try:
+        device.unpair()
+    except (
+        core_device_exceptions.DeviceNotPaired,
+        core_device_exceptions.PairingError,
+    ):
+        logger.error(f"Unpairing failed for device {device_id}")
+
+        raise HTTPException(
+            status_code=400, detail="Device state does not allow unpairing"
+        )
 
 
 def enable_developer_mode(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+    device = _get_connected_device_or_raise(device_id, device_manager)
+
+    try:
+        device.enable_developer_mode()
+    except (
+        core_device_exceptions.DeveloperModeNotSupported,
+        core_device_exceptions.DeveloperModeAlreadyEnabled,
+        core_device_exceptions.DeviceHasPasscodeSet,
+        core_device_exceptions.DeviceNotPaired,
+    ) as e:
+        logger.error(
+            f"Failed to enable developer mode on device {device_id}", exc_info=e
+        )
+
+        raise HTTPException(status_code=400, detail="Failed to enable developer mode")
 
 
-def mount_ddi(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+async def mount_ddi(*, device_id: str, device_manager: IDeviceManager):
+    device = _get_connected_device_or_raise(device_id, device_manager)
+
+    try:
+        await device.mount_ddi()
+    except (
+        core_device_exceptions.DdiAlreadyMounted,
+        core_device_exceptions.DeveloperModeNotEnabled,
+        core_device_exceptions.DeveloperModeError,
+        core_device_exceptions.DeviceNotPaired,
+    ) as e:
+        logger.error(f"Failed to mount DDI on device {device_id}", exc_info=e)
+
+        raise HTTPException(
+            status_code=400, detail="Device state does not allow mounting DDI"
+        )
 
 
 def unmount_ddi(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+    device = _get_connected_device_or_raise(device_id, device_manager)
+
+    try:
+        device.unmount_ddi()
+    except (
+        core_device_exceptions.DdiNotMounted,
+        core_device_exceptions.DeveloperModeNotEnabled,
+        core_device_exceptions.DeveloperModeError,
+        core_device_exceptions.DeviceNotPaired,
+    ) as e:
+        logger.error(f"Failed to unmount DDI on device {device_id}", exc_info=e)
+
+        raise HTTPException(
+            status_code=400, detail="Device state does not allow unmounting DDI"
+        )
 
 
 async def connect_tunnel(*, device_id: str, device_manager: IDeviceManager):
-    raise NotImplementedError
+    device = _get_connected_device_or_raise(device_id, device_manager)
+
+    try:
+        await device.establish_trusted_channel()
+    except (
+        core_device_exceptions.DeviceNotPaired,
+        core_device_exceptions.DeveloperModeNotEnabled,
+        core_device_exceptions.DdiNotMounted,
+        core_device_exceptions.RsdNotSupported,
+    ) as e:
+        logger.error(f"Failed to connect tunnel on device {device_id}", exc_info=e)
+
+        raise HTTPException(
+            status_code=400, detail="Device state does not allow connecting tunnel"
+        )
+
+
+def _get_connected_device_or_raise(device_id: str, device_manager: IDeviceManager):
+    device = device_manager.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device
 
 
 def _update_device_fields(device: Device, new_device: DeviceBase) -> Device:
