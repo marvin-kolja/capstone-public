@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from api.api_models import DeviceWithStatus
 from api.depends import SessionDep, DeviceManagerDep
@@ -15,7 +15,7 @@ async def list_devices(
     List all devices.
     """
     return device_service.list_devices(
-        db_session=db_session, device_manager=device_manager
+        session=db_session, device_manager=device_manager
     )
 
 
@@ -26,9 +26,12 @@ async def read_device(
     """
     Get the details of a device.
     """
-    return device_service.get_device_by_id(
-        device_id=device_id, db_session=db_session, device_manager=device_manager
+    device = device_service.get_device_by_id(
+        device_id=device_id, session=db_session, device_manager=device_manager
     )
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device
 
 
 @router.post("/{device_id}/pair")
