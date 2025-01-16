@@ -1,3 +1,4 @@
+import contextlib
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -43,6 +44,13 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        # The following options are required for SQLite to produce correct migrations
+        #
+        # see: https://alembic.sqlalchemy.org/en/latest/batch.html#batch-migrations
+        # and: https://github.com/PrefectHQ/prefect/pull/9169
+        transaction_per_migration=True,
+        render_as_batch=True,
+        template_args={"dialect": "sqlite"},  # used in `script.py.mako`
     )
 
     with context.begin_transaction():
@@ -65,10 +73,32 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            # The following options are required for SQLite to produce correct migrations
+            #
+            # see: https://alembic.sqlalchemy.org/en/latest/batch.html#batch-migrations
+            # and: https://github.com/PrefectHQ/prefect/pull/9169
+            render_as_batch=True,
+            transaction_per_migration=True,
+        )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        with disable_sqlite_foreign_keys(context):
+            with context.begin_transaction():
+                context.run_migrations()
+
+
+@contextlib.contextmanager
+def disable_sqlite_foreign_keys(context):
+    """
+    Disable foreign key constraints on sqlite.
+    """
+    context.execute("PRAGMA foreign_keys=OFF")
+
+    yield
+
+    context.execute("PRAGMA foreign_keys=ON")
 
 
 if context.is_offline_mode():

@@ -5,6 +5,7 @@ from core.device.i_device import IDevice
 from core.device.i_device_manager import IDeviceManager
 from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import text
 from sqlmodel import Session, delete
 
 from api.db import engine
@@ -15,6 +16,9 @@ from api.main import app
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
+        session.execute(
+            text("PRAGMA foreign_keys=ON")
+        )  # required for SQLite to enforce foreign keys
         yield session
         statement = delete(Device)
         session.execute(statement)
