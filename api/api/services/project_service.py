@@ -1,13 +1,14 @@
 import uuid
 
-from sqlmodel import Session
+from fastapi import HTTPException
+from sqlmodel import Session, select
 
-from api.models import XcProjectPublic, XcProjectCreate
+from api.models import XcProjectPublic, XcProjectCreate, XcProject
 
 
 def list_projects(*, session: Session) -> list[XcProjectPublic]:
-    # 1. Get all projects from DB
-    raise NotImplementedError
+    db_projects = session.exec(select(XcProject)).all()
+    return [XcProjectPublic.model_validate(project) for project in db_projects]
 
 
 def add_project(*, session: Session, project: XcProjectCreate) -> XcProjectPublic:
@@ -20,8 +21,12 @@ def add_project(*, session: Session, project: XcProjectCreate) -> XcProjectPubli
 
 
 def read_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPublic:
-    # 1. Get project from DB
-    raise NotImplementedError
+    db_project = session.exec(
+        select(XcProject).where(XcProject.id == project_id)
+    ).first()
+    if db_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return XcProjectPublic.model_validate(db_project)
 
 
 def refresh_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPublic:
