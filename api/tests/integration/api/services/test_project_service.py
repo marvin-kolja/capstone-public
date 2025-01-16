@@ -1,3 +1,4 @@
+import pathlib
 import uuid
 
 import pytest
@@ -10,8 +11,18 @@ from api.models import (
     XcProjectConfiguration,
     XcProjectTestPlan,
     XcProjectPublic,
+    XcProjectCreate,
 )
-from api.services.project_service import list_projects, read_project
+from api.services.project_service import list_projects, read_project, add_project
+
+
+def check_lists_equal(list_1: list, list_2: list) -> bool:
+    """
+    Check if two lists are equal.
+
+    Copied from: https://safjan.com/pytest-check-lists-equal/
+    """
+    return len(list_1) == len(list_2) and sorted(list_1) == sorted(list_2)
 
 
 @pytest.fixture
@@ -86,3 +97,53 @@ def test_read_project_not_found(db):
     with pytest.raises(HTTPException) as e:
         read_project(session=db, project_id=uuid.uuid4())
     assert e.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_add_project(db, path_to_example_project):
+    """
+    GIVEN: A project path
+
+    WHEN: add_project is called with the project path
+
+    THEN: It should add the project to the database
+    AND: Return the project with the correct values
+    """
+    public_project = await add_project(
+        session=db, project=XcProjectCreate(path=path_to_example_project)
+    )
+
+    db_project = db.get(XcProject, public_project.id)
+    assert db_project is not None
+
+    assert public_project.name == "RP Swift"
+    assert public_project.path == path_to_example_project
+    scheme_names = [scheme.name for scheme in public_project.schemas]
+    check_lists_equal(scheme_names, ["Release", "RP Swift"])
+    target_names = [target.name for target in public_project.targets]
+    check_lists_equal(target_names, ["RP Swift"])
+    configuration_names = [
+        configuration.name for configuration in public_project.configurations
+    ]
+    check_lists_equal(configuration_names, ["Debug", "Release"])
+    for scheme in public_project.schemas:
+        xc_test_plan_names = [
+            xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
+        ]
+        check_lists_equal(xc_test_plan_names, ["RP Swift"])
+
+
+@pytest.mark.asyncio
+async def test_add_project_invalid_path(db):
+    """
+    GIVEN: An invalid project path
+
+    WHEN: add_project is called with the project path
+
+    THEN: It should raise a 404 HTTPException
+    """
+    with pytest.raises(HTTPException) as e:
+        await add_project(
+            session=db, project=XcProjectCreate(path=pathlib.Path(__file__))
+        )
+    assert e.value.status_code == 400
