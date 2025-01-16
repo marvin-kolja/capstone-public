@@ -1,3 +1,4 @@
+import pathlib
 import uuid
 from typing import Literal, Optional
 
@@ -140,3 +141,83 @@ class SessionTestPlanUpdate(SessionTestPlanBase):
     recording_strategy: RecordingStrategy | None = None
     recording_start_strategy: RecordingStartStrategy | None = None
     reinstall_app: bool | None = None
+
+
+######################################
+#               Project              #
+######################################
+
+
+class XcProjectResourceModelBase(SQLModel):
+    name: str
+
+
+class XcProjectResourceModel(XcProjectResourceModelBase):
+    id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
+
+
+class XcProjectConfiguration(XcProjectResourceModel, table=True):
+    __tablename__ = "xc_project_configuration"
+
+
+class XcProjectConfigurationPublic(XcProjectResourceModelBase):
+    pass
+
+
+class XcProjectTestPlan(XcProjectResourceModel, table=True):
+    __tablename__ = "xc_project_test_plan"
+
+    schema_id: uuid.UUID = SQLField(
+        foreign_key="xc_project_schema.id", ondelete="CASCADE"
+    )
+
+
+class XcProjectTestPlanPublic(XcProjectResourceModelBase):
+    pass
+
+
+class XcProjectSchema(XcProjectResourceModel, table=True):
+    __tablename__ = "xc_project_schema"
+
+    xc_test_plans: list[XcProjectTestPlan] = Relationship(cascade_delete=True)
+
+
+class XcProjectSchemaPublic(XcProjectResourceModelBase):
+    xc_test_plans: list[XcProjectTestPlanPublic]
+
+
+class XcProjectTarget(XcProjectResourceModel, table=True):
+    __tablename__ = "xc_project_target"
+
+
+class XcProjectTargetPublic(XcProjectResourceModelBase):
+    pass
+
+
+class XcProjectBase(SQLModel):
+    path: pathlib.Path = SQLField(sa_type=String)
+
+
+class XcProject(XcProjectBase, table=True):
+    __tablename__ = "xc_project"
+
+    id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    name: str
+
+    configurations: list[XcProjectConfiguration] = Relationship(cascade_delete=True)
+    schemas: list[XcProjectSchema] = Relationship(cascade_delete=True)
+    targets: list[XcProjectTarget] = Relationship(cascade_delete=True)
+
+
+class XcProjectCreate(XcProjectBase):
+    pass
+
+
+class XcProjectPublic(XcProjectBase):
+    id: uuid.UUID
+    name: str
+
+    configurations: list[XcProjectConfigurationPublic]
+    schemas: list[XcProjectSchemaPublic]
+    targets: list[XcProjectTargetPublic]
