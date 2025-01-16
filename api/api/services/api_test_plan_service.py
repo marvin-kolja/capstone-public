@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlmodel import Session, select
 
-from api.db_models import (
+from api.models import (
     SessionTestPlan,
     SessionTestPlanPublic,
     SessionTestPlanCreate,

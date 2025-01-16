@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter
 
-from api.db_models import (
+from api.models import (
     SessionTestPlanCreate,
     SessionTestPlanPublic,
     SessionTestPlanUpdate,

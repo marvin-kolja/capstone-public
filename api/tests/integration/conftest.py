@@ -8,7 +8,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlmodel import Session, delete
 
 from api.db import engine
-from api.db_models import Device
+from api.models import Device
 from api.main import app
 
 

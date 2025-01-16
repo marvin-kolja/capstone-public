@@ -6,8 +6,7 @@ from core.exceptions import i_device as core_device_exceptions
 from fastapi import HTTPException
 from sqlmodel import Session, select, col
 
-from api.api_models import DeviceWithStatus
-from api.db_models import Device, DeviceBase
+from api.models import DeviceWithStatus, Device, DeviceBase
 from api.services.helpers import update_db_model
 
 logger = logging.getLogger(__name__)

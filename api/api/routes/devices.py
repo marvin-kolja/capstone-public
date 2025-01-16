@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from api.api_models import DeviceWithStatus
+from api.models import DeviceWithStatus
 from api.depends import SessionDep, DeviceManagerDep
 from api.services import device_service
 

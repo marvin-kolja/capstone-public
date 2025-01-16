@@ -6,8 +6,7 @@ from core.device.i_device_manager import IDeviceManager
 from core.exceptions import i_device as core_device_exceptions
 from fastapi import HTTPException
 
-from api.api_models import DeviceWithStatus
-from api.db_models import DeviceBase, Device
+from api.models import DeviceWithStatus, DeviceBase, Device
 
 # noinspection PyProtectedMember
 from api.services.device_service import (

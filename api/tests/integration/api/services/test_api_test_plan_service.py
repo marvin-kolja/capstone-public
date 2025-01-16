@@ -5,7 +5,7 @@ from core.test_session.metrics import Metric
 from fastapi import HTTPException
 from sqlmodel import select
 
-from api.db_models import (
+from api.models import (
     SessionTestPlanStep,
     SessionTestPlan,
     SessionTestPlanPublic,

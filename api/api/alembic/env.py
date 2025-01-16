@@ -14,7 +14,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from api.db_models import SQLModel  # noqa
+from api.models import SQLModel  # noqa
 from api.config import settings  # noqa
 
 target_metadata = SQLModel.metadata

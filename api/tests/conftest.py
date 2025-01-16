@@ -6,8 +6,7 @@ import pytest
 from core.device.i_device import IDevice, IDeviceInfo, IDeviceStatus
 from core.device.i_device_manager import IDeviceManager
 
-from api.api_models import DeviceWithStatus
-from api.db_models import DeviceBase
+from api.models import DeviceWithStatus, DeviceBase
 
 
 def assert_base_device_equal(device: DeviceBase, expected_device: DeviceBase):

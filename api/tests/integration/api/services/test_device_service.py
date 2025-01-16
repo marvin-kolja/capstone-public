@@ -1,7 +1,6 @@
 from sqlmodel import select
 
-from api.api_models import DeviceWithStatus
-from api.db_models import Device, DeviceBase
+from api.models import DeviceWithStatus, Device
 from api.services import device_service
 from tests.conftest import assert_base_device_equal_to_idevice
 

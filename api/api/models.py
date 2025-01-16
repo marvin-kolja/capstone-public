@@ -1,10 +1,15 @@
 import uuid
-from typing import Literal
+from typing import Literal, Optional
 
+from core.device.i_device import IDeviceStatus
 from core.test_session.metrics import Metric
 from pydantic import ConfigDict
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
+
+######################################
+#              Device                #
+######################################
 
 
 class DeviceBase(SQLModel):
@@ -22,6 +27,19 @@ class Device(DeviceBase, table=True):
     udid: str = SQLField(
         unique=True
     )  # For now, it is the same as id, but we may want to change the primary key to something else
+
+
+class DeviceWithStatus(DeviceBase):
+    id: str
+    udid: str
+
+    connected: bool = False
+    status: Optional[IDeviceStatus] = None
+
+
+######################################
+#         Session Test Plan          #
+######################################
 
 
 RepetitionStrategy = Literal["entire_suite", "per_step"]
