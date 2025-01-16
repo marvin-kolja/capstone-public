@@ -8,6 +8,7 @@ from sqlmodel import Session, select, col
 
 from api.api_models import DeviceWithStatus
 from api.db_models import Device, DeviceBase
+from api.services.helpers import update_db_model
 
 logger = logging.getLogger(__name__)
 
@@ -195,15 +196,7 @@ def _update_device_fields(device: Device, new_device: DeviceBase) -> Device:
     """
     Update the fields of a device with the fields of a new device without creating a new object.
     """
-    validated_new_device = DeviceBase.model_validate(new_device)
-
-    device.device_name = validated_new_device.device_name
-    device.device_class = validated_new_device.device_class
-    device.build_version = validated_new_device.build_version
-    device.product_version = validated_new_device.product_version
-    device.product_type = validated_new_device.product_type
-
-    return device
+    return update_db_model(db_model=device, new_data_model=new_device)
 
 
 def _update_or_add(
