@@ -8,6 +8,9 @@ from pydantic import ConfigDict
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
 
+from api.custom_db_types import PathType
+
+
 ######################################
 #              Device                #
 ######################################
@@ -196,7 +199,7 @@ class XcProjectTargetPublic(XcProjectResourceModelBase):
 
 
 class XcProjectBase(SQLModel):
-    path: pathlib.Path = SQLField(sa_type=String)
+    path: pathlib.Path = SQLField(sa_column=Column(PathType))
 
 
 class XcProject(XcProjectBase, table=True):
