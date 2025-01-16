@@ -54,9 +54,9 @@ def real_device() -> IDevice:
 @pytest.fixture(scope="session")
 def path_to_example_project() -> pathlib.Path:
     return (
-        pathlib.Path(__file__).parent.parent.parent
+        pathlib.Path(__file__).parent.parent.parent.parent
         / "misc"
         / "example_apps"
         / "RP Swift"
-        / "TestProject.xcodeproj"
+        / "RP Swift.xcodeproj"
     )
