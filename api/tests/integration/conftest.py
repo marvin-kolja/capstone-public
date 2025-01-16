@@ -1,3 +1,4 @@
+import pathlib
 from typing import Generator
 
 import pytest
@@ -48,3 +49,14 @@ def real_device() -> IDevice:
     devices = device_manager.list_devices()
     if devices:
         return devices[0]
+
+
+@pytest.fixture(scope="session")
+def path_to_example_project() -> pathlib.Path:
+    return (
+        pathlib.Path(__file__).parent.parent.parent
+        / "misc"
+        / "example_apps"
+        / "RP Swift"
+        / "TestProject.xcodeproj"
+    )
