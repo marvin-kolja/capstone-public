@@ -1,38 +1,50 @@
+import uuid
+
 from fastapi import APIRouter
+
+from api.depends import SessionDep
+from api.models import XcProjectPublic, XcProjectCreate
+from api.services import project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 @router.get("/")
-async def list_projects():
+async def list_projects(*, session: SessionDep) -> list[XcProjectPublic]:
     """
     List all projects.
     """
-    pass
+    return project_service.list_projects(session=session)
 
 
 @router.post("/")
-async def add_project():
+async def add_project(
+    *, session: SessionDep, project: XcProjectCreate
+) -> XcProjectPublic:
     """
     Add a new project.
     """
-    pass
+    return project_service.add_project(session=session, project=project)
 
 
 @router.get("/{project_id}")
-async def read_project(project_id: str):
+async def read_project(
+    *, session: SessionDep, project_id: uuid.UUID
+) -> XcProjectPublic:
     """
     Get the details of a project.
     """
-    pass
+    return project_service.read_project(session=session, project_id=project_id)
 
 
 @router.post("/{project_id}/refresh")
-async def refresh_project(project_id: str):
+async def refresh_project(
+    *, session: SessionDep, project_id: uuid.UUID
+) -> XcProjectPublic:
     """
     Refreshes the data of a project.
     """
-    pass
+    return project_service.refresh_project(session=session, project_id=project_id)
 
 
 @router.get("/{project_id}/builds")
