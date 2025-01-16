@@ -1,4 +1,10 @@
-from sqlmodel import SQLModel, Field as SQLField
+import uuid
+from typing import Literal
+
+from core.test_session.metrics import Metric
+from pydantic import ConfigDict
+from sqlalchemy import UniqueConstraint
+from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
 
 
 class DeviceBase(SQLModel):
@@ -16,3 +22,103 @@ class Device(DeviceBase, table=True):
     udid: str = SQLField(
         unique=True
     )  # For now, it is the same as id, but we may want to change the primary key to something else
+
+
+RepetitionStrategy = Literal["entire_suite", "per_step"]
+RecordingStrategy = Literal["per_step", "per_test"]
+RecordingStartStrategy = Literal["launch", "attach"]
+
+
+class SessionTestPlanStepBase(SQLModel):
+    name: str
+    repetitions: int | None = SQLField(ge=1, default=1)
+    test_cases: list[str] = SQLField(min_length=1, sa_column=Column(JSON))
+    metrics: list[Metric] | None = SQLField(sa_column=Column(JSON), default=None)
+    recording_start_strategy: RecordingStartStrategy | None = SQLField(
+        sa_type=String, default=None
+    )
+    reinstall_app: bool | None = SQLField(default=None)
+
+
+class SessionTestPlanStep(SessionTestPlanStepBase, table=True):
+    __tablename__ = "session_testplan_step"
+    __table_args__ = (UniqueConstraint("test_plan_id", "order"),)
+
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    order: int = SQLField(ge=0)
+
+    test_plan_id: uuid.UUID = SQLField(
+        foreign_key="session_testplan.id", ondelete="CASCADE"
+    )
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class SessionTestPlanStepCreate(SessionTestPlanStepBase):
+    pass
+
+
+class SessionTestPlanStepPublic(SessionTestPlanStepBase):
+    id: uuid.UUID
+    order: int
+
+
+class SessionTestPlanStepUpdate(SessionTestPlanStepBase):
+    name: str | None = None
+    test_cases: list[str] | None = None
+    metrics: list[Metric] | None = None
+    recording_start_strategy: RecordingStartStrategy | None = None
+    reinstall_app: bool | None = None
+
+
+class SessionTestPlanBase(SQLModel):
+    name: str
+    xctestrun_path: str
+    xctestrun_test_configuration: str
+    end_on_failure: bool | None = SQLField(default=False)
+    repetitions: int = SQLField(ge=1)
+    repetition_strategy: RepetitionStrategy = SQLField(sa_type=String)
+    metrics: list[Metric] = SQLField(sa_column=Column(JSON))
+    recording_strategy: RecordingStrategy | None = SQLField(
+        sa_type=String, default="per_test"
+    )
+    recording_start_strategy: RecordingStartStrategy | None = SQLField(
+        sa_type=String, default="launch"
+    )
+    reinstall_app: bool | None = SQLField(default=False)
+
+
+class SessionTestPlan(SessionTestPlanBase, table=True):
+    __tablename__ = "session_testplan"
+
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+
+    steps: list[SessionTestPlanStep] = Relationship(cascade_delete=True)
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class SessionTestPlanCreate(SessionTestPlanBase):
+    pass
+
+
+class SessionTestPlanPublic(SessionTestPlanBase):
+    id: uuid.UUID
+    end_on_failure: bool
+    recording_strategy: RecordingStrategy
+    recording_start_strategy: RecordingStartStrategy
+    reinstall_app: bool
+    steps: list[SessionTestPlanStepPublic]
+
+
+class SessionTestPlanUpdate(SessionTestPlanBase):
+    name: str | None = None
+    xctestrun_path: str | None = None
+    xctestrun_test_configuration: str | None = None
+    end_on_failure: bool | None = None
+    repetitions: int | None = None
+    repetition_strategy: RepetitionStrategy | None = None
+    metrics: list[Metric] | None = None
+    recording_strategy: RecordingStrategy | None = None
+    recording_start_strategy: RecordingStartStrategy | None = None
+    reinstall_app: bool | None = None
