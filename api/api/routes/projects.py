@@ -24,7 +24,7 @@ async def add_project(
     """
     Add a new project.
     """
-    return project_service.add_project(session=session, project=project)
+    return await project_service.add_project(session=session, project=project)
 
 
 @router.get("/{project_id}")

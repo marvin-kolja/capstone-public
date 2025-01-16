@@ -11,7 +11,7 @@ def list_projects(*, session: Session) -> list[XcProjectPublic]:
     return [XcProjectPublic.model_validate(project) for project in db_projects]
 
 
-def add_project(*, session: Session, project: XcProjectCreate) -> XcProjectPublic:
+async def add_project(*, session: Session, project: XcProjectCreate) -> XcProjectPublic:
     # 1. Validate path to project
     # 2. Validate project name
     # 3. List configurations, schemes, targets
