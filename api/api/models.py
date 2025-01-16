@@ -171,8 +171,8 @@ class XcProjectConfigurationPublic(XcProjectResourceModelBase):
 class XcProjectTestPlan(XcProjectResourceModel, table=True):
     __tablename__ = "xc_project_test_plan"
 
-    schema_id: uuid.UUID = SQLField(
-        foreign_key="xc_project_schema.id", ondelete="CASCADE"
+    scheme_id: uuid.UUID = SQLField(
+        foreign_key="xc_project_scheme.id", ondelete="CASCADE"
     )
 
 
@@ -180,13 +180,13 @@ class XcProjectTestPlanPublic(XcProjectResourceModelBase):
     pass
 
 
-class XcProjectSchema(XcProjectResourceModel, table=True):
-    __tablename__ = "xc_project_schema"
+class XcProjectScheme(XcProjectResourceModel, table=True):
+    __tablename__ = "xc_project_scheme"
 
     xc_test_plans: list[XcProjectTestPlan] = Relationship(cascade_delete=True)
 
 
-class XcProjectSchemaPublic(XcProjectResourceModelBase):
+class XcProjectSchemePublic(XcProjectResourceModelBase):
     xc_test_plans: list[XcProjectTestPlanPublic]
 
 
@@ -209,7 +209,7 @@ class XcProject(XcProjectBase, table=True):
     name: str
 
     configurations: list[XcProjectConfiguration] = Relationship(cascade_delete=True)
-    schemas: list[XcProjectSchema] = Relationship(cascade_delete=True)
+    schemes: list[XcProjectScheme] = Relationship(cascade_delete=True)
     targets: list[XcProjectTarget] = Relationship(cascade_delete=True)
 
 
@@ -222,5 +222,5 @@ class XcProjectPublic(XcProjectBase):
     name: str
 
     configurations: list[XcProjectConfigurationPublic]
-    schemas: list[XcProjectSchemaPublic]
+    schemes: list[XcProjectSchemePublic]
     targets: list[XcProjectTargetPublic]

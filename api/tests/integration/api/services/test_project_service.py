@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 from api.models import (
     XcProject,
-    XcProjectSchema,
+    XcProjectScheme,
     XcProjectTarget,
     XcProjectConfiguration,
     XcProjectTestPlan,
@@ -31,18 +31,18 @@ def new_db_project(db, path_to_example_project):
     db.add(project)
     db.commit()
 
-    schema = XcProjectSchema(name="schema_1", project_id=project.id)
+    scheme = XcProjectScheme(name="scheme_1", project_id=project.id)
     target = XcProjectTarget(name="target_1", project_id=project.id)
     configuration = XcProjectConfiguration(
         name="configuration_1", project_id=project.id
     )
-    db.add(schema)
+    db.add(scheme)
     db.add(target)
     db.add(configuration)
     db.commit()
 
     xc_test_plan = XcProjectTestPlan(
-        name="xc_test_plan_1", schema_id=schema.id, project_id=project.id
+        name="xc_test_plan_1", scheme_id=scheme.id, project_id=project.id
     )
     db.add(xc_test_plan)
     db.commit()
@@ -118,7 +118,7 @@ async def test_add_project(db, path_to_example_project):
 
     assert public_project.name == "RP Swift"
     assert public_project.path == path_to_example_project
-    scheme_names = [scheme.name for scheme in public_project.schemas]
+    scheme_names = [scheme.name for scheme in public_project.schemes]
     check_lists_equal(scheme_names, ["Release", "RP Swift"])
     target_names = [target.name for target in public_project.targets]
     check_lists_equal(target_names, ["RP Swift"])
@@ -126,7 +126,7 @@ async def test_add_project(db, path_to_example_project):
         configuration.name for configuration in public_project.configurations
     ]
     check_lists_equal(configuration_names, ["Debug", "Release"])
-    for scheme in public_project.schemas:
+    for scheme in public_project.schemes:
         xc_test_plan_names = [
             xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
         ]
