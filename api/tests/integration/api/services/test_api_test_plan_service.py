@@ -210,7 +210,8 @@ def test_delete_test_plan(new_test_plan, new_test_plan_step, db):
 
     WHEN: The delete_test_plan function is called
 
-    THEN: The test plan should be deleted
+    THEN: The test plan should be deleted from the DB
+    AND: The test plan steps should be deleted from the DB
     """
     delete_test_plan(session=db, test_plan_id=new_test_plan.id)
 
@@ -219,6 +220,14 @@ def test_delete_test_plan(new_test_plan, new_test_plan_step, db):
     ).first()
 
     assert plan is None
+
+    steps = db.exec(
+        select(SessionTestPlanStep).where(
+            SessionTestPlanStep.test_plan_id == new_test_plan.id
+        )
+    ).all()
+
+    assert len(steps) == 0
 
 
 def test_delete_test_plan_not_found(db):
