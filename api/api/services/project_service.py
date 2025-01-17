@@ -1,12 +1,11 @@
+import pathlib
 import uuid
 from typing import Optional, TypeVar
 
-from fastapi import HTTPException
 from sqlmodel import Session, select
 
 from api.models import (
     XcProjectPublic,
-    XcProjectCreate,
     XcProject,
     XcProjectConfiguration,
     XcProjectTarget,
@@ -21,17 +20,29 @@ def list_projects(*, session: Session) -> list[XcProjectPublic]:
     return [XcProjectPublic.model_validate(project) for project in db_projects]
 
 
-async def add_project(*, session: Session, project: XcProjectCreate) -> XcProjectPublic:
-    try:
-        core_project = core_xc_project.XcProject(project.path.resolve().as_posix())
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid path to project")
+def get_core_xc_project(*, path: pathlib.Path) -> core_xc_project.XcProject:
+    """
+    Get the core xc project instance using the path to the project.
 
+    :raises ValueError: If the path to the project is invalid
+    """
+    return core_xc_project.XcProject(path.resolve().as_posix())
+
+
+async def add_project(
+    *, session: Session, xc_project_interface: core_xc_project.XcProject
+) -> XcProjectPublic:
+    """
+    Add a new project to the database after it was validated and information was retrieved from the project.
+
+    :raises core.subprocess.ProcessException: If commands to retrieve additional infos fails
+    :raises ValidationError: If validation of data fails
+    """
     db_project = XcProject(
-        name="", path=project.path
+        name="", path=pathlib.Path(xc_project_interface.path_to_project)
     )  # Uses a blank name for now as it will be updated in sync_db_project
     await sync_db_project(
-        session=session, db_project=db_project, xc_project=core_project
+        session=session, db_project=db_project, xc_project=xc_project_interface
     )
     session.add(db_project)
 
@@ -41,40 +52,23 @@ async def add_project(*, session: Session, project: XcProjectCreate) -> XcProjec
     return XcProjectPublic.model_validate(db_project)
 
 
-def read_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPublic:
+def read_project(*, session: Session, project_id: uuid.UUID) -> Optional[XcProject]:
     db_project = session.exec(
         select(XcProject).where(XcProject.id == project_id)
     ).first()
     if db_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return XcProjectPublic.model_validate(db_project)
+        return None
+    return db_project
 
 
 async def refresh_project(
-    *, session: Session, project_id: uuid.UUID
+    *,
+    session: Session,
+    db_project: XcProject,
+    xc_project_interface: core_xc_project.XcProject,
 ) -> XcProjectPublic:
-    # 1. Get project from DB
-    # 2. List configurations, schemes, targets
-    # 3. List xc test plans for each scheme
-    # 4. Update information in DB
-    #
-    # Is very similar to add_project, so we can reuse the code
-    db_project = session.exec(
-        select(XcProject).where(XcProject.id == project_id)
-    ).first()
-
-    if db_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    try:
-        core_project = core_xc_project.XcProject(db_project.path.resolve().as_posix())
-    except ValueError:
-        # If the path isn't valid anymore, we can't refresh the project. Thus, we simply return the project as is.
-        # TODO: We could also mark the project as invalid and allow the user to fix the path.
-        return XcProjectPublic.model_validate(db_project)
-
     await sync_db_project(
-        session=session, db_project=db_project, xc_project=core_project
+        session=session, db_project=db_project, xc_project=xc_project_interface
     )
 
     session.commit()
@@ -168,6 +162,9 @@ async def sync_db_project(
     :param session: The database session
     :param db_project:  The project that is currently in the database
     :param xc_project: The core project instance that is used to get the new items
+
+    :raises core.subprocess.ProcessException: If commands to retrieve additional infos fails
+    :raises ValidationError: If the output of the command cannot be parsed correctly
     """
     project_details = await xc_project.list()
 

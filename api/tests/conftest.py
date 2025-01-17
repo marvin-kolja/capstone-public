@@ -1,11 +1,15 @@
 import random
 import string
+from typing import Generator
 from unittest.mock import MagicMock
 
 import pytest
 from core.device.i_device import IDevice, IDeviceInfo, IDeviceStatus
 from core.device.i_device_manager import IDeviceManager
+from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 
+from api.main import app
 from api.models import DeviceWithStatus, DeviceBase
 
 
@@ -67,3 +71,24 @@ def mock_i_device(random_device_id):
 def mock_device_manager(mock_i_device):
     device_manager_mock = MagicMock(spec=IDeviceManager)
     return device_manager_mock
+
+
+@pytest.fixture(scope="module")
+def client() -> Generator[TestClient, None, None]:
+    with TestClient(
+        app,
+        raise_server_exceptions=False,
+    ) as c:
+        yield c
+
+
+@pytest.fixture(scope="module")
+async def async_client() -> Generator[AsyncClient, None, None]:
+    async with AsyncClient(
+        transport=ASGITransport(
+            app=app,
+            raise_app_exceptions=False,
+        ),
+        base_url="http://test",
+    ) as ac:
+        yield ac

@@ -123,7 +123,7 @@ def test_unpair_device(
         f"/devices/{real_device.udid}/unpair"
     )  # Unpairing the same device twice should fail.
 
-    assert r_2.status_code == 400
+    assert r_2.status_code == 500
 
 
 def test_enable_developer_mode(

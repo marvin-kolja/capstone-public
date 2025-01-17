@@ -81,68 +81,83 @@ def new_db_project(db, path_to_example_project):
     return project
 
 
-def test_list_projects(db, path_to_example_project, new_db_project):
+def test_list_projects(path_to_example_project, new_db_project, client):
     """
-    GIVEN: A database with a project
+    GIVEN: A project in the database
 
-    WHEN: list_projects is called
+    WHEN: GETing the `/projects` endpoint
 
-    THEN: It should return a list of projects with the project inside
+    THEN: The response should contain a list of projects with the project inside
     AND: The project should have the correct values
     """
-    projects = list_projects(session=db)
+    r = client.get("/projects")
+
+    assert r.status_code == 200
+
+    projects = r.json()
 
     assert len(projects) >= 1
 
     found = False
     for project in projects:
-        if project.path == path_to_example_project:
+        public_project = XcProjectPublic.model_validate(project)
+
+        if public_project.path == path_to_example_project:
             found = True
-            assert project == XcProjectPublic.model_validate(new_db_project)
+            assert public_project == XcProjectPublic.model_validate(new_db_project)
 
     assert found
 
 
-def test_read_project(db, path_to_example_project, new_db_project):
+def test_read_project(path_to_example_project, new_db_project, client):
     """
-    GIVEN: A database with a project
+    GIVEN: A project in the database
 
-    WHEN: read_project is called with the project id
+    WHEN: GETing the `/projects/{project_id}` endpoint
 
     THEN: It should return the requested project
     AND: The project should have the correct values
     """
-    project = read_project(session=db, project_id=new_db_project.id)
+    r = client.get(f"/projects/{new_db_project.id}")
+
+    assert r.status_code == 200
+
+    project = XcProjectPublic.model_validate(r.json())
 
     assert project == XcProjectPublic.model_validate(new_db_project)
 
 
-def test_read_project_not_found(db):
+def test_read_project_not_found(client):
     """
-    GIVEN: A database with no projects
+    GIVEN: No projects in the database
 
-    WHEN: read_project is called with a non-existing project id
+    WHEN: GETing the `/projects/{project_id}` endpoint with a non-existing project id
 
-    THEN: It should raise a 404 HTTPException
+    THEN: The response should be a 404
     """
-    with pytest.raises(HTTPException) as e:
-        read_project(session=db, project_id=uuid.uuid4())
-    assert e.value.status_code == 404
+    r = client.get(f"/projects/{uuid.uuid4()}")
+
+    assert r.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_add_project(db, path_to_example_project):
+async def test_add_project(db, path_to_example_project, client):
     """
     GIVEN: A project path
 
-    WHEN: add_project is called with the project path
+    WHEN: POSTing to the `/projects` endpoint with the project path
 
     THEN: It should add the project to the database
     AND: Return the project with the correct values
     """
-    public_project = await add_project(
-        session=db, project=XcProjectCreate(path=path_to_example_project)
+    r = client.post(
+        "/projects/",
+        json={"path": str(path_to_example_project)},
     )
+
+    assert r.status_code == 200
+
+    public_project = XcProjectPublic.model_validate(r.json())
 
     db_project = db.get(XcProject, public_project.id)
     assert db_project is not None
@@ -151,37 +166,44 @@ async def test_add_project(db, path_to_example_project):
 
 
 @pytest.mark.asyncio
-async def test_add_project_invalid_path(db):
+async def test_add_project_invalid_path(client):
     """
     GIVEN: An invalid project path
 
-    WHEN: add_project is called with the project path
+    WHEN: POSTing to the `/projects` endpoint with the project path
 
-    THEN: It should raise a 404 HTTPException
+    THEN: The response should be a 400
     """
-    with pytest.raises(HTTPException) as e:
-        await add_project(
-            session=db, project=XcProjectCreate(path=pathlib.Path(__file__))
-        )
-    assert e.value.status_code == 400
+    r = client.post(
+        "/projects/",
+        json={"path": str(pathlib.Path(__file__))},
+    )
+    assert r.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_refresh_project(db, new_db_project, path_to_example_project):
+async def test_refresh_project(db, new_db_project, path_to_example_project, client):
     """
     GIVEN: A project in the database
 
-    WHEN: refresh_project is called with the project id
+    WHEN: POSTing to the `/projects/{project_id}/refresh` endpoint
 
     THEN: It should return the project with the correct values
     AND: It should update the project in the database and its related entities
     """
     old_project = XcProjectPublic.model_validate(new_db_project)
 
-    refreshed_project = await refresh_project(session=db, project_id=new_db_project.id)
+    r = client.post(f"/projects/{new_db_project.id}/refresh")
+
+    assert r.status_code == 200
+
+    refreshed_project = XcProjectPublic.model_validate(r.json())
 
     assert refreshed_project != old_project
     assert_real_project_values(refreshed_project, path_to_example_project)
+
+    db.refresh(new_db_project)  # We need to refresh in order to get the latest db entry
+
     assert (
         XcProjectPublic.model_validate(db.get(XcProject, new_db_project.id))
         == refreshed_project
@@ -189,31 +211,35 @@ async def test_refresh_project(db, new_db_project, path_to_example_project):
 
 
 @pytest.mark.asyncio
-async def test_refresh_project_not_found(db):
+async def test_refresh_project_not_found(client):
     """
-    GIVEN: A database with no projects
+    GIVEN: No projects in the database
 
-    WHEN: refresh_project is called with a non-existing project id
+    WHEN: POSTing to the `/projects/{project_id}/refresh` endpoint with a non-existing project id
 
-    THEN: It should raise a 404 HTTPException
+    THEN: The response should be a 404
     """
-    with pytest.raises(HTTPException) as e:
-        await refresh_project(session=db, project_id=uuid.uuid4())
-    assert e.value.status_code == 404
+    r = client.post(f"/projects/{uuid.uuid4()}/refresh")
+
+    assert r.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_refresh_project_invalid_path(db, new_db_project):
+async def test_refresh_project_invalid_path(db, new_db_project, client):
     """
     GIVEN: A project in the database with a non-existing path
 
-    WHEN: refresh_project is called with the project id
+    WHEN: POSTing to the `/projects/{project_id}/refresh` endpoint
 
     THEN: It should return the project as is
     """
     new_db_project.path = pathlib.Path(__file__)
     db.commit()
 
-    refreshed_project = await refresh_project(session=db, project_id=new_db_project.id)
+    r = client.post(f"/projects/{new_db_project.id}/refresh")
+
+    assert r.status_code == 200
+
+    refreshed_project = XcProjectPublic.model_validate(r.json())
 
     assert refreshed_project == XcProjectPublic.model_validate(new_db_project)

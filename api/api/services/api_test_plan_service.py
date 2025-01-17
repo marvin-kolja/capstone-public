@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Optional
 
-from fastapi import HTTPException
+from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session, select
 
 from api.models import (
@@ -37,15 +37,18 @@ def create_test_plan(
 
 def read_test_plan(
     *, session: Session, test_plan_id: uuid.UUID
-) -> SessionTestPlanPublic:
-    db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
-    return SessionTestPlanPublic.model_validate(db_plan)
+) -> Optional[SessionTestPlan]:
+    db_plan = session.exec(
+        select(SessionTestPlan).where(SessionTestPlan.id == test_plan_id)
+    ).first()
+    if db_plan is None:
+        return None
+    return db_plan
 
 
 def update_test_plan(
-    *, session: Session, test_plan_id: uuid.UUID, plan: SessionTestPlanUpdate
+    *, session: Session, db_plan: SessionTestPlan, plan: SessionTestPlanUpdate
 ) -> SessionTestPlanPublic:
-    db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
     update_db_model(db_model=db_plan, new_data_model=plan)
     session.add(db_plan)
     session.commit()
@@ -53,17 +56,15 @@ def update_test_plan(
     return SessionTestPlanPublic.model_validate(db_plan)
 
 
-def delete_test_plan(*, session: Session, test_plan_id: uuid.UUID):
-    db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
+def delete_test_plan(*, session: Session, db_plan: SessionTestPlan):
     session.delete(db_plan)
     session.commit()
     return
 
 
 def create_test_plan_step(
-    *, session: Session, test_plan_id: uuid.UUID, step: SessionTestPlanStepCreate
+    *, session: Session, db_plan: SessionTestPlan, step: SessionTestPlanStepCreate
 ) -> SessionTestPlanStepPublic:
-    db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
     db_step = SessionTestPlanStep.model_validate(
         {
             **step.model_dump(),
@@ -81,13 +82,9 @@ def create_test_plan_step(
 def update_test_plan_step(
     *,
     session: Session,
-    test_plan_id: uuid.UUID,
-    step_id: uuid.UUID,
+    db_step: SessionTestPlanStep,
     step: SessionTestPlanStepUpdate,
 ) -> SessionTestPlanStepPublic:
-    db_step = _get_test_plan_step_or_raise(
-        session=session, test_plan_id=test_plan_id, step_id=step_id
-    )
     update_db_model(db_model=db_step, new_data_model=step)
     session.add(db_step)
     session.commit()
@@ -95,25 +92,27 @@ def update_test_plan_step(
     return SessionTestPlanStepPublic.model_validate(db_step)
 
 
-def delete_test_plan_step(
-    *, session: Session, test_plan_id: uuid.UUID, step_id: uuid.UUID
-):
-    db_step = _get_test_plan_step_or_raise(
-        session=session, test_plan_id=test_plan_id, step_id=step_id
-    )
+def delete_test_plan_step(*, session: Session, db_step: SessionTestPlanStep):
     session.delete(db_step)
     session.commit()
     return
 
 
 def reorder_test_plan_steps(
-    *, session: Session, test_plan_id: uuid.UUID, step_ids: list[uuid.UUID]
+    *, session: Session, db_plan: SessionTestPlan, step_ids: list[uuid.UUID]
 ):
+    """
+    Reorder the steps of a test plan based on the provided step ids.
+
+    The order of the steps is determined by the order of the step ids in the list.
+
+    The step ids must be unique and match the existing steps of the test plan.
+
+    :raises RequestValidationError: If the step ids contain duplicates or do not match the existing step ids
+    """
     if len(step_ids) != len(set(step_ids)):
         logger.error(f"Step ids contain duplicates: {step_ids}")
-        raise HTTPException(status_code=400, detail="Step ids contain duplicates")
-
-    db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
+        raise RequestValidationError("Step ids contain duplicates")
 
     existing_step_ids = [step.id for step in db_plan.steps]
 
@@ -121,7 +120,7 @@ def reorder_test_plan_steps(
         logger.error(
             f"Tried to reorder steps using {step_ids} but existing steps are {existing_step_ids}"
         )
-        raise HTTPException(status_code=400, detail="Step ids mismatch")
+        raise RequestValidationError("Step ids mismatch")
 
     # Assign temporary order to all steps to avoid unique constraint violation
     for db_step in db_plan.steps:
@@ -139,18 +138,7 @@ def reorder_test_plan_steps(
     return
 
 
-def _get_test_plan_or_raise(
-    *, session: Session, test_plan_id: uuid.UUID
-) -> SessionTestPlan:
-    plan = session.exec(
-        select(SessionTestPlan).where(SessionTestPlan.id == test_plan_id)
-    ).first()
-    if plan is None:
-        raise HTTPException(status_code=404, detail="Test plan not found")
-    return plan
-
-
-def _get_test_plan_step(
+def read_test_plan_step(
     *, session: Session, test_plan_id: uuid.UUID, step_id: uuid.UUID
 ) -> Optional[SessionTestPlanStep]:
     return session.exec(
@@ -158,14 +146,3 @@ def _get_test_plan_step(
         .where(SessionTestPlanStep.id == step_id)
         .where(SessionTestPlanStep.test_plan_id == test_plan_id)
     ).first()
-
-
-def _get_test_plan_step_or_raise(
-    *, session: Session, test_plan_id: uuid.UUID, step_id: uuid.UUID
-) -> SessionTestPlanStep:
-    step = _get_test_plan_step(
-        session=session, test_plan_id=test_plan_id, step_id=step_id
-    )
-    if step is None:
-        raise HTTPException(status_code=404, detail="Step not found")
-    return step
