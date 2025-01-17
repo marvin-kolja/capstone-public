@@ -52,8 +52,6 @@ class AppBuilder:
     def __init__(self, xc_project: XcProject):
         """
         :param xc_project: The xcode project to build on.
-        :raises FileNotFoundError: when the path does not exist.
-        :raises ValueError: when the path does not end with .xcodeproj.
         """
         self.xc_project: XcProject = xc_project
 
