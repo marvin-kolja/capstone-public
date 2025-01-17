@@ -13,7 +13,12 @@ from api.models import (
     XcProjectPublic,
     XcProjectCreate,
 )
-from api.services.project_service import list_projects, read_project, add_project
+from api.services.project_service import (
+    list_projects,
+    read_project,
+    add_project,
+    refresh_project,
+)
 
 
 def check_lists_equal(list_1: list, list_2: list) -> bool:
@@ -23,6 +28,32 @@ def check_lists_equal(list_1: list, list_2: list) -> bool:
     Copied from: https://safjan.com/pytest-check-lists-equal/
     """
     return len(list_1) == len(list_2) and sorted(list_1) == sorted(list_2)
+
+
+def assert_real_project_values(
+    project: XcProjectPublic, path_to_example_project: pathlib.Path
+):
+    """
+    Assert the values of a public project object are correct and align with the example project in the roots misc
+    folder.
+
+    If the example project changes, the values in this function should be updated.
+    """
+    assert project.name == "RP Swift"
+    assert project.path == path_to_example_project
+    scheme_names = [scheme.name for scheme in project.schemes]
+    assert check_lists_equal(scheme_names, ["Release", "RP Swift"])
+    target_names = [target.name for target in project.targets]
+    assert check_lists_equal(target_names, ["RP Swift", "RP SwiftUITests"])
+    configuration_names = [
+        configuration.name for configuration in project.configurations
+    ]
+    assert check_lists_equal(configuration_names, ["Debug", "Release"])
+    for scheme in project.schemes:
+        xc_test_plan_names = [
+            xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
+        ]
+        assert check_lists_equal(xc_test_plan_names, ["RP Swift"])
 
 
 @pytest.fixture
@@ -116,21 +147,7 @@ async def test_add_project(db, path_to_example_project):
     db_project = db.get(XcProject, public_project.id)
     assert db_project is not None
 
-    assert public_project.name == "RP Swift"
-    assert public_project.path == path_to_example_project
-    scheme_names = [scheme.name for scheme in public_project.schemes]
-    assert check_lists_equal(scheme_names, ["Release", "RP Swift"])
-    target_names = [target.name for target in public_project.targets]
-    assert check_lists_equal(target_names, ["RP Swift", "RP SwiftUITests"])
-    configuration_names = [
-        configuration.name for configuration in public_project.configurations
-    ]
-    assert check_lists_equal(configuration_names, ["Debug", "Release"])
-    for scheme in public_project.schemes:
-        xc_test_plan_names = [
-            xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
-        ]
-        assert check_lists_equal(xc_test_plan_names, ["RP Swift"])
+    assert_real_project_values(public_project, path_to_example_project)
 
 
 @pytest.mark.asyncio
@@ -147,3 +164,56 @@ async def test_add_project_invalid_path(db):
             session=db, project=XcProjectCreate(path=pathlib.Path(__file__))
         )
     assert e.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_refresh_project(db, new_db_project, path_to_example_project):
+    """
+    GIVEN: A project in the database
+
+    WHEN: refresh_project is called with the project id
+
+    THEN: It should return the project with the correct values
+    AND: It should update the project in the database and its related entities
+    """
+    old_project = XcProjectPublic.model_validate(new_db_project)
+
+    refreshed_project = await refresh_project(session=db, project_id=new_db_project.id)
+
+    assert refreshed_project != old_project
+    assert_real_project_values(refreshed_project, path_to_example_project)
+    assert (
+        XcProjectPublic.model_validate(db.get(XcProject, new_db_project.id))
+        == refreshed_project
+    )
+
+
+@pytest.mark.asyncio
+async def test_refresh_project_not_found(db):
+    """
+    GIVEN: A database with no projects
+
+    WHEN: refresh_project is called with a non-existing project id
+
+    THEN: It should raise a 404 HTTPException
+    """
+    with pytest.raises(HTTPException) as e:
+        await refresh_project(session=db, project_id=uuid.uuid4())
+    assert e.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_refresh_project_invalid_path(db, new_db_project):
+    """
+    GIVEN: A project in the database with a non-existing path
+
+    WHEN: refresh_project is called with the project id
+
+    THEN: It should return the project as is
+    """
+    new_db_project.path = pathlib.Path(__file__)
+    db.commit()
+
+    refreshed_project = await refresh_project(session=db, project_id=new_db_project.id)
+
+    assert refreshed_project == XcProjectPublic.model_validate(new_db_project)

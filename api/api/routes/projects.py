@@ -44,7 +44,7 @@ async def refresh_project(
     """
     Refreshes the data of a project.
     """
-    return project_service.refresh_project(session=session, project_id=project_id)
+    return await project_service.refresh_project(session=session, project_id=project_id)
 
 
 @router.get("/{project_id}/builds")

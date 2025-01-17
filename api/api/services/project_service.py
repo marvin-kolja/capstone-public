@@ -50,14 +50,37 @@ def read_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPublic:
     return XcProjectPublic.model_validate(db_project)
 
 
-def refresh_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPublic:
+async def refresh_project(
+    *, session: Session, project_id: uuid.UUID
+) -> XcProjectPublic:
     # 1. Get project from DB
     # 2. List configurations, schemes, targets
     # 3. List xc test plans for each scheme
     # 4. Update information in DB
     #
     # Is very similar to add_project, so we can reuse the code
-    raise NotImplementedError
+    db_project = session.exec(
+        select(XcProject).where(XcProject.id == project_id)
+    ).first()
+
+    if db_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        core_project = core_xc_project.XcProject(db_project.path.resolve().as_posix())
+    except ValueError:
+        # If the path isn't valid anymore, we can't refresh the project. Thus, we simply return the project as is.
+        # TODO: We could also mark the project as invalid and allow the user to fix the path.
+        return XcProjectPublic.model_validate(db_project)
+
+    await sync_db_project(
+        session=session, db_project=db_project, xc_project=core_project
+    )
+
+    session.commit()
+    session.refresh(db_project)
+
+    return XcProjectPublic.model_validate(db_project)
 
 
 _ProjectResource = TypeVar(
