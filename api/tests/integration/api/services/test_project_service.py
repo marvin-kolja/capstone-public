@@ -119,18 +119,18 @@ async def test_add_project(db, path_to_example_project):
     assert public_project.name == "RP Swift"
     assert public_project.path == path_to_example_project
     scheme_names = [scheme.name for scheme in public_project.schemes]
-    check_lists_equal(scheme_names, ["Release", "RP Swift"])
+    assert check_lists_equal(scheme_names, ["Release", "RP Swift"])
     target_names = [target.name for target in public_project.targets]
-    check_lists_equal(target_names, ["RP Swift"])
+    assert check_lists_equal(target_names, ["RP Swift", "RP SwiftUITests"])
     configuration_names = [
         configuration.name for configuration in public_project.configurations
     ]
-    check_lists_equal(configuration_names, ["Debug", "Release"])
+    assert check_lists_equal(configuration_names, ["Debug", "Release"])
     for scheme in public_project.schemes:
         xc_test_plan_names = [
             xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
         ]
-        check_lists_equal(xc_test_plan_names, ["RP Swift"])
+        assert check_lists_equal(xc_test_plan_names, ["RP Swift"])
 
 
 @pytest.mark.asyncio
