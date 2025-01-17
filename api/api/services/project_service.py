@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, TypeVar
 
 from fastapi import HTTPException
 from sqlmodel import Session, select
@@ -12,7 +12,6 @@ from api.models import (
     XcProjectTarget,
     XcProjectScheme,
     XcProjectTestPlan,
-    XcProjectResourceModel,
 )
 from core.xc import xc_project as core_xc_project
 
@@ -61,15 +60,24 @@ def refresh_project(*, session: Session, project_id: uuid.UUID) -> XcProjectPubl
     raise NotImplementedError
 
 
+_ProjectResource = TypeVar(
+    "_ProjectResource",
+    XcProjectConfiguration,
+    XcProjectTarget,
+    XcProjectScheme,
+    XcProjectTestPlan,
+)
+
+
 def sync_project_resources(
     *,
     session: Session,
-    db_items: list[XcProjectResourceModel],
+    db_items: list[_ProjectResource],
     new_item_names: list[str],
     project_id: uuid.UUID,
-    model_class: type[XcProjectResourceModel],
+    model_class: type[_ProjectResource],
     additional_fields: Optional[dict] = None,
-):
+) -> list[_ProjectResource]:
     """
     Synchronizes the resources of a project with the new items.
 
@@ -91,13 +99,19 @@ def sync_project_resources(
     :param project_id: The ID of the project that the items belong to
     :param model_class: The model class to use for new items
     :param additional_fields: Additional fields that should be set for the new items
+
+    :return: The new list of db items
     """
     existing_item_names = [item.name for item in db_items]
+    result = []
 
     for db_item in db_items:
         # Remove items that are not in the new items anymore
         if db_item.name not in new_item_names:
             session.delete(db_item)
+        else:
+            # Still exists, add to the result list
+            result.append(db_item)  # Add to the new list
 
     for new_item_name in new_item_names:
         # Add new items
@@ -108,6 +122,9 @@ def sync_project_resources(
                 **(additional_fields if additional_fields else {}),
             )
             session.add(db_item)
+            result.append(db_item)  # Add to the new list
+
+    return result
 
 
 async def sync_db_project(
@@ -148,7 +165,7 @@ async def sync_db_project(
         project_id=db_project.id,
         model_class=XcProjectTarget,
     )
-    sync_project_resources(
+    db_schemes = sync_project_resources(
         session=session,
         db_items=db_project.schemes,
         new_item_names=project_details.schemes,
@@ -156,7 +173,7 @@ async def sync_db_project(
         model_class=XcProjectScheme,
     )
 
-    for db_scheme in db_project.schemes:
+    for db_scheme in db_schemes:
         xc_test_plans = await xc_project.xcode_test_plans(scheme=db_scheme.name)
 
         sync_project_resources(

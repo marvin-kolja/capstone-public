@@ -93,7 +93,7 @@ def test_sync_resources(
         overlaps
     )  # Calculate how many resources need to be created
 
-    sync_project_resources(
+    return_value = sync_project_resources(
         session=db_session_mock,
         db_items=project_resources,
         new_item_names=new_project_resources,
@@ -104,6 +104,8 @@ def test_sync_resources(
 
     assert db_session_mock.add.call_count == count_of_new
     assert db_session_mock.delete.call_count == count_of_deleted
+
+    assert len(return_value) == len(new_project_resources)
 
     for _call in db_session_mock.add.call_args_list:
         db_model = _call.args[0]
@@ -159,6 +161,23 @@ async def test_sync_db_project():
         core_xc_project_mock.xcode_test_plans.return_value = [
             MagicMock(spec=str),
             MagicMock(spec=str),
+        ]
+
+        sync_project_resources_mock.side_effect = [
+            [MagicMock(spec=XcProjectConfiguration)],  # First call
+            [MagicMock(spec=XcProjectTarget)],  # Second call
+            [
+                MagicMock(spec=XcProjectScheme),
+                MagicMock(spec=XcProjectScheme),
+            ],  # Third call
+            [
+                MagicMock(spec=XcProjectTestPlan),
+                MagicMock(spec=XcProjectTestPlan),
+            ],  # Fourth call
+            [
+                MagicMock(spec=XcProjectTestPlan),
+                MagicMock(spec=XcProjectTestPlan),
+            ],  # Fifth call
         ]
 
         await sync_db_project(
