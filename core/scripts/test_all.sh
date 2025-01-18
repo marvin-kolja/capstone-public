@@ -13,7 +13,6 @@ while [[ "$#" -gt 0 ]]; do
         -h|--help) echo "Usage: $0 [-v] [-u] [-i] [--device]"; exit 0 ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
-    shift
 done
 
 OPTIONS=()
