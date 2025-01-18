@@ -153,8 +153,3 @@ def test_start_build(
 
         assert new_db_fake_build.status == "pending"
         assert new_db_fake_build.xctestrun_path is None
-
-
-@pytest.mark.xfail(reason="Function is not implemented yet")
-def test_build_project_job():
-    _build_project_job()

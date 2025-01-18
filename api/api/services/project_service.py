@@ -4,6 +4,8 @@ import uuid
 from typing import Optional, TypeVar
 
 from core.xc.app_builder import AppBuilder
+from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.xctest import Xctest
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
@@ -248,7 +250,79 @@ async def _build_project_job(
     db_build: Build,
     output_dir: str,
 ):
-    raise NotImplementedError
+    logger.info(f"Starting build for project '{db_build.project_id}'")
+
+    destination = IOSDestination(id=db_build.device_id)
+
+    logger.debug(f"Setting build status to 'running' for build '{db_build.id}'")
+
+    db_build.status = "running"
+    session.add(db_build)
+    session.commit()
+
+    logger.debug(f"Starting build for testing for project '{db_build.project_id}'")
+
+    try:
+        build_for_testing_result = await app_builder.build_for_testing(
+            configuration=db_build.configuration,
+            scheme=db_build.scheme,
+            destination=destination,
+            test_plan=db_build.test_plan,
+            output_dir=output_dir,
+            clean=True,  # Always clean the build directory
+        )
+
+        logger.debug(
+            f"Build for testing for project '{db_build.project_id}' finished successfully"
+        )
+
+        logger.debug(
+            f"Parsing xctestrun file '{build_for_testing_result.xctestrun_path}'"
+        )
+        xctestrun = Xctest.parse_xctestrun(build_for_testing_result.xctestrun_path)
+
+        logger.debug(f"Setting xctestrun path for build '{db_build.id}'")
+        db_build.xctestrun_path = pathlib.Path(build_for_testing_result.xctestrun_path)
+        session.add(db_build)
+        session.commit()
+
+        requires_normal_build = False
+        # Usually, the app that is tested is built when building for testing, as it is set as a Target Dependency in the
+        # Build Phases of the Test Target. However, we don't know what the developer has done in the project, so we
+        # check if the app exists in the derived data directory. If it doesn't, we perform another build.
+
+        for test_configuration in xctestrun.TestConfigurations:
+            for test_target in test_configuration.TestTargets:
+                if not pathlib.Path(test_target.app_path).exists():
+                    requires_normal_build = True
+                    break
+
+        if requires_normal_build:
+            logger.debug(
+                f"Normal build required for project '{db_build.project_id}', starting..."
+            )
+            await app_builder.build(
+                configuration=db_build.configuration,
+                scheme=db_build.scheme,
+                destination=destination,
+                output_dir=output_dir,
+                clean=False,  # Don't clean the build directory, as it was already cleaned in the build for testing step
+            )
+
+        logger.debug(
+            f"Normal build for project '{db_build.project_id}' finished successfully"
+        )
+
+        db_build.status = "success"
+        session.add(db_build)
+        session.commit()
+
+        logger.info(f"Build for project '{db_build.project_id}' finished successfully")
+    except Exception as e:
+        logger.error(f"Build for project '{db_build.project_id}' failed", exc_info=e)
+        db_build.status = "failure"
+        session.add(db_build)
+        session.commit()
 
 
 _ProjectResource = TypeVar(

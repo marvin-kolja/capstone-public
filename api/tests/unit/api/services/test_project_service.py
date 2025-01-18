@@ -1,8 +1,13 @@
+import pathlib
 import random
 import uuid
-from unittest.mock import MagicMock, patch, AsyncMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock, call
 
 import pytest
+from core.xc.app_builder import AppBuilder
+from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.xctestrun import Xctestrun, XcTestConfiguration, XcTestTarget
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session
 
@@ -14,11 +19,13 @@ from api.models import (
     XcProjectTarget,
     XcProject,
     StartBuildRequest,
+    Build,
 )
 from api.services.project_service import (
     sync_project_resources,
     sync_db_project,
     validate_build_request,
+    _build_project_job,
 )
 from core.xc import xc_project as core_xc_project
 
@@ -259,3 +266,135 @@ def test_validate_build_request(
         assert e.value.errors() == [expected_error]
     else:
         validate_build_request(db_project=build, build_request=build_request)
+
+
+@pytest.mark.parametrize(
+    "app_path_exists_after_first_build",
+    [
+        True,
+        False,
+    ],
+)
+@pytest.mark.asyncio
+async def test_build_project_job(random_device_id, app_path_exists_after_first_build):
+    """
+    GIVEN: A mocked db session
+    AND: A mocked AppBuilder from `core`
+    AND: A mocked Build model instance
+    AND: A mocked `Xctest.parse_xctestrun` method
+
+    WHEN: _build_project_job is called
+
+    THEN: The app_builder.build_for_testing is called with the correct parameters
+    AND: The app_builder.build is called with the correct parameters if required
+    """
+    db_session_mock = MagicMock(spec=Session)
+    app_builder_mock = MagicMock(spec=AppBuilder)
+
+    build_mock = MagicMock(spec=Build)
+    status_value_mock = PropertyMock()
+    type(build_mock).status = status_value_mock
+    xctestrun_path_value_mock = PropertyMock()
+    type(build_mock).xctestrun_path = xctestrun_path_value_mock
+    build_mock.test_plan = "test_plan"
+    build_mock.device_id = random_device_id
+    build_mock.configuration = "configuration"
+    build_mock.scheme = "scheme"
+
+    xctestrun_mock = MagicMock(spec=Xctestrun)
+    test_target_mock = MagicMock(spec=XcTestTarget)
+    test_target_mock.app_path = "/app_path"
+    test_configuration_mock = MagicMock(spec=XcTestConfiguration)
+    test_configuration_mock.TestTargets = [test_target_mock]
+    xctestrun_mock.TestConfigurations = [test_configuration_mock]
+
+    with patch("api.services.project_service.Xctest") as xctest_mock, patch.object(
+        Path, "exists"
+    ) as path_exists_mock:
+        xctest_mock.parse_xctestrun.return_value = xctestrun_mock
+        path_exists_mock.return_value = app_path_exists_after_first_build
+
+        await _build_project_job(
+            session=db_session_mock,
+            app_builder=app_builder_mock,
+            db_build=build_mock,
+            output_dir="output_dir",
+        )
+
+        app_builder_mock.build_for_testing.assert_awaited_once_with(
+            configuration=build_mock.configuration,
+            scheme=build_mock.scheme,
+            destination=IOSDestination(id=build_mock.device_id),
+            test_plan=build_mock.test_plan,
+            output_dir="output_dir",
+            clean=True,
+        )
+
+        if not app_path_exists_after_first_build:
+            app_builder_mock.build.assert_awaited_once_with(
+                configuration=build_mock.configuration,
+                scheme=build_mock.scheme,
+                destination=IOSDestination(id=build_mock.device_id),
+                output_dir="output_dir",
+                clean=False,
+            )
+
+        status_value_mock.assert_has_calls(
+            [
+                call("running"),
+                call("success"),
+            ]
+        )
+        xctestrun_path_value_mock.assert_has_calls(
+            [
+                call(
+                    pathlib.Path(
+                        app_builder_mock.build_for_testing.return_value.xctestrun_path
+                    )
+                ),
+            ]
+        )
+
+        # 1 for start, 1 for adding xctestrun, 1 for adding build
+        assert db_session_mock.add.call_count == 3
+        assert db_session_mock.commit.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_build_project_job_failure(random_device_id):
+    """
+    GIVEN: A mocked db session
+    AND: A mocked AppBuilder from `core`
+    AND: A mocked Build model instance
+
+    WHEN: _build_project_job is called and the build_for_testing fails
+
+    THEN: The db build entry should have a failed status
+    """
+    db_session_mock = MagicMock(spec=Session)
+    app_builder_mock = MagicMock(spec=AppBuilder)
+
+    build_mock = MagicMock(spec=Build)
+    status_mock = PropertyMock()
+    type(build_mock).status = status_mock
+    build_mock.device_id = random_device_id
+
+    app_builder_mock.build_for_testing.side_effect = Exception("Failed to build")
+
+    await _build_project_job(
+        session=db_session_mock,
+        app_builder=app_builder_mock,
+        db_build=build_mock,
+        output_dir="output_dir",
+    )
+
+    status_mock.assert_has_calls(
+        [
+            call("running"),
+            call("failure"),
+        ]
+    )
+
+    # 1 for start, 1 for failure
+    assert db_session_mock.add.call_count == 2
+    assert db_session_mock.commit.call_count == 2
