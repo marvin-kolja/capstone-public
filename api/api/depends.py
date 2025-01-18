@@ -5,6 +5,7 @@ from fastapi import Depends
 from sqlalchemy import text
 from sqlmodel import Session
 
+from api.async_jobs import AsyncJobRunner
 from api.db import engine
 
 
@@ -26,3 +27,12 @@ def get_device_manager() -> IDeviceManager:
 
 
 DeviceManagerDep = Annotated[IDeviceManager, Depends(get_device_manager)]
+
+async_job_runner = AsyncJobRunner()
+
+
+def get_job_runner() -> AsyncJobRunner:
+    return async_job_runner
+
+
+AsyncJobRunnerDep = Annotated[AsyncJobRunner, Depends(get_job_runner)]

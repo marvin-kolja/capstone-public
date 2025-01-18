@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, APIRouter
 from fastapi.routing import APIRoute
 
 from api.config import settings
+from api.depends import async_job_runner
 from api.routes import (
     devices,
     api_test_plans,
@@ -23,7 +26,16 @@ api_router.include_router(execution_plans.router)
 api_router.include_router(api_test_session.router)
 
 
-app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        async_job_runner.start_scheduler()
+        yield
+    finally:
+        async_job_runner.shutdown_scheduler()
+
+
+app = FastAPI(generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan)
 app.include_router(api_router)
 
 if __name__ == "__main__":
