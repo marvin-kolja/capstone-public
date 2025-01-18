@@ -5,7 +5,7 @@ import pytest
 
 from core.xc.app_builder import AppBuilder
 from core.subprocess import Process
-from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.commands.xcodebuild_command import IOSDestination, XcodebuildBuildCommand
 from core.xc.xc_project import XcProject
 
 
@@ -18,7 +18,14 @@ def mock_xc_project():
 
 class TestAppBuilder:
     @pytest.mark.asyncio
-    async def test_build(self, mock_xc_project):
+    @pytest.mark.parametrize(
+        "clean",
+        [
+            True,
+            False,
+        ],
+    )
+    async def test_build(self, mock_xc_project, clean):
         """
         GIVEN: An XcProject
 
@@ -31,8 +38,13 @@ class TestAppBuilder:
         configuration = "config1"
         destination = MagicMock(spec=IOSDestination)
         output_dir = "/tmp/output"
+        expected_actions = ["build"]
+        if clean:
+            expected_actions.insert(0, "clean")
 
-        with patch("core.subprocess.Process") as mock_process:
+        with patch("core.subprocess.Process") as mock_process, patch(
+            "core.xc.app_builder.XcodebuildBuildCommand"
+        ) as mock_xcodebuild_build_command:
             mock_process_instance = MagicMock(spec=Process)
             mock_process_instance.failed = False
             mock_process_instance.execute.return_value = None
@@ -44,9 +56,17 @@ class TestAppBuilder:
                 configuration=configuration,
                 destination=destination,
                 output_dir=output_dir,
+                clean=clean,
             )
 
-            mock_process_instance.execute.assert_awaited_once()
+            mock_xcodebuild_build_command.assert_called_once_with(
+                actions=expected_actions,
+                project=mock_xc_project.path_to_project,
+                scheme=scheme,
+                configuration=configuration,
+                destination=destination,
+                derived_data_path=output_dir,
+            )
             mock_process_instance.wait.assert_awaited()
 
             assert result.build_dir == "/tmp/output/Build"
@@ -56,7 +76,14 @@ class TestAppBuilder:
             assert result.scheme == scheme
 
     @pytest.mark.asyncio
-    async def test_build_for_testing(self, mock_xc_project):
+    @pytest.mark.parametrize(
+        "clean",
+        [
+            True,
+            False,
+        ],
+    )
+    async def test_build_for_testing(self, mock_xc_project, clean):
         """
         GIVEN: An XcProject
 
@@ -70,10 +97,15 @@ class TestAppBuilder:
         destination = MagicMock(spec=IOSDestination)
         output_dir = "/tmp/output"
         test_plan = "testPlan1"
+        expected_actions = ["build-for-testing"]
+        if clean:
+            expected_actions.insert(0, "clean")
 
         with patch("core.subprocess.Process") as mock_process, patch.object(
             app_builder, "xctestrun_file"
-        ) as mock_xctestrun_file:
+        ) as mock_xctestrun_file, patch(
+            "core.xc.app_builder.XcodebuildBuildCommand"
+        ) as mock_xcodebuild_build_command:
             mock_process_instance = MagicMock(spec=Process)
             mock_process_instance.failed = False
             mock_process_instance.execute.return_value = None
@@ -90,10 +122,20 @@ class TestAppBuilder:
                 destination=destination,
                 output_dir=output_dir,
                 test_plan=test_plan,
+                clean=clean,
             )
 
             mock_xctestrun_file.assert_called_once_with(output_dir, scheme, test_plan)
 
+            mock_xcodebuild_build_command.assert_called_once_with(
+                actions=expected_actions,
+                project=mock_xc_project.path_to_project,
+                scheme=scheme,
+                configuration=configuration,
+                destination=destination,
+                derived_data_path=output_dir,
+                test_plan=test_plan,
+            )
             mock_process_instance.execute.assert_awaited_once()
             mock_process_instance.wait.assert_awaited()
 

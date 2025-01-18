@@ -324,7 +324,15 @@ class TestXcodebuildTestEnumerationCommand:
 
 
 class TestXcodebuildBuildCommand:
-    @pytest.mark.parametrize("action", ["build", "build-for-testing"])
+    @pytest.mark.parametrize(
+        "actions",
+        [
+            ["build"],
+            ["build-for-testing"],
+            ["clean", "build"],
+            ["clean", "build-for-testing"],
+        ],
+    )
     @pytest.mark.parametrize(
         "workspace,project",
         [
@@ -332,7 +340,9 @@ class TestXcodebuildBuildCommand:
             [None, "/tmp/project"],
         ],
     )
-    def test_parse_returns_correct_command(self, action, workspace, project, fake_udid):
+    def test_parse_returns_correct_command(
+        self, actions, workspace, project, fake_udid
+    ):
         """
         GIVEN: A `XcodebuildBuildCommand` with correct arguments
 
@@ -342,11 +352,11 @@ class TestXcodebuildBuildCommand:
         """
         expected_command = [
             "xcodebuild",
-            action,
+            *actions,
             "-workspace" if workspace else "-project",
             workspace if workspace else project,
         ]
-        if action == "build-for-testing":
+        if "build-for-testing" in actions:
             expected_command.extend(["-testPlan", "Test Plan Name"])
 
         expected_command.extend(
@@ -368,12 +378,12 @@ class TestXcodebuildBuildCommand:
         )
 
         command = XcodebuildBuildCommand(
-            actions=[action],
+            actions=actions,
             workspace=workspace,
             project=project,
             scheme="Some Scheme",
             configuration="Some Configuration",
-            test_plan="Test Plan Name" if action == "build-for-testing" else None,
+            test_plan="Test Plan Name" if "build-for-testing" in actions else None,
             destination=IOSDestination(id=fake_udid),
             derived_data_path="/tmp/derived_data",
         )

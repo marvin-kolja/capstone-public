@@ -392,7 +392,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
 
     def __init__(
         self,
-        actions: list[Literal["build", "build-for-testing"]],
+        actions: list[Literal["clean", "build", "build-for-testing"]],
         scheme: str,
         configuration: str,
         destination: IOSDestination,
@@ -402,7 +402,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         test_plan: Optional[str] = None,
     ):
         for action in actions:
-            if action not in ["build", "build-for-testing"]:
+            if action not in ["clean", "build", "build-for-testing"]:
                 raise CommandError(
                     f"Invalid action: {action}, must be one of ['build', 'build-for-testing']"
                 )

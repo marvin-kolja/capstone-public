@@ -1,5 +1,6 @@
 import logging
 import pathlib
+from typing import Optional, Literal
 
 from pydantic import BaseModel
 
@@ -61,12 +62,23 @@ class AppBuilder:
         configuration: str,
         destination: IOSDestination,
         output_dir: str,
+        clean: Optional[bool] = False,
     ) -> XcodeBuildArtefacts:
         """
         Builds the application of the given xcode project
+
+        :param scheme: The scheme to build.
+        :param configuration: The configuration to build.
+        :param destination: The destination to build for.
+        :param output_dir: The directory to store the build artifacts.
+        :param clean: Whether to clean the build directory before building. Default is False.
         """
+        actions: list[Literal["clean", "build"]] = ["build"]
+        if clean:
+            actions.insert(0, "clean")
+
         command = XcodebuildBuildCommand(
-            actions=["build"],
+            actions=actions,
             project=self.xc_project.path_to_project,
             scheme=scheme,
             configuration=configuration,
@@ -99,12 +111,24 @@ class AppBuilder:
         destination: IOSDestination,
         test_plan: str,
         output_dir: str,
+        clean: Optional[bool] = False,
     ) -> XcodeTestBuildArtefacts:
         """
         Build xcode project for testing
+
+        :param scheme: The scheme to build.
+        :param configuration: The configuration to build.
+        :param destination: The destination to build for.
+        :param test_plan: The xcode test plan to use.
+        :param output_dir: The directory to store the build artifacts.
+        :param clean: Whether to clean the build directory before building. Default is False.
         """
+        actions: list[Literal["clean", "build-for-testing"]] = ["build-for-testing"]
+        if clean:
+            actions.insert(0, "clean")
+
         command = XcodebuildBuildCommand(
-            actions=["build-for-testing"],
+            actions=actions,
             project=self.xc_project.path_to_project,
             scheme=scheme,
             configuration=configuration,
