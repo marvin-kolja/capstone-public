@@ -275,3 +275,44 @@ def test_list_builds(db, new_db_project, client, new_db_fake_device):
             assert public_build == BuildPublic.model_validate(db_build)
 
     assert found
+
+
+def test_read_build(db, new_db_project, client, new_db_fake_device):
+    """
+    GIVEN: A project and a build in the database
+
+    WHEN: GETing the `/projects/{project_id}/builds/{build_id}` endpoint
+
+    THEN: The response should contain the build
+    AND: The build should have the correct values
+    """
+    db_build = Build(
+        scheme="Release",
+        configuration="Release",
+        test_plan="RP Swift",
+        project_id=new_db_project.id,
+        device_id=new_db_fake_device.id,
+    )
+    db.add(db_build)
+    db.commit()
+
+    r = client.get(f"/projects/{new_db_project.id}/builds/{db_build.id}")
+
+    assert r.status_code == 200
+
+    public_build = BuildPublic.model_validate(r.json())
+
+    assert public_build == BuildPublic.model_validate(db_build)
+
+
+def test_read_build_not_found(client, new_db_project):
+    """
+    GIVEN: No matching builds in the database
+
+    WHEN: GETing the `/projects/{project_id}/builds/{build_id}` endpoint with a non-existing build id
+
+    THEN: The response should be a 404
+    """
+    r = client.get(f"/projects/{new_db_project.id}/builds/{uuid.uuid4()}")
+
+    assert r.status_code == 404

@@ -3,6 +3,7 @@ import pathlib
 import uuid
 from typing import Optional, TypeVar
 
+from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
 from api.models import (
@@ -86,6 +87,22 @@ def list_builds(*, session: Session, project_id: uuid.UUID) -> list[BuildPublic]
     db_builds = session.exec(select(Build).where(Build.project_id == project_id)).all()
     logger.debug(f"Found {len(db_builds)} builds for project '{project_id}'")
     return [BuildPublic.model_validate(build) for build in db_builds]
+
+
+def read_build(
+    *, session: Session, project_id: uuid.UUID, build_id: uuid.UUID
+) -> Optional[Build]:
+    try:
+        db_build = session.exec(
+            select(Build)
+            .where(Build.id == build_id)
+            .where(Build.project_id == project_id)
+        ).one()
+        logger.debug(f"Found build '{build_id}' for project '{project_id}'")
+        return db_build
+    except NoResultFound:
+        logger.debug(f"Build '{build_id}' not found for project '{project_id}'")
+        return None
 
 
 _ProjectResource = TypeVar(

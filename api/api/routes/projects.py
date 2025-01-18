@@ -94,10 +94,18 @@ async def start_build(project_id: str):
 
 
 @router.get("/{project_id}/builds/{build_id}")
-async def read_build(project_id: str, build_id: str):
+async def read_build(
+    *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID
+) -> BuildPublic:
     """
     Get the details of a build.
     """
+    db_build = project_service.read_build(
+        session=session, project_id=project_id, build_id=build_id
+    )
+    if db_build is None:
+        raise HTTPException(status_code=404, detail="Build not found")
+    return db_build
 
 
 @router.get("/{project_id}/builds/{build_id}/update-stream")
