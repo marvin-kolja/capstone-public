@@ -3,9 +3,13 @@ import pathlib
 import uuid
 from typing import Optional, TypeVar
 
+from core.xc.app_builder import AppBuilder
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
+from api.async_jobs import AsyncJobRunner
+from api.config import settings
 from api.models import (
     XcProjectPublic,
     XcProject,
@@ -15,6 +19,7 @@ from api.models import (
     XcProjectTestPlan,
     Build,
     BuildPublic,
+    StartBuildRequest,
 )
 from core.xc import xc_project as core_xc_project
 
@@ -103,6 +108,147 @@ def read_build(
     except NoResultFound:
         logger.debug(f"Build '{build_id}' not found for project '{project_id}'")
         return None
+
+
+def validate_build_request(
+    *,
+    db_project: XcProject,
+    build_request: StartBuildRequest,
+):
+    """
+    Makes sure that the build request is valid for the project. Checks scheme, configuration, and test plan.
+
+    :raises RequestValidationError: If the build request is invalid
+    """
+    if build_request.scheme not in [scheme.name for scheme in db_project.schemes]:
+        raise RequestValidationError(
+            errors=[{"loc": ["scheme"], "msg": "Invalid scheme"}]
+        )
+
+    if build_request.configuration not in [
+        configuration.name for configuration in db_project.configurations
+    ]:
+        raise RequestValidationError(
+            errors=[{"loc": ["configuration"], "msg": "Invalid configuration"}]
+        )
+
+    scheme = next(
+        scheme for scheme in db_project.schemes if scheme.name == build_request.scheme
+    )
+
+    if build_request.test_plan not in [
+        xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
+    ]:
+        raise RequestValidationError(
+            errors=[{"loc": ["test_plan"], "msg": "Invalid test plan"}]
+        )
+
+
+def get_build_job_id(*, db_build: Build) -> str:
+    """
+    Creates an id from the project id and the build request data.
+
+    The values are joined with a dash: `project_id-device_id-scheme-configuration-test_plan`.
+
+    :param db_build: The build for which the job id should be created
+    :return: The job id as string
+    """
+    return "-".join(
+        [
+            db_build.project_id.hex,
+            db_build.device_id,
+            db_build.scheme,
+            db_build.configuration,
+            db_build.test_plan,
+        ]
+    )
+
+
+def get_unique_build(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    build_request: StartBuildRequest,
+) -> Optional[Build]:
+    try:
+        return session.exec(
+            select(Build)
+            .where(Build.project_id == project_id)
+            .where(Build.device_id == build_request.device_id)
+            .where(Build.scheme == build_request.scheme)
+            .where(Build.configuration == build_request.configuration)
+            .where(Build.test_plan == build_request.test_plan)
+        ).one()
+    except NoResultFound:
+        return None
+
+
+def create_build(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    build_request: StartBuildRequest,
+) -> Build:
+    """
+    Create a new build in the database.
+    """
+    db_build = Build(
+        project_id=project_id,
+        device_id=build_request.device_id,
+        scheme=build_request.scheme,
+        configuration=build_request.configuration,
+        test_plan=build_request.test_plan,
+    )
+    session.add(db_build)
+    session.commit()
+
+    return db_build
+
+
+def start_build(
+    *,
+    session: Session,
+    db_build: Build,
+    job_runner: AsyncJobRunner,
+    app_builder: AppBuilder,
+    job_id: str,
+):
+    """
+    Reset build status and xctestrun path and start the build job.
+    """
+    # Set the build status to pending and clear the xctestrun path
+    db_build.status = "pending"
+    db_build.xctestrun_path = None
+    session.add(db_build)
+    session.commit()
+
+    job_runner.add_job(
+        _build_project_job,
+        kwargs={
+            "session": session,
+            "app_builder": app_builder,
+            "db_build": db_build,
+            "output_dir": build_output_dir(db_build=db_build).resolve().as_posix(),
+        },
+        job_id=job_id,
+    )
+
+
+def build_output_dir(*, db_build: Build) -> pathlib.Path:
+    """
+    Get the output directory for the build relative to the base build directory defined in the settings.
+    """
+    return settings.BUILD_DIR_PATH / db_build.id.hex
+
+
+async def _build_project_job(
+    *,
+    session: Session,
+    app_builder: AppBuilder,
+    db_build: Build,
+    output_dir: str,
+):
+    raise NotImplementedError
 
 
 _ProjectResource = TypeVar(

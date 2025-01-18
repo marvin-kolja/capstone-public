@@ -3,6 +3,7 @@ import uuid
 from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
+from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session
 
 from api.models import (
@@ -12,8 +13,13 @@ from api.models import (
     XcProjectScheme,
     XcProjectTarget,
     XcProject,
+    StartBuildRequest,
 )
-from api.services.project_service import sync_project_resources, sync_db_project
+from api.services.project_service import (
+    sync_project_resources,
+    sync_db_project,
+    validate_build_request,
+)
 from core.xc import xc_project as core_xc_project
 
 
@@ -189,3 +195,67 @@ async def test_sync_db_project():
         assert (
             sync_project_resources_mock.call_count == 5
         )  # 3 resources + For each scheme to sync test plans (2 schemes)
+
+
+@pytest.mark.parametrize(
+    "scheme_name, test_plan_name, configuration, expected_error",
+    [
+        ("scheme", "test_plan", "configuration", None),
+        (
+            "scheme",
+            "test_plan",
+            "invalid_configuration",
+            {"loc": ["configuration"], "msg": "Invalid configuration"},
+        ),
+        (
+            "scheme",
+            "invalid_test_plan",
+            "configuration",
+            {"loc": ["test_plan"], "msg": "Invalid test plan"},
+        ),
+        (
+            "invalid_scheme",
+            "test_plan",
+            "configuration",
+            {"loc": ["scheme"], "msg": "Invalid scheme"},
+        ),
+    ],
+)
+def test_validate_build_request(
+    scheme_name, test_plan_name, configuration, expected_error, random_device_id
+):
+    """
+    GIVEN: A valid or invalid build request
+
+    WHEN: validate_build_request is called
+
+    THEN: A RequestValidationError is raised if the build request is invalid
+    AND: No exception is raised if the build request is valid
+    """
+    xc_test_plan = MagicMock(spec=XcProjectTestPlan)
+    xc_test_plan.name = "test_plan"
+
+    xc_scheme = MagicMock(spec=XcProjectScheme)
+    xc_scheme.name = "scheme"
+    xc_scheme.xc_test_plans = [xc_test_plan]
+
+    xc_configuration = MagicMock(spec=XcProjectConfiguration)
+    xc_configuration.name = "configuration"
+
+    build = MagicMock(spec=XcProject)
+    build.schemes = [xc_scheme]
+    build.configurations = [xc_configuration]
+
+    build_request = StartBuildRequest(
+        scheme=scheme_name,
+        test_plan=test_plan_name,
+        device_id=random_device_id,
+        configuration=configuration,
+    )
+
+    if expected_error is not None:
+        with pytest.raises(RequestValidationError) as e:
+            validate_build_request(db_project=build, build_request=build_request)
+        assert e.value.errors() == [expected_error]
+    else:
+        validate_build_request(db_project=build, build_request=build_request)

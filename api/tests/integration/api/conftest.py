@@ -1,7 +1,17 @@
 import pytest
 from core.test_session.metrics import Metric
 
-from api.models import SessionTestPlanStep, SessionTestPlan, Device
+from api.models import (
+    SessionTestPlanStep,
+    SessionTestPlan,
+    Device,
+    XcProject,
+    XcProjectScheme,
+    XcProjectTarget,
+    XcProjectConfiguration,
+    XcProjectTestPlan,
+    Build,
+)
 
 
 @pytest.fixture(scope="function")
@@ -62,3 +72,46 @@ def new_db_fake_device(db, random_device_id):
 
     db.delete(device)
     db.commit()
+
+
+@pytest.fixture
+def new_db_project(db, path_to_example_project):
+    project = XcProject(name="project_1", path=path_to_example_project)
+    db.add(project)
+    db.commit()
+
+    scheme = XcProjectScheme(name="scheme_1", project_id=project.id)
+    target = XcProjectTarget(name="target_1", project_id=project.id)
+    configuration = XcProjectConfiguration(
+        name="configuration_1", project_id=project.id
+    )
+    db.add(scheme)
+    db.add(target)
+    db.add(configuration)
+    db.commit()
+
+    xc_test_plan = XcProjectTestPlan(
+        name="xc_test_plan_1", scheme_id=scheme.id, project_id=project.id
+    )
+    db.add(xc_test_plan)
+    db.commit()
+
+    return project
+
+
+@pytest.fixture
+def new_db_fake_build(db, new_db_project, new_db_fake_device):
+    """
+    Add a new build to the database.
+    """
+    db_build = Build(
+        scheme="Release",
+        configuration="Release",
+        test_plan="RP Swift",
+        project_id=new_db_project.id,
+        device_id=new_db_fake_device.id,
+    )
+    db.add(db_build)
+    db.commit()
+
+    return db_build

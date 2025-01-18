@@ -1,10 +1,11 @@
 import uuid
 
+from core.xc.app_builder import AppBuilder
 from fastapi import APIRouter, HTTPException
 
-from api.depends import SessionDep
-from api.services import project_service
-from api.models import XcProjectPublic, XcProjectCreate, BuildPublic
+from api.depends import SessionDep, DeviceManagerDep, AsyncJobRunnerDep
+from api.services import project_service, device_service
+from api.models import XcProjectPublic, XcProjectCreate, BuildPublic, StartBuildRequest
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -86,11 +87,63 @@ async def list_builds(
 
 
 @router.post("/{project_id}/builds")
-async def start_build(project_id: str):
+async def start_build(
+    *,
+    session: SessionDep,
+    device_manager: DeviceManagerDep,
+    job_runner: AsyncJobRunnerDep,
+    project_id: uuid.UUID,
+    build_request: StartBuildRequest,
+) -> BuildPublic:
     """
     Start a new build for a project.
     """
-    pass
+    db_project = project_service.read_project(session=session, project_id=project_id)
+    if db_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    project_service.validate_build_request(
+        db_project=db_project, build_request=build_request
+    )
+
+    try:
+        xc_project = project_service.get_core_xc_project(path=db_project.path)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid project path") from e
+
+    device = device_service.get_device_by_id(
+        session=session,
+        device_id=build_request.device_id,
+        device_manager=device_manager,
+    )
+    if device is None or not device.connected:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    db_build = project_service.get_unique_build(
+        session=session,
+        project_id=project_id,
+        build_request=build_request,
+    ) or project_service.create_build(
+        session=session,
+        project_id=project_id,
+        build_request=build_request,
+    )
+
+    job_id = project_service.get_build_job_id(
+        db_build=db_build,
+    )
+    if job_runner.job_exists(job_id):
+        raise HTTPException(status_code=400, detail="Build already in progress")
+
+    project_service.start_build(
+        session=session,
+        db_build=db_build,
+        app_builder=AppBuilder(xc_project=xc_project),
+        job_runner=job_runner,
+        job_id=job_id,
+    )
+
+    return db_build
 
 
 @router.get("/{project_id}/builds/{build_id}")

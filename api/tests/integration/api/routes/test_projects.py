@@ -1,14 +1,11 @@
 import pathlib
 import uuid
+from unittest.mock import patch
 
 import pytest
 
 from api.models import (
     XcProject,
-    XcProjectScheme,
-    XcProjectTarget,
-    XcProjectConfiguration,
-    XcProjectTestPlan,
     XcProjectPublic,
     Build,
     BuildPublic,
@@ -48,31 +45,6 @@ def assert_real_project_values(
             xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
         ]
         assert check_lists_equal(xc_test_plan_names, ["RP Swift"])
-
-
-@pytest.fixture
-def new_db_project(db, path_to_example_project):
-    project = XcProject(name="project_1", path=path_to_example_project)
-    db.add(project)
-    db.commit()
-
-    scheme = XcProjectScheme(name="scheme_1", project_id=project.id)
-    target = XcProjectTarget(name="target_1", project_id=project.id)
-    configuration = XcProjectConfiguration(
-        name="configuration_1", project_id=project.id
-    )
-    db.add(scheme)
-    db.add(target)
-    db.add(configuration)
-    db.commit()
-
-    xc_test_plan = XcProjectTestPlan(
-        name="xc_test_plan_1", scheme_id=scheme.id, project_id=project.id
-    )
-    db.add(xc_test_plan)
-    db.commit()
-
-    return project
 
 
 def test_list_projects(path_to_example_project, new_db_project, client):
@@ -316,3 +288,168 @@ def test_read_build_not_found(client, new_db_project):
     r = client.get(f"/projects/{new_db_project.id}/builds/{uuid.uuid4()}")
 
     assert r.status_code == 404
+
+
+def test_start_build(client, new_db_project, real_device):
+    """
+    GIVEN: A project in the database
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint
+
+    THEN: The response should contain the build
+    """
+    if real_device is None:
+        pytest.skip("No real device connected")
+
+    with patch("api.routes.projects.project_service.start_build") as start_build_mock:
+        # Mocking start build as we only want to test if the endpoint works up until this point
+        r = client.post(
+            f"/projects/{new_db_project.id}/builds",
+            json={
+                "scheme": new_db_project.schemes[0].name,
+                "configuration": new_db_project.configurations[0].name,
+                "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+                "device_id": real_device.udid,
+            },
+        )
+
+        assert r.status_code == 200
+
+        start_build_mock.assert_called_once()
+        assert BuildPublic.model_validate(r.json())
+
+
+def test_start_build_no_project(client, new_db_project, random_device_id):
+    """
+    GIVEN: No matching project in the database
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint
+
+    THEN: The response should be a 404
+    """
+    r = client.post(
+        f"/projects/{uuid.uuid4()}/builds",
+        json={
+            "scheme": new_db_project.schemes[0].name,
+            "configuration": new_db_project.configurations[0].name,
+            "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+            "device_id": random_device_id,
+        },
+    )
+
+    assert r.status_code == 404
+
+
+def test_start_build_invalid_request_data(client, new_db_project, random_device_id):
+    """
+    GIVEN: A project in the database
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint with invalid request data
+
+    THEN: The response should be a 422
+    """
+    r = client.post(
+        f"/projects/{new_db_project.id}/builds",
+        json={
+            "scheme": new_db_project.schemes[0].name,
+            "configuration": "Invalid Configuration",
+            "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+            "device_id": random_device_id,
+        },
+    )
+
+    assert r.status_code == 422
+    assert r.json() == {
+        "detail": [
+            {
+                "loc": ["configuration"],
+                "msg": "Invalid configuration",
+            }
+        ]
+    }
+
+
+def test_start_build_project_path_invalid(db, client, new_db_project):
+    """
+    GIVEN: A project in the database
+    AND: The projects path is now invalid (e.g. was deleted)
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint
+
+    THEN: The response should be a 400
+    """
+    new_db_project.path = pathlib.Path(__file__)
+    db.add(new_db_project)
+    db.commit()
+
+    r = client.post(
+        f"/projects/{new_db_project.id}/builds",
+        json={
+            "scheme": new_db_project.schemes[0].name,
+            "configuration": new_db_project.configurations[0].name,
+            "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+            "device_id": "invalid_device_id",
+        },
+    )
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Invalid project path"}
+
+
+def test_start_build_invalid_device(client, new_db_project):
+    """
+    GIVEN: A project in the database
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint with a device id that cannot be found
+
+    THEN: The response should be a 404
+    """
+    r = client.post(
+        f"/projects/{new_db_project.id}/builds",
+        json={
+            "scheme": new_db_project.schemes[0].name,
+            "configuration": new_db_project.configurations[0].name,
+            "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+            "device_id": "invalid_device_id",
+        },
+    )
+
+    assert r.status_code == 404
+    assert r.json() == {"detail": "Device not found"}
+
+
+def test_start_build_existing_build(db, client, new_db_project, real_device):
+    """
+    GIVEN: A project in the database
+
+    WHEN: POSTing to the `/projects/{project_id}/builds` endpoint TWICE with the same data
+
+    THEN: There should be no error (We mock the start build as we only care about the behaviour of "rebuilding").
+    """
+    if real_device is None:
+        pytest.skip("No real device connected")
+
+    request_data = {
+        "scheme": new_db_project.schemes[0].name,
+        "configuration": new_db_project.configurations[0].name,
+        "test_plan": new_db_project.schemes[0].xc_test_plans[0].name,
+        "device_id": real_device.udid,
+    }
+
+    with patch("api.routes.projects.project_service.start_build") as start_build_mock:
+        r = client.post(
+            f"/projects/{new_db_project.id}/builds",
+            json=request_data,
+        )
+
+        r_2 = client.post(
+            f"/projects/{new_db_project.id}/builds",
+            json=request_data,
+        )
+
+        assert r.status_code == 200
+        assert r_2.status_code == 200
+
+        assert r.json() == r_2.json()
+
+        assert start_build_mock.call_count == 2
