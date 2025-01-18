@@ -1,3 +1,4 @@
+import pathlib
 from typing import Literal
 
 from pydantic import (
@@ -23,6 +24,17 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         return "sqlite:///" + self.SQLITE_PATH
+
+    BUILD_DIR: str
+
+    # noinspection PyPep8Naming
+    @computed_field
+    @property
+    def BUILD_DIR_PATH(self) -> pathlib.Path:
+        path = pathlib.Path(self.BUILD_DIR)
+        if not path.exists():
+            raise ValueError(f"BUILD_DIR does not exist: {path}")
+        return path
 
 
 settings = Settings()  # type: ignore
