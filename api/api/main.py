@@ -1,6 +1,7 @@
 from fastapi import FastAPI, APIRouter
 from fastapi.routing import APIRoute
 
+from api.config import settings
 from api.routes import (
     devices,
     api_test_plans,
@@ -24,3 +25,13 @@ api_router.include_router(api_test_session.router)
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
 app.include_router(api_router)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "api.main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=settings.ENVIRONMENT == "local",
+    )
