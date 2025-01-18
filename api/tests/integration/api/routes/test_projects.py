@@ -2,7 +2,6 @@ import pathlib
 import uuid
 
 import pytest
-from fastapi import HTTPException
 
 from api.models import (
     XcProject,
@@ -11,13 +10,8 @@ from api.models import (
     XcProjectConfiguration,
     XcProjectTestPlan,
     XcProjectPublic,
-    XcProjectCreate,
-)
-from api.services.project_service import (
-    list_projects,
-    read_project,
-    add_project,
-    refresh_project,
+    Build,
+    BuildPublic,
 )
 
 
@@ -243,3 +237,41 @@ async def test_refresh_project_invalid_path(db, new_db_project, client):
     refreshed_project = XcProjectPublic.model_validate(r.json())
 
     assert refreshed_project == XcProjectPublic.model_validate(new_db_project)
+
+
+def test_list_builds(db, new_db_project, client, new_db_fake_device):
+    """
+    GIVEN: A project and a build in the database
+
+    WHEN: GETing the `/projects/{project_id}/builds` endpoint
+
+    THEN: The response should contain a list of at least one build
+    AND: Contain the build that this test created
+    AND: The build should have the correct values
+    """
+    db_build = Build(
+        scheme="Release",
+        configuration="Release",
+        test_plan="RP Swift",
+        project_id=new_db_project.id,
+        device_id=new_db_fake_device.id,
+    )
+    db.add(db_build)
+    db.commit()
+
+    r = client.get(f"/projects/{new_db_project.id}/builds")
+
+    assert r.status_code == 200
+
+    builds = r.json()
+
+    assert len(builds) >= 1
+
+    found = False
+    for build in builds:
+        if build["id"] == str(db_build.id):
+            found = True
+            public_build = BuildPublic.model_validate(build)
+            assert public_build == BuildPublic.model_validate(db_build)
+
+    assert found

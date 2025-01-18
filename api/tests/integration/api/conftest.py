@@ -1,7 +1,7 @@
 import pytest
 from core.test_session.metrics import Metric
 
-from api.models import SessionTestPlanStep, SessionTestPlan
+from api.models import SessionTestPlanStep, SessionTestPlan, Device
 
 
 @pytest.fixture(scope="function")
@@ -41,3 +41,24 @@ def new_test_plan_step(db, new_test_plan):
 
     # We specifically do not delete the step here, as we want to test that the database can handle multiple test
     # steps existing at the same time.
+
+
+@pytest.fixture(scope="function")
+def new_db_fake_device(db, random_device_id):
+    device = Device(
+        id=random_device_id,
+        udid=random_device_id,
+        device_name="Fake Device",
+        device_class="Fake",
+        product_version="Fake",
+        build_version="Fake",
+        product_type="Fake",
+    )
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+
+    yield device
+
+    db.delete(device)
+    db.commit()

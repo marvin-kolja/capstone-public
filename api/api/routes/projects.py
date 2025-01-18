@@ -3,8 +3,8 @@ import uuid
 from fastapi import APIRouter, HTTPException
 
 from api.depends import SessionDep
-from api.models import XcProjectPublic, XcProjectCreate
 from api.services import project_service
+from api.models import XcProjectPublic, XcProjectCreate, BuildPublic
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -76,11 +76,13 @@ async def refresh_project(
 
 
 @router.get("/{project_id}/builds")
-async def list_builds(project_id: str):
+async def list_builds(
+    *, session: SessionDep, project_id: uuid.UUID
+) -> list[BuildPublic]:
     """
     List builds that belong to a project.
     """
-    pass
+    return project_service.list_builds(session=session, project_id=project_id)
 
 
 @router.post("/{project_id}/builds")

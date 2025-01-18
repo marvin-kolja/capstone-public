@@ -1,3 +1,4 @@
+import logging
 import pathlib
 import uuid
 from typing import Optional, TypeVar
@@ -11,8 +12,12 @@ from api.models import (
     XcProjectTarget,
     XcProjectScheme,
     XcProjectTestPlan,
+    Build,
+    BuildPublic,
 )
 from core.xc import xc_project as core_xc_project
+
+logger = logging.getLogger(__name__)
 
 
 def list_projects(*, session: Session) -> list[XcProjectPublic]:
@@ -75,6 +80,12 @@ async def refresh_project(
     session.refresh(db_project)
 
     return XcProjectPublic.model_validate(db_project)
+
+
+def list_builds(*, session: Session, project_id: uuid.UUID) -> list[BuildPublic]:
+    db_builds = session.exec(select(Build).where(Build.project_id == project_id)).all()
+    logger.debug(f"Found {len(db_builds)} builds for project '{project_id}'")
+    return [BuildPublic.model_validate(build) for build in db_builds]
 
 
 _ProjectResource = TypeVar(
