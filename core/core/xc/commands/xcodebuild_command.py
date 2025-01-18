@@ -332,19 +332,19 @@ class XcodebuildCommand(ProcessCommand):
     """
 
     ACTION_TYPE = Literal[
-        "build", "build-for-testing", "clean", "test-without-building", None
+        "build", "build-for-testing", "clean", "test-without-building"
     ]
 
     def __init__(
         self,
-        action: ACTION_TYPE,
+        actions: list[ACTION_TYPE],
         options: Optional[list[XcodebuildOption]] = None,
     ):
         """
-        :param action: The main action to execute. Can be `None` as not every command requires an action.
+        :param actions: The main actions to execute in order. Can be empty if as not every command needs an action.
         :param options: Additional options to pass to `xcodebuild`. Refer to `XcodebuildOptions` for valid options.
         """
-        self.action = action
+        self.actions = actions
         self.options = options
 
     @property
@@ -354,13 +354,13 @@ class XcodebuildCommand(ProcessCommand):
     def parse(self) -> [str]:
         command = ["xcodebuild"]
 
-        if self.action not in self.valid_actions:
-            raise CommandError(
-                f"Invalid action: {self.action}, must be one of {self.valid_actions}"
-            )
-
-        if self.action is not None:
-            command.append(self.action)
+        if self.actions:
+            for action in self.actions:
+                if action not in self.valid_actions:
+                    raise CommandError(
+                        f"Invalid action: {action}, must be one of {self.valid_actions}"
+                    )
+                command.append(action)
 
         valid_option_names = _valid_option_names()
 
@@ -385,11 +385,14 @@ class XcodebuildCommand(ProcessCommand):
 class XcodebuildBuildCommand(XcodebuildCommand):
     """
     A convenience command parser for the `xcodebuild` building commands (`build` and `build-for-testing`).
+
+    Can pass multiple actions to the command which are passed to `xcodebuild` in the provided order. This is crucial
+    as this will be the order they are executed in by `xcodebuild`.
     """
 
     def __init__(
         self,
-        action: Literal["build", "build-for-testing"],
+        actions: list[Literal["build", "build-for-testing"]],
         scheme: str,
         configuration: str,
         destination: IOSDestination,
@@ -398,17 +401,18 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         project: Optional[str] = None,
         test_plan: Optional[str] = None,
     ):
-        if action not in ["build", "build-for-testing"]:
-            raise CommandError(
-                f"Invalid action: {action}, must be one of ['build', 'build-for-testing']"
-            )
+        for action in actions:
+            if action not in ["build", "build-for-testing"]:
+                raise CommandError(
+                    f"Invalid action: {action}, must be one of ['build', 'build-for-testing']"
+                )
 
         _validate_workspace_or_project(workspace, project)
 
-        if action == "build-for-testing" and test_plan is None:
+        if "build-for-testing" in actions and test_plan is None:
             raise CommandError("Test plan must be provided when building for testing")
-        elif action == "build" and test_plan is not None:
-            raise CommandError("Test plan must not be provided when building")
+        elif "build" in actions and test_plan is not None:
+            raise CommandError("Test plan must not be provided when only building")
 
         options = []
 
@@ -430,7 +434,7 @@ class XcodebuildBuildCommand(XcodebuildCommand):
         options.append(XcodebuildOptions.ide_custom_build_products_path(""))
         options.append(XcodebuildOptions.ide_custom_build_intermediates_path(""))
 
-        super().__init__(action=action, options=options)
+        super().__init__(actions=actions, options=options)
 
 
 class XcodebuildTestCommand(XcodebuildCommand):
@@ -475,7 +479,7 @@ class XcodebuildTestCommand(XcodebuildCommand):
         if result_bundle_path:
             options.append(XcodebuildOptions.result_bundle_path(result_bundle_path))
 
-        super().__init__(action="test-without-building", options=options)
+        super().__init__(actions=["test-without-building"], options=options)
 
 
 class XcodebuildTestEnumerationCommand(XcodebuildCommand):
@@ -503,7 +507,7 @@ class XcodebuildTestEnumerationCommand(XcodebuildCommand):
         if output_path is not None:
             options.append(XcodebuildOptions.test_enumeration_output_path(output_path))
 
-        super().__init__(action="test-without-building", options=options)
+        super().__init__(actions=["test-without-building"], options=options)
 
 
 class XcodebuildListCommand(XcodebuildCommand):
@@ -527,7 +531,7 @@ class XcodebuildListCommand(XcodebuildCommand):
         if json_output:
             options.append(XcodebuildOptions.json())
 
-        super().__init__(action=None, options=options)
+        super().__init__(actions=[], options=options)
 
 
 class XcodebuildShowTestPlansCommand(XcodebuildCommand):
@@ -555,4 +559,4 @@ class XcodebuildShowTestPlansCommand(XcodebuildCommand):
         if json_output:
             options.append(XcodebuildOptions.json())
 
-        super().__init__(action=None, options=options)
+        super().__init__(actions=[], options=options)

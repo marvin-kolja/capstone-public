@@ -99,7 +99,7 @@ class TestXcodebuildCommand:
         THEN: A `CommandError` should be raised
         """
         invalid_option = XcodebuildOption("-invalid")
-        command = XcodebuildCommand(action="build", options=[invalid_option])
+        command = XcodebuildCommand(actions=["build"], options=[invalid_option])
 
         with pytest.raises(CommandError):
             command.parse()
@@ -112,7 +112,7 @@ class TestXcodebuildCommand:
 
         THEN: A `CommandError` should be raised
         """
-        command = XcodebuildCommand(action="invalid")
+        command = XcodebuildCommand(actions=["invalid"])
 
         with pytest.raises(CommandError):
             command.parse()
@@ -134,7 +134,36 @@ class TestXcodebuildCommand:
         ]
 
         command = XcodebuildCommand(
-            action="build",
+            actions=["build"],
+            options=[
+                XcodebuildOptions.quiet(),
+                XcodebuildOptions.project("/tmp/project"),
+            ],
+        )
+
+        parsed_command = command.parse()
+
+        assert expected_parsed_command == parsed_command
+
+    def test_multiple_actions(self):
+        """
+        GIVEN: A `XcodebuildCommand` with multiple actions
+
+        WHEN: parsing the command
+
+        THEN: The returned list of str should be correct
+        """
+        expected_parsed_command = [
+            "xcodebuild",
+            "clean",
+            "build",
+            "-quiet",
+            "-project",
+            "/tmp/project",
+        ]
+
+        command = XcodebuildCommand(
+            actions=["clean", "build"],
             options=[
                 XcodebuildOptions.quiet(),
                 XcodebuildOptions.project("/tmp/project"),
@@ -339,7 +368,7 @@ class TestXcodebuildBuildCommand:
         )
 
         command = XcodebuildBuildCommand(
-            action=action,
+            actions=[action],
             workspace=workspace,
             project=project,
             scheme="Some Scheme",
@@ -363,7 +392,7 @@ class TestXcodebuildBuildCommand:
         """
         with pytest.raises(CommandError):
             XcodebuildBuildCommand(
-                action="build",
+                actions=["build"],
                 destination=MagicMock(spec=IOSDestination),
                 configuration=MagicMock(spec=str),
                 derived_data_path=MagicMock(spec=str),
@@ -381,7 +410,7 @@ class TestXcodebuildBuildCommand:
         """
         with pytest.raises(CommandError):
             XcodebuildBuildCommand(
-                action=action,
+                actions=[action],
                 workspace="/tmp/workspace",
                 project="/tmp/project",
                 destination=MagicMock(spec=IOSDestination),

@@ -66,7 +66,7 @@ class AppBuilder:
         Builds the application of the given xcode project
         """
         command = XcodebuildBuildCommand(
-            action="build",
+            actions=["build"],
             project=self.xc_project.path_to_project,
             scheme=scheme,
             configuration=configuration,
@@ -104,7 +104,7 @@ class AppBuilder:
         Build xcode project for testing
         """
         command = XcodebuildBuildCommand(
-            action="build-for-testing",
+            actions=["build-for-testing"],
             project=self.xc_project.path_to_project,
             scheme=scheme,
             configuration=configuration,
