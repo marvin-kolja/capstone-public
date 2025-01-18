@@ -4,7 +4,7 @@ from typing import Literal, Optional
 
 from core.device.i_device import IDeviceStatus
 from core.test_session.metrics import Metric
-from pydantic import ConfigDict
+from pydantic import ConfigDict, BaseModel
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
 
@@ -224,3 +224,61 @@ class XcProjectPublic(XcProjectBase):
     configurations: list[XcProjectConfigurationPublic]
     schemes: list[XcProjectSchemePublic]
     targets: list[XcProjectTargetPublic]
+
+
+######################################
+#               Build                #
+######################################
+
+BuildStatus = Literal[
+    "pending",
+    "running",
+    "success",
+    "failure",
+]
+
+
+class BuildBase(SQLModel):
+    scheme: str
+    configuration: str
+    test_plan: str
+    device_id: str
+    status: BuildStatus = SQLField(sa_type=String, default="pending")
+    xctestrun_path: pathlib.Path | None = SQLField(
+        sa_column=Column(PathType), default=None
+    )
+    """
+    Should be set when status is success
+    """
+
+
+class Build(BuildBase, table=True):
+    __tablename__ = "build"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "device_id",
+            "scheme",
+            "configuration",
+            "test_plan",
+            name="unique_build",
+        ),
+    )
+
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
+    device_id: str = SQLField(foreign_key="device.id", ondelete="CASCADE")
+
+
+class BuildPublic(BuildBase):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    device_id: str
+
+
+class StartBuildRequest(BaseModel):
+    scheme: str
+    configuration: str
+    test_plan: str
+    device_id: str
