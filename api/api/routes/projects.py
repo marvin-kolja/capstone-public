@@ -1,11 +1,17 @@
 import uuid
 
 from core.xc.app_builder import AppBuilder
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from api.depends import SessionDep, DeviceManagerDep, AsyncJobRunnerDep
 from api.services import project_service, device_service
-from api.models import XcProjectPublic, XcProjectCreate, BuildPublic, StartBuildRequest
+from api.models import (
+    XcProjectPublic,
+    XcProjectCreate,
+    BuildPublic,
+    StartBuildRequest,
+)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -161,9 +167,27 @@ async def read_build(
     return db_build
 
 
-@router.get("/{project_id}/builds/{build_id}/update-stream")
-async def stream_build_updates(project_id: str, build_id: str):
+class SSEStreamingResponse(StreamingResponse):
+    media_type = "text/event-stream"
+
+
+@router.get(
+    "/{project_id}/builds/{build_id}/update-stream",
+    response_class=SSEStreamingResponse,
+)
+async def stream_build_updates(
+    *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID, request: Request
+) -> StreamingResponse:
     """
     Stream build status updates.
     """
-    pass
+    db_build = project_service.read_build(
+        session=session, project_id=project_id, build_id=build_id
+    )
+    if db_build is None:
+        raise HTTPException(status_code=404, detail="Build not found")
+
+    return StreamingResponse(
+        project_service.listen_to_build_updates(db_build=db_build, request=request),
+        media_type="text/event-stream",
+    )

@@ -1,11 +1,13 @@
+import asyncio
 import logging
 import pathlib
 import uuid
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, AsyncGenerator
 
 from core.xc.app_builder import AppBuilder
 from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.xctest import Xctest
+from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
@@ -24,6 +26,8 @@ from api.models import (
     StartBuildRequest,
 )
 from core.xc import xc_project as core_xc_project
+
+from api.services.orm_update_listener import ModelUpdateListener
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +327,37 @@ async def _build_project_job(
         db_build.status = "failure"
         session.add(db_build)
         session.commit()
+
+
+async def listen_to_build_updates(
+    *, db_build: Build, request: Request
+) -> AsyncGenerator[str, None]:
+    """
+    An async generator that listens to updates of a build and yields the updated build.
+
+    This is done until the build status is set to 'success' or 'failure', or the request is disconnected.
+    """
+
+    listener = ModelUpdateListener(
+        db_instance=db_build,
+        model_class=Build,
+    )
+
+    async for update in listener.listen():
+        if update is None:
+            if await request.is_disconnected():
+                logger.debug(f"Request disconnected, stopping listener")
+                listener.stop()
+            continue
+
+        if update.id != db_build.id:
+            continue  # Skip updates for other builds
+
+        yield BuildPublic.model_validate(update).model_dump_json() + "\n\n"
+
+        if update.status == "success" or update.status == "failure":
+            logger.debug(f"Build '{update.id}' finished, stopping listener")
+            listener.stop()
 
 
 _ProjectResource = TypeVar(

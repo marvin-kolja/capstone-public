@@ -1,17 +1,20 @@
+import asyncio
 import pathlib
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 import pytest
 from core.xc.app_builder import AppBuilder
+from fastapi import Request
 from sqlmodel import select
 
 from api.async_jobs import AsyncJobRunner
-from api.models import Build, StartBuildRequest
+from api.models import Build, StartBuildRequest, BuildPublic
 from api.services.project_service import (
     get_unique_build,
     create_build,
     start_build,
     _build_project_job,
+    listen_to_build_updates,
 )
 
 
@@ -153,3 +156,83 @@ def test_start_build(
 
         assert new_db_fake_build.status == "pending"
         assert new_db_fake_build.xctestrun_path is None
+
+
+@pytest.mark.parametrize(
+    "build_status_last_update",
+    [
+        ("success",),
+        ("failure",),
+    ],
+)
+@pytest.mark.asyncio
+async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_update):
+    """
+    GIVEN: A build in the database
+    AND: A method that creates a new build, updates it, updates the build that is being listened to a status that ends
+    the listener
+
+    WHEN: Listening to build updates
+
+    THEN: Only the updates of the build should be listened to
+    AND: The listener should stop
+    """
+    request_mock = AsyncMock(spec=Request)
+
+    async def simulate_updates():
+        another_build = Build(
+            project_id=new_db_fake_build.project_id,
+            device_id=new_db_fake_build.device_id,
+            scheme="Another Scheme",
+            configuration="Another Configuration",
+            test_plan="Another Test Plan",
+        )
+        db.add(another_build)
+        db.commit()
+
+        another_build.status = "running"
+        db.add(another_build)
+        db.commit()
+
+        new_db_fake_build.status = build_status_last_update
+        db.add(new_db_fake_build)
+        db.commit()
+
+    task = asyncio.create_task(simulate_updates())
+
+    update_count = 0
+
+    async for event in listen_to_build_updates(
+        db_build=new_db_fake_build, request=request_mock
+    ):
+        update_count += 1
+
+        # event is a json string and ends with two newlines
+        assert event.endswith("\n\n")
+        json_string = event[:-2]
+        assert BuildPublic.model_validate_json(json_string).id == new_db_fake_build.id
+
+    await task
+
+    assert update_count == 2
+    request_mock.is_disconnected.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_listen_to_build_updates(db, new_db_fake_build):
+    """
+    GIVEN: A build in the database
+
+    WHEN: Listening to build updates
+
+    THEN: The listener should stop when the request is disconnected
+    """
+    request_mock = AsyncMock(spec=Request)
+    request_mock.is_disconnected.side_effect = AsyncMock(return_value=True)
+
+    async for event in listen_to_build_updates(
+        db_build=new_db_fake_build, request=request_mock
+    ):
+        continue
+
+    request_mock.is_disconnected.assert_called()

@@ -1,8 +1,10 @@
+import asyncio
 import pathlib
 import uuid
 from unittest.mock import patch
 
 import pytest
+from httpx import AsyncClient
 
 from api.models import (
     XcProject,
@@ -453,3 +455,61 @@ def test_start_build_existing_build(db, client, new_db_project, real_device):
         assert r.json() == r_2.json()
 
         assert start_build_mock.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_stream_build_updates_not_found(async_client: AsyncClient):
+    """
+    GIVEN: No matching project or build in the database
+
+    WHEN: GETing the `/projects/{project_id}/builds/{build_id}/update-stream` endpoint
+
+    THEN: The response should be a 404
+    """
+    r = await async_client.get(
+        f"/projects/{uuid.uuid4()}/builds/{uuid.uuid4()}/update-stream"
+    )
+
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_stream_build_updates(db, async_client: AsyncClient, new_db_fake_build):
+    """
+    GIVEN: A matching project and build in the database
+
+    WHEN: GETing the `/projects/{project_id}/builds/{build_id}/update-stream` endpoint
+    AND: The status is updated to "success"
+
+    THEN: The response should be a 200
+    AND: The response should contain two builds. One with status "pending" and one with status "success"
+    """
+    # TODO: It's not that easy to currently test SSE events (stream). In this test we're simply waiting for all data
+    #  to have arrived. See issue: https://github.com/encode/httpx/issues/2186.
+
+    async def simulate_update():
+        await asyncio.sleep(0.1)
+        new_db_fake_build.status = "success"
+        db.add(new_db_fake_build)
+        db.commit()
+
+    task = asyncio.create_task(simulate_update())
+
+    r = await async_client.get(
+        f"/projects/{new_db_fake_build.project_id}/builds/{new_db_fake_build.id}/update-stream",
+    )
+
+    await task
+
+    assert r.status_code == 200
+
+    lines = r.text.split("\n\n")
+    assert len(lines) == 3
+
+    for index, line in enumerate(lines):
+        if index == 0:
+            assert BuildPublic.model_validate_json(line).status == "pending"
+        elif index == 1:
+            assert BuildPublic.model_validate_json(line).status == "success"
+        else:
+            assert line == ""
