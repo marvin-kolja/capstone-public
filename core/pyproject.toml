@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "core"
-version = "0.1.0"
+version = "0.2.0"
 description = "Core implementation of the project"
 authors = ["Marvin Willms <marvin.willms@code.berlin>"]
 readme = "README.md"
