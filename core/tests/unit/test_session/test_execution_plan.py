@@ -184,7 +184,7 @@ class TestExecutionPlan:
                         f"Step repetition should be in order, but got "
                         f"{previous_step.step_repetition} before {step.step_repetition}."
                     )
-                    if previous_step.step == step.step:
+                    if previous_step.plan_step_order == step.plan_step_order:
                         assert previous_step.step_repetition <= step.step_repetition, (
                             f"Step repetition should be in order, but got "
                             f"{previous_step.step_repetition} before {step.step_repetition}."
@@ -256,7 +256,7 @@ class TestExecutionPlan:
         assert len(execution_steps) == 1
         step = execution_steps[0]
         assert step.plan_repetition == 0
-        assert step.step == mock_step
+        assert step.plan_step_order == mock_step.order
         assert step.step_repetition == 0
         assert step.recording_start_strategy == "launch"
         assert step.reinstall_app is True

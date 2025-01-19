@@ -29,8 +29,8 @@ class ExecutionStep(BaseModel):
 
     plan_repetition: int
     """The repetition of the test plan that this step belongs to."""
-    step: PlanStep
-    """The test plan step that this execution step is derived from."""
+    plan_step_order: int
+    """The order of the test plan step that this execution step is derived from."""
     step_repetition: int
     """The repetition of the test plan step."""
     recording_start_strategy: Literal["launch", "attach"]
@@ -268,7 +268,7 @@ class ExecutionPlan:
             execution_steps.append(
                 ExecutionStep(
                     plan_repetition=repetition,
-                    step=step,
+                    plan_step_order=step.order,
                     step_repetition=step_repetition,
                     recording_start_strategy=recording_start_strategy,
                     reinstall_app=reinstall_app,
@@ -295,7 +295,7 @@ class ExecutionPlan:
                 execution_steps.append(
                     ExecutionStep(
                         plan_repetition=repetition,
-                        step=step,
+                        plan_step_order=step.order,
                         step_repetition=step_repetition,
                         recording_start_strategy=recording_start_strategy,
                         reinstall_app=should_reinstall_app,

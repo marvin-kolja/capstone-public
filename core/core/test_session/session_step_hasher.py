@@ -20,7 +20,7 @@ def hash_session_execution_step(session_id: UUID, execution_step: ExecutionStep)
     input_string = (
         f"{session_id}"
         f"/{execution_step.plan_repetition}"
-        f"/{execution_step.step.order}"
+        f"/{execution_step.plan_step_order}"
         f"/{execution_step.step_repetition}"
     )
 

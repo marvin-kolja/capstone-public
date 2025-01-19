@@ -42,7 +42,7 @@ class TestSessionState:
         session_id = uuid.uuid4()
         mock_execution_step = MagicMock(
             spec=ExecutionStep,
-            step=MagicMock(spec=PlanStep, order=1, name="Test"),
+            plan_step_order=1,
             plan_repetition=0,
             step_repetition=0,
             test_cases=[

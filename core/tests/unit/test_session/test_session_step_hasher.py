@@ -31,7 +31,7 @@ class TestSessionStepHasher:
         """
         session_id = uuid.uuid4()
         mock_execution_step.plan_repetition = plan_repetition
-        mock_execution_step.step.order = step_order
+        mock_execution_step.plan_step_order = step_order
         mock_execution_step.step_repetition = step_repetition
         mock_execution_step.test_cases = [
             MagicMock(spec=StepTestCase, xctest_id=x) for x in test_case_ids

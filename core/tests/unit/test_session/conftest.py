@@ -37,6 +37,7 @@ def mock_step():
         metrics=None,
         test_cases=[],
         recording_start_strategy="launch",
+        order=1,
     )
     mock.name = "Test 1"
     return mock
@@ -60,5 +61,5 @@ def mock_execution_plan():
 def mock_execution_step():
     return MagicMock(
         spec=ExecutionStep,
-        step=MagicMock(spec=PlanStep, order=1, name="Test"),
+        plan_step_order=1,
     )
