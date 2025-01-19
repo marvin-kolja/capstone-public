@@ -18,11 +18,14 @@ class TestIDevice:
         device = IDeviceManager().get_device(udid=device_udid)
 
         if device.ddi_mounted:
-            await device.unmount_ddi()
+            device.unmount_ddi()
         assert not device.ddi_mounted
 
         await device.mount_ddi()
         assert device.ddi_mounted
 
-        await device.unmount_ddi()
+        device.unmount_ddi()
         assert not device.ddi_mounted
+
+        await device.mount_ddi() # Mount it again to avoid errors in other tests
+        assert device.ddi_mounted
