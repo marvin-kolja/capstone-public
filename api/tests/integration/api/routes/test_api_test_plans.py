@@ -73,7 +73,7 @@ def test_read_test_plan_not_found(client):
     assert r.status_code == 404
 
 
-def test_create_test_plan(client, db):
+def test_create_test_plan(client, db, new_db_project):
     """
     GIVEN: A test plan creation model
 
@@ -84,14 +84,14 @@ def test_create_test_plan(client, db):
     """
     test_plan = SessionTestPlanCreate(
         name="test plan",
-        xctestrun_path="path",
-        xctestrun_test_configuration="config",
+        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
         repetitions=1,
         repetition_strategy="entire_suite",
         metrics=[Metric.cpu],
+        project_id=new_db_project.id.hex,
     )
 
-    r = client.post("/test-plans/", json=test_plan.model_dump())
+    r = client.post("/test-plans/", json=test_plan.model_dump(mode="json"))
 
     assert r.status_code == 200
 
@@ -104,11 +104,8 @@ def test_create_test_plan(client, db):
     assert created_plan == SessionTestPlanPublic.model_validate(db_plan)
 
     assert created_plan.name == test_plan.name
-    assert created_plan.xctestrun_path == test_plan.xctestrun_path
-    assert (
-        created_plan.xctestrun_test_configuration
-        == test_plan.xctestrun_test_configuration
-    )
+    assert created_plan.xc_test_plan_name == test_plan.xc_test_plan_name
+    assert created_plan.project_id == test_plan.project_id == test_plan.project_id
     assert created_plan.repetitions == test_plan.repetitions
     assert created_plan.repetition_strategy == test_plan.repetition_strategy
     assert created_plan.metrics == test_plan.metrics

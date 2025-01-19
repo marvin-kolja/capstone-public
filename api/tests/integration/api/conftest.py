@@ -18,14 +18,14 @@ from api.models import (
 
 
 @pytest.fixture(scope="function")
-def new_test_plan(db):
+def new_test_plan(db, new_db_project):
     test_plan = SessionTestPlan(
         name="test plan",
-        xctestrun_path="path",
-        xctestrun_test_configuration="config",
+        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
         repetitions=1,
         repetition_strategy="entire_suite",
         metrics=[Metric.cpu],
+        project_id=new_db_project.id,
     )
     db.add(test_plan)
     db.commit()

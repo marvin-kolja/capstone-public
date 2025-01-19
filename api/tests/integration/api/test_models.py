@@ -4,7 +4,7 @@ from sqlmodel import select
 from api.models import SessionTestPlan, SessionTestPlanStep
 
 
-def test_session_test_plan_cascade_deletion(db):
+def test_session_test_plan_cascade_deletion(db, new_db_project):
     """
     GIVEN: A test plan with test steps
 
@@ -15,10 +15,10 @@ def test_session_test_plan_cascade_deletion(db):
     # Create a test plan with test steps
     test_plan = SessionTestPlan(
         name="Test Plan 1",
-        xctestrun_path="path/to/xctestrun",
-        xctestrun_test_configuration="test_configuration",
+        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
         repetitions=1,
         repetition_strategy="entire_suite",
+        project_id=new_db_project.id,
     )
     db.add(test_plan)
     db.commit()

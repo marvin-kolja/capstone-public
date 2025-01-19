@@ -95,8 +95,7 @@ class SessionTestPlanStepUpdate(SessionTestPlanStepBase):
 
 class SessionTestPlanBase(SQLModel):
     name: str
-    xctestrun_path: str
-    xctestrun_test_configuration: str
+    xc_test_plan_name: str
     end_on_failure: bool | None = SQLField(default=False)
     repetitions: int = SQLField(ge=1)
     repetition_strategy: RepetitionStrategy = SQLField(sa_type=String)
@@ -114,6 +113,7 @@ class SessionTestPlan(SessionTestPlanBase, table=True):
     __tablename__ = "session_testplan"
 
     id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
 
     steps: list[SessionTestPlanStep] = Relationship(cascade_delete=True)
 
@@ -121,7 +121,7 @@ class SessionTestPlan(SessionTestPlanBase, table=True):
 
 
 class SessionTestPlanCreate(SessionTestPlanBase):
-    pass
+    project_id: uuid.UUID
 
 
 class SessionTestPlanPublic(SessionTestPlanBase):
@@ -131,12 +131,12 @@ class SessionTestPlanPublic(SessionTestPlanBase):
     recording_start_strategy: RecordingStartStrategy
     reinstall_app: bool
     steps: list[SessionTestPlanStepPublic]
+    project_id: uuid.UUID
 
 
 class SessionTestPlanUpdate(SessionTestPlanBase):
     name: str | None = None
-    xctestrun_path: str | None = None
-    xctestrun_test_configuration: str | None = None
+    xc_test_plan_name: str | None = None
     end_on_failure: bool | None = None
     repetitions: int | None = None
     repetition_strategy: RepetitionStrategy | None = None

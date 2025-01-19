@@ -70,7 +70,7 @@ def test_list_projects(path_to_example_project, new_db_project, client):
     for project in projects:
         public_project = XcProjectPublic.model_validate(project)
 
-        if public_project.path == path_to_example_project:
+        if public_project.id == new_db_project.id:
             found = True
             assert public_project == XcProjectPublic.model_validate(new_db_project)
 
