@@ -27,5 +27,5 @@ class TestIDevice:
         device.unmount_ddi()
         assert not device.ddi_mounted
 
-        await device.mount_ddi() # Mount it again to avoid errors in other tests
+        await device.mount_ddi()  # Mount it again to avoid errors in other tests
         assert device.ddi_mounted
