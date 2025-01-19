@@ -370,6 +370,18 @@ async def listen_to_build_updates(
             listener.stop()
 
 
+async def list_available_tests(*, db_build: Build) -> list[str]:
+    """
+    Uses the xctestrun to execute a dry run of the tests on device to get the list of enabled tests.
+    """
+    list_result = await Xctest.list_tests(
+        db_build.xctestrun.path.resolve().as_posix(),
+        IOSDestination(id=db_build.device_id),
+    )
+
+    return list_result.enabledTests
+
+
 _ProjectResource = TypeVar(
     "_ProjectResource",
     XcProjectConfiguration,

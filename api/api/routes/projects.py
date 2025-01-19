@@ -197,3 +197,35 @@ async def stream_build_updates(
         project_service.listen_to_build_updates(db_build=db_build, request=request),
         media_type="text/event-stream",
     )
+
+
+@router.get("/{project_id}/builds/{build_id}/available-tests")
+async def list_available_tests(
+    *,
+    session: SessionDep,
+    device_manager: DeviceManagerDep,
+    project_id: uuid.UUID,
+    build_id: uuid.UUID,
+) -> list[str]:
+    """
+    This will list the available tests for a builds' xctestrun file. Provided the build is finished, the xctestrun file
+    is available and the device the build war run on is connected. If any of these conditions are not met, an error will
+    be raised.
+    """
+    db_build = project_service.read_build(
+        session=session, project_id=project_id, build_id=build_id
+    )
+    if db_build is None:
+        raise HTTPException(status_code=404, detail="Build not found")
+
+    if db_build.xctestrun is None or db_build.status != "success":
+        raise HTTPException(status_code=400, detail="Build is not finished")
+
+    device = device_service.get_device_by_id(
+        session=session, device_id=db_build.device_id, device_manager=device_manager
+    )
+
+    if device is None or not device.connected:
+        raise HTTPException(status_code=400, detail="Device is not connected")
+
+    return await project_service.list_available_tests(db_build=db_build)

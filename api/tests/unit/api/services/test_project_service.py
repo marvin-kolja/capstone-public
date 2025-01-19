@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock, call
 import pytest
 from core.xc.app_builder import AppBuilder
 from core.xc.commands.xcodebuild_command import IOSDestination
+from core.xc.xctest import XctestOverview
 from core.xc.xctestrun import Xctestrun, XcTestConfiguration, XcTestTarget
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session
@@ -26,6 +27,7 @@ from api.services.project_service import (
     sync_db_project,
     validate_build_request,
     _build_project_job,
+    list_available_tests,
 )
 from core.xc import xc_project as core_xc_project
 
@@ -398,3 +400,27 @@ async def test_build_project_job_failure(random_device_id):
     # 1 for start, 1 for failure
     assert db_session_mock.add.call_count == 2
     assert db_session_mock.commit.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_list_available_tests():
+    """
+    GIVEN: A mocked `Xctest.list_tests` method
+
+    WHEN: list_available_tests is called
+
+    THEN: The enabled tests are returned
+    """
+    with patch("api.services.project_service.Xctest") as xctest_mock:
+        xctest_overview = MagicMock(spec=XctestOverview)
+        xctest_overview.enabledTests = ["Test1", "Test2", "Test3"]
+        xctest_mock.list_tests.side_effect = AsyncMock(return_value=xctest_overview)
+
+        db_build_mock = MagicMock(spec=Build)
+        db_build_mock.xctestrun.path = Path("path/to/xctestrun")
+        db_build_mock.device_id = "device_id"
+
+        tests = await list_available_tests(db_build=db_build_mock)
+
+        assert tests == xctest_overview.enabledTests
+        xctest_mock.list_tests.side_effect.assert_awaited_once()
