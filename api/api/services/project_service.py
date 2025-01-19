@@ -24,6 +24,7 @@ from api.models import (
     Build,
     BuildPublic,
     StartBuildRequest,
+    Xctestrun,
 )
 from core.xc import xc_project as core_xc_project
 
@@ -224,9 +225,9 @@ def start_build(
     """
     # Set the build status to pending and clear the xctestrun path
     db_build.status = "pending"
-    db_build.xctestrun_path = None
-    session.add(db_build)
+    session.delete(db_build.xctestrun)
     session.commit()
+    session.refresh(db_build)
 
     job_runner.add_job(
         _build_project_job,
@@ -285,8 +286,16 @@ async def _build_project_job(
         )
         xctestrun = Xctest.parse_xctestrun(build_for_testing_result.xctestrun_path)
 
-        logger.debug(f"Setting xctestrun path for build '{db_build.id}'")
-        db_build.xctestrun_path = pathlib.Path(build_for_testing_result.xctestrun_path)
+        logger.debug(f"Creating xctestrun for build '{db_build.id}'")
+        db_xctestrun = Xctestrun(
+            path=pathlib.Path(build_for_testing_result.xctestrun_path),
+            test_configurations=[
+                test_configuration.Name
+                for test_configuration in xctestrun.TestConfigurations
+            ],
+            build_id=db_build.id,
+        )
+        db_build.xctestrun = db_xctestrun
         session.add(db_build)
         session.commit()
 

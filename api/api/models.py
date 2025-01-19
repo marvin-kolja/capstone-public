@@ -230,6 +230,26 @@ class XcProjectPublic(XcProjectBase):
 #               Build                #
 ######################################
 
+
+class XctestrunBase(SQLModel):
+    path: pathlib.Path = SQLField(sa_column=Column(PathType, unique=True))
+    test_configurations: list[str] = SQLField(sa_column=Column(JSON))
+
+
+class Xctestrun(XctestrunBase, table=True):
+    __tablename__ = "xctestrun"
+
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+
+    build_id: uuid.UUID = SQLField(
+        foreign_key="build.id", ondelete="CASCADE", unique=True
+    )
+
+
+class XctestrunPublic(XctestrunBase):
+    id: uuid.UUID
+
+
 BuildStatus = Literal[
     "pending",
     "running",
@@ -244,12 +264,6 @@ class BuildBase(SQLModel):
     test_plan: str
     device_id: str
     status: BuildStatus = SQLField(sa_type=String, default="pending")
-    xctestrun_path: pathlib.Path | None = SQLField(
-        sa_column=Column(PathType), default=None
-    )
-    """
-    Should be set when status is success
-    """
 
 
 class Build(BuildBase, table=True):
@@ -269,12 +283,14 @@ class Build(BuildBase, table=True):
     id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
     project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
     device_id: str = SQLField(foreign_key="device.id", ondelete="CASCADE")
+    xctestrun: Xctestrun | None = Relationship(cascade_delete=True)
 
 
 class BuildPublic(BuildBase):
     id: uuid.UUID
     project_id: uuid.UUID
     device_id: str
+    xctestrun: XctestrunPublic | None
 
 
 class StartBuildRequest(BaseModel):

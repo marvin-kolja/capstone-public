@@ -294,8 +294,6 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
     build_mock = MagicMock(spec=Build)
     status_value_mock = PropertyMock()
     type(build_mock).status = status_value_mock
-    xctestrun_path_value_mock = PropertyMock()
-    type(build_mock).xctestrun_path = xctestrun_path_value_mock
     build_mock.test_plan = "test_plan"
     build_mock.device_id = random_device_id
     build_mock.configuration = "configuration"
@@ -305,12 +303,15 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
     test_target_mock = MagicMock(spec=XcTestTarget)
     test_target_mock.app_path = "/app_path"
     test_configuration_mock = MagicMock(spec=XcTestConfiguration)
+    test_configuration_mock.Name = "Some Test Configuration"
     test_configuration_mock.TestTargets = [test_target_mock]
     xctestrun_mock.TestConfigurations = [test_configuration_mock]
 
     with patch("api.services.project_service.Xctest") as xctest_mock, patch.object(
         Path, "exists"
-    ) as path_exists_mock:
+    ) as path_exists_mock, patch(
+        "api.services.project_service.Xctestrun"
+    ) as xctestrun_model_mock:
         xctest_mock.parse_xctestrun.return_value = xctestrun_mock
         path_exists_mock.return_value = app_path_exists_after_first_build
 
@@ -345,14 +346,13 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
                 call("success"),
             ]
         )
-        xctestrun_path_value_mock.assert_has_calls(
-            [
-                call(
-                    pathlib.Path(
-                        app_builder_mock.build_for_testing.return_value.xctestrun_path
-                    )
-                ),
-            ]
+
+        xctestrun_model_mock.assert_called_once_with(
+            path=pathlib.Path(
+                app_builder_mock.build_for_testing.return_value.xctestrun_path
+            ),
+            test_configurations=[xctestrun_mock.TestConfigurations[0].Name],
+            build_id=build_mock.id,
         )
 
         # 1 for start, 1 for adding xctestrun, 1 for adding build

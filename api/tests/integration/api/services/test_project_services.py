@@ -104,7 +104,12 @@ def test_create_build(db, new_db_project, new_db_fake_device):
     ],
 )
 def test_start_build(
-    db, xcodebuild_fails, new_db_project, random_device_id, new_db_fake_build
+    db,
+    xcodebuild_fails,
+    new_db_project,
+    random_device_id,
+    new_db_fake_build,
+    new_db_fake_xctestrun,
 ):
     """
     GIVEN: a build in the database
@@ -120,7 +125,7 @@ def test_start_build(
     """
     # fake build values in order to see if tested function changes them
     new_db_fake_build.status = "failed"
-    new_db_fake_build.xctestrun_path = pathlib.Path("xctestrun_path")
+    new_db_fake_build.xctestrun = new_db_fake_xctestrun
     db.add(new_db_fake_build)
     db.commit()
 
@@ -155,7 +160,7 @@ def test_start_build(
         db.refresh(new_db_fake_build)
 
         assert new_db_fake_build.status == "pending"
-        assert new_db_fake_build.xctestrun_path is None
+        assert new_db_fake_build.xctestrun is None
 
 
 @pytest.mark.parametrize(

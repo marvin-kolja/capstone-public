@@ -1,3 +1,5 @@
+import pathlib
+
 import pytest
 from core.test_session.metrics import Metric
 
@@ -11,6 +13,7 @@ from api.models import (
     XcProjectConfiguration,
     XcProjectTestPlan,
     Build,
+    Xctestrun,
 )
 
 
@@ -115,3 +118,19 @@ def new_db_fake_build(db, new_db_project, new_db_fake_device):
     db.commit()
 
     return db_build
+
+
+@pytest.fixture
+def new_db_fake_xctestrun(db, new_db_fake_build):
+    """
+    Add a new xctestrun to the database.
+    """
+    xctestrun = Xctestrun(
+        path=pathlib.Path("xctestrun_path"),
+        test_configurations=["test_config"],
+        build_id=new_db_fake_build.id,
+    )
+    db.add(xctestrun)
+    db.commit()
+
+    return xctestrun

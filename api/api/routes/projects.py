@@ -187,6 +187,12 @@ async def stream_build_updates(
     if db_build is None:
         raise HTTPException(status_code=404, detail="Build not found")
 
+    # noinspection PyStatementEffect
+    db_build.xctestrun
+    # The DB session is closed before the async generator is called. Because of this SQLAlchemy lazy loading cannot work
+    # as the `db_build` is detached from the session when used in the async generator. This is a workaround to ensure
+    # the `xctestrun` is loaded. Read more on this here: https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
+
     return StreamingResponse(
         project_service.listen_to_build_updates(db_build=db_build, request=request),
         media_type="text/event-stream",
