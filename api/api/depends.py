@@ -1,3 +1,4 @@
+import logging
 from typing import Generator, Annotated
 
 from core.device.i_device_manager import IDeviceManager
@@ -8,13 +9,17 @@ from sqlmodel import Session
 from api.async_jobs import AsyncJobRunner
 from api.db import engine
 
+logger = logging.getLogger(__name__)
+
 
 def get_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
+        logger.debug("Creating database session")
         session.execute(
             text("PRAGMA foreign_keys=ON")
         )  # required for SQLite to enforce foreign keys
         yield session
+        logger.debug("Closing database session")
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
