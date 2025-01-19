@@ -225,7 +225,8 @@ def start_build(
     """
     # Set the build status to pending and clear the xctestrun path
     db_build.status = "pending"
-    session.delete(db_build.xctestrun)
+    if db_build.xctestrun:
+        session.delete(db_build.xctestrun)
     session.commit()
     session.refresh(db_build)
 
