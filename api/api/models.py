@@ -1,14 +1,14 @@
 import pathlib
 import uuid
 import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, Annotated, Any
 
 from core.device.i_device import IDeviceStatus
 from core.test_session.metrics import Metric
 from core.test_session.session_state import StatusLiteral
 from core.xc.xcresult.models.test_results import summary as xcresult_test_summary
 from core.xc.xctrace.xml_parser import Sysmon, CoreAnimation, ProcessStdoutErr
-from pydantic import ConfigDict, BaseModel
+from pydantic import ConfigDict, BaseModel, BeforeValidator
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
 
@@ -322,6 +322,8 @@ class XcTestResultDataBase(SQLModel):
         sa_column=Column(JSON)
     )
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 class XcTestResult(XcTestResultDataBase, table=True):
     __tablename__ = "test_result"
@@ -400,6 +402,8 @@ class ExecutionStepBase(SQLModel):
     created_at: datetime.datetime = CreatedAtField()
     updated_at: datetime.datetime = UpdatedAtField()
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 class ExecutionStep(ExecutionStepBase, table=True):
     __tablename__ = "execution_step"
@@ -414,16 +418,16 @@ class ExecutionStep(ExecutionStepBase, table=True):
     )
     session_id: uuid.UUID = SQLField(foreign_key="session.id", ondelete="CASCADE")
 
-    xc_test_result: XcTestResult = Relationship(cascade_delete=True)
-    trace_result: TraceResult = Relationship(cascade_delete=True)
+    xc_test_result: XcTestResult | None = Relationship(cascade_delete=True)
+    trace_result: TraceResult | None = Relationship(cascade_delete=True)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ExecutionStepPublic(ExecutionStepBase):
     id: uuid.UUID
-    xc_test_result: XcTestResultPublic
-    trace_result: TraceResultPublic
+    xc_test_result: XcTestResultPublic | None
+    trace_result: TraceResultPublic | None
 
 
 ######################################
@@ -432,8 +436,8 @@ class ExecutionStepPublic(ExecutionStepBase):
 
 
 class TestSessionBase(SQLModel):
-    id: uuid.UUID = SQLField(primary_key=True)
     xc_test_configuration_name: str
+
     status: StatusLiteral = SQLField(sa_type=String, default="not_started")
 
     created_at: datetime.datetime = CreatedAtField()
@@ -443,8 +447,8 @@ class TestSessionBase(SQLModel):
 class TestSession(TestSessionBase, table=True):
     __tablename__ = "session"
 
-    # TODO: Consider storing device, plan, and build as JSON fields to avoid loosing data if the referenced record is
-    #  deleted
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+
     device_id: str = SQLField(
         foreign_key="device.id", ondelete="SET NULL", nullable=True
     )  # Set device_id to NULL if the device is deleted as we want to keep the session record
@@ -455,20 +459,47 @@ class TestSession(TestSessionBase, table=True):
         foreign_key="build.id", ondelete="SET NULL", nullable=True
     )  # Set build_id to NULL if the build is deleted as we want to keep the session record
 
-    device_snapshot: Device = SQLField(sa_column=Column(JSON))
-    plan_snapshot: SessionTestPlan = SQLField(sa_column=Column(JSON))
-    build_snapshot: Build = SQLField(sa_column=Column(JSON))
+    # TODO: Pydantic models do not serialize to JSON by default. For now we use dicts which requires dumping and loading
+    #  to convert to and from JSON. We should consider using one of the suggested solutions in the following issue:
+    #  https://github.com/fastapi/sqlmodel/issues/63#issuecomment-2581016387
+    device_snapshot: dict = SQLField(sa_column=Column(JSON))
+    plan_snapshot: dict = SQLField(sa_column=Column(JSON))
+    build_snapshot: dict = SQLField(sa_column=Column(JSON))
 
     device: Device | None = Relationship()
     plan: SessionTestPlan | None = Relationship()
     build: Build | None = Relationship()
     execution_steps: list[ExecutionStep] = Relationship(cascade_delete=True)
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+def dict_to_pydantic_validator(model: type[BaseModel]):
+    """
+    Returns a function that validates the incoming data using passed model
+    :param model: pydantic model
+    :return: a function that can be used in a BeforeValidator
+    """
+
+    def parse(data: Any) -> Any:
+        validated = model.model_validate(data)
+        return validated
+
+    return parse
+
 
 class TestSessionPublic(TestSessionBase):
-    device: DeviceWithStatus | None
-    plan: SessionTestPlanPublic | None
-    build: BuildPublic | None
+    id: uuid.UUID
+    device_snapshot: Annotated[
+        DeviceWithStatus, BeforeValidator(dict_to_pydantic_validator(DeviceWithStatus))
+    ]
+    plan_snapshot: Annotated[
+        SessionTestPlanPublic,
+        BeforeValidator(dict_to_pydantic_validator(SessionTestPlanPublic)),
+    ]
+    build_snapshot: Annotated[
+        BuildPublic, BeforeValidator(dict_to_pydantic_validator(BuildPublic))
+    ]
     execution_steps: list[ExecutionStepPublic]
 
 
