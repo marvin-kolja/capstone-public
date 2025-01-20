@@ -1,10 +1,17 @@
+import uuid
+
 from fastapi import APIRouter
+from starlette.responses import StreamingResponse
+
+from api.custom_responses import SSEStreamingResponse
+from api.depends import SessionDep, AsyncJobRunnerDep
+from api.models import TestSessionCreate, TestSessionPublic
 
 router = APIRouter(prefix="/test-session", tags=["testSession"])
 
 
 @router.get("/")
-async def list_test_sessions():
+async def list_test_sessions(*, session: SessionDep) -> list[TestSessionPublic]:
     """
     List all test sessions.
     """
@@ -12,56 +19,53 @@ async def list_test_sessions():
 
 
 @router.post("/")
-async def create_test_session():
+async def start_test_session(
+    *,
+    session: SessionDep,
+    job_runner: AsyncJobRunnerDep,
+    session_create: TestSessionCreate
+) -> TestSessionPublic:
     """
-    Create a new test session.
+    Create and start new test session.
     """
     pass
 
 
 @router.get("/{test_session_id}")
-async def read_test_session(test_session_id: str):
+async def read_test_session(
+    *, session: SessionDep, test_session_id: uuid.UUID
+) -> TestSessionPublic:
     """
     Get the details of a test session.
     """
     pass
 
 
-@router.post("/{test_session_id}/start")
-async def start_test_session(test_session_id: str):
-    """
-    Starts running a test session.
-    """
-    pass
-
-
 @router.post("/{test_session_id}/cancel")
-async def cancel_test_session(test_session_id: str):
+async def cancel_test_session(
+    *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
+):
     """
     Cancels a running test session.
     """
     pass
 
 
-@router.get("/{test_session_id}/update-stream")
-async def stream_test_session_updates(test_session_id: str):
+@router.get("/{test_session_id}/execution-step-stream")
+async def stream_execution_step_updates(
+    *, session: SessionDep, test_session_id: uuid.UUID
+) -> SSEStreamingResponse:
     """
-    Stream test session updates.
-    """
-    pass
-
-
-@router.get("/{test_session_id}/results")
-async def list_test_session_results(test_session_id: str):
-    """
-    Get the results of a test session.
+    Stream updates of the execution steps of a test session. Can return any execution step when it is updated.
     """
     pass
 
 
-@router.post("/{test_session_id}/results/export")
-async def export_test_session_results(test_session_id: str):
+@router.post("/{test_session_id}/process-trace-results")
+async def export_test_session_results(
+    *, session: SessionDep, test_session_id: uuid.UUID
+):
     """
-    Start exporting the results of a test session.
+    Start processing the trace results of a test session.
     """
     pass

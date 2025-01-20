@@ -4,6 +4,7 @@ from core.xc.app_builder import AppBuilder
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from api.custom_responses import SSEStreamingResponse
 from api.depends import SessionDep, DeviceManagerDep, AsyncJobRunnerDep
 from api.services import project_service, device_service
 from api.models import (
@@ -165,10 +166,6 @@ async def read_build(
     if db_build is None:
         raise HTTPException(status_code=404, detail="Build not found")
     return db_build
-
-
-class SSEStreamingResponse(StreamingResponse):
-    media_type = "text/event-stream"
 
 
 @router.get(
