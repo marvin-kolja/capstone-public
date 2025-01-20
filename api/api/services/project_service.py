@@ -102,18 +102,21 @@ def list_builds(*, session: Session, project_id: uuid.UUID) -> list[BuildPublic]
 
 
 def read_build(
-    *, session: Session, project_id: uuid.UUID, build_id: uuid.UUID
+    *,
+    session: Session,
+    build_id: uuid.UUID,
+    project_id: Optional[uuid.UUID] = None,
 ) -> Optional[Build]:
     try:
-        db_build = session.exec(
-            select(Build)
-            .where(Build.id == build_id)
-            .where(Build.project_id == project_id)
-        ).one()
-        logger.debug(f"Found build '{build_id}' for project '{project_id}'")
+        statement = select(Build).where(Build.id == build_id)
+        if project_id:
+            statement = statement.where(Build.project_id == project_id)
+
+        db_build = session.exec(statement).one()
+        logger.debug(f"Found build '{build_id}'")
         return db_build
     except NoResultFound:
-        logger.debug(f"Build '{build_id}' not found for project '{project_id}'")
+        logger.debug(f"Build '{build_id}' not found")
         return None
 
 
