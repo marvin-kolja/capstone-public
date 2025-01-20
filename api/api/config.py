@@ -36,5 +36,16 @@ class Settings(BaseSettings):
             raise ValueError(f"BUILD_DIR does not exist: {path}")
         return path
 
+    TEST_SESSIONS_DIR: str
+
+    # noinspection PyPep8Naming
+    @computed_field
+    @property
+    def TEST_SESSIONS_DIR_PATH(self) -> pathlib.Path:
+        path = pathlib.Path(self.TEST_SESSIONS_DIR)
+        if not path.exists():
+            raise ValueError(f"TEST_SESSIONS_DIR does not exist: {path}")
+        return path
+
 
 settings = Settings()  # type: ignore
