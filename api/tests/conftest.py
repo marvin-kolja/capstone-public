@@ -77,7 +77,7 @@ def mock_device_manager(mock_i_device):
 def client() -> Generator[TestClient, None, None]:
     with TestClient(
         app,
-        raise_server_exceptions=False,
+        raise_server_exceptions=True,
     ) as c:
         yield c
 
