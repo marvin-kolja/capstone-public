@@ -20,7 +20,7 @@ from api.services import (
     api_test_session_service,
 )
 
-router = APIRouter(prefix="/test-session", tags=["testSession"])
+router = APIRouter(prefix="/test-sessions", tags=["testSession"])
 
 
 @router.get("/")
