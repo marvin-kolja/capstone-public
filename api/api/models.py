@@ -436,6 +436,8 @@ class ExecutionStepPublic(ExecutionStepBase):
 
 
 class TestSessionBase(SQLModel):
+    __test__ = False
+
     xc_test_configuration_name: str
 
     status: StatusLiteral = SQLField(sa_type=String, default="not_started")
@@ -446,6 +448,7 @@ class TestSessionBase(SQLModel):
 
 class TestSession(TestSessionBase, table=True):
     __tablename__ = "session"
+    __test__ = False
 
     id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
 
@@ -489,6 +492,8 @@ def dict_to_pydantic_validator(model: type[BaseModel]):
 
 
 class TestSessionPublic(TestSessionBase):
+    __test__ = False
+
     id: uuid.UUID
     device_snapshot: Annotated[
         DeviceWithStatus, BeforeValidator(dict_to_pydantic_validator(DeviceWithStatus))
@@ -504,6 +509,8 @@ class TestSessionPublic(TestSessionBase):
 
 
 class TestSessionCreate(BaseModel):
+    __test__ = False
+
     plan_id: uuid.UUID
     build_id: uuid.UUID
     xc_test_configuration_name: str
