@@ -1,11 +1,13 @@
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call, PropertyMock
 
 import pytest
 
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
 from core.exceptions.i_device import DeviceNotReadyForDvt
+from core.test_session.execution_plan import ExecutionStep, ExecutionPlan
+from core.xc.app_bundle.info_plist import InfoPlist
 from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.commands.xctrace_command import Instrument
 from core.test_session.metrics import Metric
@@ -399,4 +401,110 @@ class TestSession:
                 xctestrun_path=mock_execution_plan.test_plan.xctestrun_config.path,
                 only_testing=[mock_test_case.xctest_id],
                 destination=IOSDestination(id=fake_udid),
+            )
+
+    def test_get_app_bundle_id(self):
+        """
+        GIVEN: A test session and a mocked execution plan
+
+        WHEN: Getting the app bundle id from an app path
+
+        THEN: It should return the correct bundle id
+        """
+        execution_plan_mock = MagicMock(spec=ExecutionPlan)
+
+        session = Session(
+            execution_plan=execution_plan_mock,
+            session_id=MagicMock(),
+            device=MagicMock(),
+            output_dir=MagicMock(),
+        )
+
+        app_bundle_id = "com.example.app"
+        app_bundle_path = "/tmp/example.app"
+
+        mock_info_plist = MagicMock(spec=InfoPlist, CFBundleIdentifier=app_bundle_id)
+        execution_plan_mock.info_plists = {app_bundle_path: mock_info_plist}
+
+        assert session._get_app_bundle_id(app_bundle_path) == app_bundle_id
+
+    @pytest.mark.parametrize(
+        "app_bundle_id, app_bundle_path, ui_app_bundle_id, ui_app_bundle_path",
+        [
+            ("com.example.app", "/tmp/example.app", None, None),
+            (
+                "com.example.app",
+                "/tmp/example.app",
+                "com.example.ui_test_app",
+                "/tmp/ui_test_example.app",
+            ),
+        ],
+    )
+    @pytest.mark.parametrize("reinstall_app", [True, False])
+    @pytest.mark.parametrize("is_installed", [True, False])
+    def test_handle_app_installation(
+        self,
+        app_bundle_id,
+        app_bundle_path,
+        ui_app_bundle_id,
+        ui_app_bundle_path,
+        reinstall_app,
+        is_installed,
+    ):
+        """
+        GIVEN: An execution step.
+
+        WHEN: The app and UI test app are not installed.
+
+        THEN: The app and UI test app should be installed.
+        """
+        execution_step_mock = MagicMock(spec=ExecutionStep)
+        execution_step_mock.reinstall_app = reinstall_app
+        test_target_mock = MagicMock(spec=XcTestTarget)
+        test_target_mock.app_path = app_bundle_path
+        test_target_mock.ui_test_app_path = ui_app_bundle_path
+        execution_step_mock.test_target = test_target_mock
+
+        expected_install_calls = []
+        expected_uninstall_calls = []
+
+        if not is_installed or reinstall_app:
+            expected_install_calls.append(call(app_bundle_path))
+            if ui_app_bundle_id:
+                expected_install_calls.append(call(ui_app_bundle_path))
+
+        if is_installed and reinstall_app:
+            expected_uninstall_calls.append(call(app_bundle_id))
+            if ui_app_bundle_id:
+                expected_uninstall_calls.append(call(ui_app_bundle_id))
+
+        session = Session(
+            execution_plan=MagicMock(),
+            session_id=MagicMock(),
+            device=MagicMock(),
+            output_dir=MagicMock(),
+        )
+
+        with patch.object(session, "_i_services") as mock_i_services, patch.object(
+            session, "_get_app_bundle_id"
+        ) as mock_get_app_bundle_id:
+            mock_i_services.list_installed_apps.return_value = (
+                [
+                    app_bundle_id,
+                    ui_app_bundle_id,
+                ]
+                if is_installed
+                else []
+            )
+            mock_get_app_bundle_id.side_effect = lambda path: (
+                app_bundle_id if path == app_bundle_path else ui_app_bundle_id
+            )
+
+            session._handle_app_installation(execution_step_mock)
+
+            mock_i_services.install_app.assert_has_calls(
+                expected_install_calls, any_order=False
+            )
+            mock_i_services.uninstall_app.assert_has_calls(
+                expected_uninstall_calls, any_order=False
             )

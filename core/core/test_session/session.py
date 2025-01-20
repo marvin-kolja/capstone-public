@@ -106,7 +106,15 @@ class Session:
         trace_path, xcresult_path = self._generate_result_paths(execution_step)
         await self._execute_test_and_trace(execution_step, trace_path, xcresult_path)
 
-    def _handle_app_installation(self, execution_step):
+    def _get_app_bundle_id(self, app_path: str) -> str:
+        """
+        Get the app bundle id using the app path.
+        :param app_path: The path to the app.
+        :return: The app bundle id.
+        """
+        return self._execution_plan.info_plists[app_path].CFBundleIdentifier
+
+    def _handle_app_installation(self, execution_step: ExecutionStep):
         """
         Handle the installation of the app and the UI test app.
 
@@ -117,18 +125,20 @@ class Session:
         """
         app_path = execution_step.test_target.app_path
         ui_test_app_path = execution_step.test_target.ui_test_app_path
-        app_paths = [app_path, ui_test_app_path] if ui_test_app_path else [app_path]
+        paths_to_install = (
+            [app_path, ui_test_app_path] if ui_test_app_path else [app_path]
+        )
 
         installed_apps = self._i_services.list_installed_apps()
 
-        for path_to_app in app_paths:
-            bundle_id = self._execution_plan.info_plists[path_to_app].CFBundleIdentifier
+        for path_to_install in paths_to_install:
+            bundle_id = self._get_app_bundle_id(path_to_install)
 
             if bundle_id in installed_apps and execution_step.reinstall_app:
                 self._i_services.uninstall_app(bundle_id)
-                self._i_services.install_app(app_path)
+                self._i_services.install_app(path_to_install)
             elif bundle_id not in installed_apps:
-                self._i_services.install_app(app_path)
+                self._i_services.install_app(path_to_install)
 
     def _generate_result_paths(self, execution_step) -> tuple[str, str]:
         """
