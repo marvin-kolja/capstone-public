@@ -111,6 +111,52 @@ def test_create_test_plan(client, db, new_db_project):
     assert created_plan.metrics == test_plan.metrics
 
 
+def test_create_test_plan_invalid_project(client, db):
+    """
+    GIVEN: A test plan creation model with an invalid project id
+
+    WHEN: POSTing to the `/test-plans/` endpoint
+
+    THEN: The response should be a 400
+    """
+    r = client.post(
+        "/test-plans/",
+        json=SessionTestPlanCreate(
+            name="test plan",
+            xc_test_plan_name="test plan",
+            repetitions=1,
+            repetition_strategy="entire_suite",
+            metrics=[Metric.cpu],
+            project_id=uuid.uuid4(),
+        ).model_dump(mode="json"),
+    )
+
+    assert r.status_code == 400
+
+
+def test_create_test_plan_invalid_xc_test_plan(client, db, new_db_project):
+    """
+    GIVEN: A test plan creation model with an invalid xc test plan name
+
+    WHEN: POSTing to the `/test-plans/` endpoint
+
+    THEN: The response should be a 400
+    """
+    r = client.post(
+        "/test-plans/",
+        json=SessionTestPlanCreate(
+            name="test plan",
+            xc_test_plan_name="invalid test plan",
+            repetitions=1,
+            repetition_strategy="entire_suite",
+            metrics=[Metric.cpu],
+            project_id=new_db_project.id,
+        ).model_dump(mode="json"),
+    )
+
+    assert r.status_code == 400
+
+
 def test_update_test_plan(new_test_plan, db, client):
     """
     GIVEN: An existing test plan in the database
@@ -161,6 +207,24 @@ def test_update_test_plan_not_found(client):
     )
 
     assert r.status_code == 404
+
+
+def test_update_test_plan_invalid_xc_test_plan(client, new_test_plan):
+    """
+    GIVEN: A test plan in the database
+
+    WHEN: PATCHing `/test-plans/{id}` endpoint with an invalid xc test plan name
+
+    THEN: The response should be a 400
+    """
+    r = client.patch(
+        f"/test-plans/{new_test_plan.id}",
+        json=SessionTestPlanUpdate(xc_test_plan_name="invalid test plan").model_dump(
+            exclude_unset=True
+        ),
+    )
+
+    assert r.status_code == 400
 
 
 def test_delete_test_plan(new_test_plan, new_test_plan_step, db, client):

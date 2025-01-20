@@ -14,7 +14,7 @@ from api.models import (
     SessionTestPlanStep,
 )
 from api.depends import SessionDep
-from api.services import api_test_plan_service
+from api.services import api_test_plan_service, project_service
 
 router = APIRouter(prefix="/test-plans", tags=["testPlans"])
 
@@ -34,6 +34,19 @@ async def create_test_plan(
     """
     Create a new test plan.
     """
+    project = project_service.read_project(
+        session=session, project_id=test_plan.project_id
+    )
+    if project is None:
+        raise HTTPException(status_code=400, detail="Invalid project id")
+
+    if not project_service.project_has_xc_test_plan(
+        session=session,
+        project_id=project.id,
+        xc_test_plan=test_plan.xc_test_plan_name,
+    ):
+        raise HTTPException(status_code=400, detail="Invalid test plan")
+
     return api_test_plan_service.create_test_plan(session=session, plan=test_plan)
 
 
@@ -55,6 +68,20 @@ async def update_test_plan(
     Update a test plan.
     """
     db_plan = _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
+
+    project = project_service.read_project(
+        session=session, project_id=db_plan.project_id
+    )
+    if project is None:
+        raise HTTPException(status_code=500)
+
+    if plan.xc_test_plan_name is not None:
+        if not project_service.project_has_xc_test_plan(
+            session=session,
+            project_id=project.id,
+            xc_test_plan=plan.xc_test_plan_name,
+        ):
+            raise HTTPException(status_code=400, detail="Invalid test plan")
 
     return api_test_plan_service.update_test_plan(
         session=session, db_plan=db_plan, plan=plan

@@ -509,3 +509,20 @@ async def sync_db_project(
             model_class=XcProjectTestPlan,
             additional_fields={"scheme_id": db_scheme.id},
         )
+
+
+def project_has_xc_test_plan(
+    *, session: Session, project_id: uuid.UUID, xc_test_plan: str
+) -> bool:
+    """
+    Check if a project has a specific xc test plan.
+    """
+    return (
+        session.exec(
+            select(XcProjectTestPlan)
+            .join(XcProject)
+            .where(XcProject.id == project_id)
+            .where(XcProjectTestPlan.name == xc_test_plan)
+        ).first()
+        is not None
+    )
