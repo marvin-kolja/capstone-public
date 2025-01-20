@@ -249,7 +249,7 @@ def test_reorder_test_plan_steps(new_test_plan, db):
     steps = [
         SessionTestPlanStepCreate(
             name=f"step {i}",
-            test_cases=[f"test/case/path/{i}"],
+            test_cases=[f"test/case/path{i}"],
         )
         for i in range(3)
     ]

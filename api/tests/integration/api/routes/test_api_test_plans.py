@@ -241,6 +241,26 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db, client):
     assert created_step.repetitions == test_plan_step.repetitions
 
 
+def test_create_test_plan_step_invalid_test_cases(client, new_test_plan):
+    """
+    GIVEN: A test plan in the db
+
+    WHEN: POSTing to the `/test-plans/{id}/steps` endpoint with invalid test cases
+
+    THEN: The response should be a 422
+    """
+    r = client.post(
+        f"/test-plans/{new_test_plan.id}/steps",
+        json=SessionTestPlanStepCreate(
+            name="new step",
+            test_cases=["target/test_case/path", "invalid_target/test_case/path"],
+        ).model_dump(),
+    )
+
+    assert r.status_code == 422
+    assert r.json()["detail"] == "Invalid test case path"
+
+
 def test_create_test_plan_step_no_test_plan(client):
     """
     GIVEN: No test plan in the database
@@ -288,6 +308,27 @@ def test_update_test_plan_step(new_test_plan, new_test_plan_step, db, client):
 
     assert new_test_plan_step.name == step_update.name
     assert updated_step == SessionTestPlanStepPublic.model_validate(new_test_plan_step)
+
+
+def test_update_test_plan_step_invalid_test_cases(
+    client, new_test_plan, new_test_plan_step
+):
+    """
+    GIVEN: A test plan and a step in the db
+
+    WHEN: PATCHing the `/test-plans/{id}/steps/{id}` endpoint with invalid test cases
+
+    THEN: The response should be a 422
+    """
+    r = client.patch(
+        f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}",
+        json=SessionTestPlanStepUpdate(
+            name="updated step", test_cases=["invalid"]
+        ).model_dump(exclude_unset=True),
+    )
+
+    assert r.status_code == 422
+    assert r.json()["detail"] == "Invalid test case path"
 
 
 def test_update_test_plan_step_not_found(new_test_plan, client):
@@ -352,7 +393,7 @@ def test_reorder_test_plan_steps(new_test_plan, db, client):
     steps = [
         SessionTestPlanStepCreate(
             name=f"step {i}",
-            test_cases=[f"test/case/path/{i}"],
+            test_cases=[f"test/case/path{i}"],
         )
         for i in range(3)
     ]

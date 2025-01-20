@@ -2,6 +2,7 @@ import logging
 import uuid
 from typing import Optional
 
+from core.test_session import plan as core_plan
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session, select
 
@@ -72,6 +73,7 @@ def create_test_plan_step(
             "order": len(db_plan.steps),
         }
     )
+    _validate_test_cases(db_step.test_cases)
     db_plan.steps.append(db_step)
     session.add(db_plan)
     session.commit()
@@ -86,6 +88,7 @@ def update_test_plan_step(
     step: SessionTestPlanStepUpdate,
 ) -> SessionTestPlanStepPublic:
     update_db_model(db_model=db_step, new_data_model=step)
+    _validate_test_cases(db_step.test_cases)
     session.add(db_step)
     session.commit()
     session.refresh(db_step)
@@ -146,3 +149,18 @@ def read_test_plan_step(
         .where(SessionTestPlanStep.id == step_id)
         .where(SessionTestPlanStep.test_plan_id == test_plan_id)
     ).first()
+
+
+def _validate_test_cases(test_cases: list[str]):
+    """
+    Uses the core PlanStep.validate_same_test_target method to validate the test cases format and same target.
+
+    :param test_cases: List of test cases to be validated
+    :raises ValidationError: If the test cases are not from the same test target
+    """
+    try:
+        core_plan.PlanStep.validate_same_test_target(
+            [core_plan.StepTestCase(xctest_id=test_case) for test_case in test_cases]
+        )
+    except ValueError as e:
+        raise RequestValidationError("Invalid test case path") from e
