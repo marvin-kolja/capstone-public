@@ -45,6 +45,11 @@ def upgrade() -> None:
         sa.Column("device_snapshot", sa.JSON(), nullable=True),
         sa.Column("plan_snapshot", sa.JSON(), nullable=True),
         sa.Column("build_snapshot", sa.JSON(), nullable=True),
+        sa.Column(
+            "xc_test_configuration_name",
+            sqlmodel.sql.sqltypes.AutoString(),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["build_id"], ["build.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["device_id"], ["device.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(

@@ -433,6 +433,7 @@ class ExecutionStepPublic(ExecutionStepBase):
 
 class TestSessionBase(SQLModel):
     id: uuid.UUID = SQLField(primary_key=True)
+    xc_test_configuration_name: str
     status: StatusLiteral = SQLField(sa_type=String, default="not_started")
 
     created_at: datetime.datetime = CreatedAtField()
