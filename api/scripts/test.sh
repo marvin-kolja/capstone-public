@@ -14,7 +14,7 @@ rm -f $DB_PATH
 SQLITE_PATH=$DB_PATH sh scripts/migrate.sh
 
 # Run the tests
-SQLITE_PATH=$DB_PATH coverage run -m pytest tests/
+SQLITE_PATH=$DB_PATH coverage run -m pytest tests/ $@
 
 # Clean up
 rm -f $DB_PATH
