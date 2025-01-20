@@ -31,6 +31,15 @@ def plan_execution(
     xctestrun_path: pathlib.Path,
     xc_test_configuration_name: str,
 ) -> execution_plan.ExecutionPlan:
+    """
+    Plan the test session execution based on the public test plan, xctestrun path and test configuration.
+
+    :param public_plan: The public test plan model
+    :param xctestrun_path: The path to the xctestrun file
+    :param xc_test_configuration_name: The test configuration to be used
+
+    :return: The core execution plan model
+    """
     core_session_test_plan = _parse_api_test_plan_to_core_test_plan(
         public_plan=public_plan,
         xctestrun_path=xctestrun_path.resolve().as_posix(),
@@ -51,6 +60,18 @@ def create_test_session(
     execution_steps: list[ExecutionStep] = None,
     session_id: Optional[uuid.UUID] = None,
 ) -> TestSession:
+    """
+    Create a new test session in the database.
+
+    :param session: The database session
+    :param public_plan: The public test plan model to create a snapshot of
+    :param public_build: The public build model to create a snapshot of
+    :param public_device: The public device model to create a snapshot of
+    :param xc_test_configuration_name: The test configuration name to be used for execution
+    :param execution_steps: The execution steps to be used for the test session
+    :param session_id: The UUID of the test session
+    :return: The database test session model
+    """
     db_test_session = TestSession(
         id=session_id,
         plan_id=public_plan.id,
