@@ -95,6 +95,7 @@ def generate_model(
             ).as_posix(),
             output=output_file,
             output_model_type=DataModelType.PydanticV2BaseModel,
+            snake_case_field=True,
         )
         logger.info(f"Model generated: {output_file}")
 
