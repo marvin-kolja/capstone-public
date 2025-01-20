@@ -1,6 +1,7 @@
 import pathlib
 
-from sqlalchemy import TypeDecorator, String
+from sqlalchemy import TypeDecorator, String, func, text
+from sqlmodel import Field as SQLField
 
 
 class PathType(TypeDecorator):
@@ -15,3 +16,26 @@ class PathType(TypeDecorator):
         if value is not None:
             return pathlib.Path(value)
         return value
+
+
+# noinspection PyPep8Naming
+def CreatedAtField(
+    **kwargs,
+) -> SQLField:
+    return SQLField(
+        sa_column_kwargs={"server_default": func.now()},
+        **kwargs,
+    )
+
+
+# noinspection PyPep8Naming
+def UpdatedAtField(
+    **kwargs,
+) -> SQLField:
+    return SQLField(
+        sa_column_kwargs={
+            "server_default": func.now(),
+            "onupdate": func.now(),
+        },
+        **kwargs,
+    )

@@ -1,14 +1,18 @@
 import pathlib
 import uuid
+import datetime
 from typing import Literal, Optional
 
 from core.device.i_device import IDeviceStatus
 from core.test_session.metrics import Metric
+from core.test_session.session_state import StatusLiteral
+from core.xc.xcresult.models.test_results import summary as xcresult_test_summary
+from core.xc.xctrace.xml_parser import Sysmon, CoreAnimation, ProcessStdoutErr
 from pydantic import ConfigDict, BaseModel
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
 
-from api.custom_db_types import PathType
+from api.custom_db_types import PathType, CreatedAtField, UpdatedAtField
 
 
 ######################################
@@ -298,3 +302,175 @@ class StartBuildRequest(BaseModel):
     configuration: str
     test_plan: str
     device_id: str
+
+
+######################################
+#          Execution Result          #
+######################################
+
+
+class XcTestResultDataBase(SQLModel):
+    start_time: Optional[float]
+    end_time: Optional[float]
+    result: xcresult_test_summary.TestResult = SQLField(sa_column=Column(JSON))
+    total_test_count: int
+    passed_tests: int
+    failed_tests: int
+    skipped_tests: int
+    expected_failures: int
+    test_failures: list[xcresult_test_summary.TestFailure] = SQLField(
+        sa_column=Column(JSON)
+    )
+
+
+class XcTestResult(XcTestResultDataBase, table=True):
+    __tablename__ = "test_result"
+
+    id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    execution_step_id: uuid.UUID = SQLField(
+        foreign_key="execution_step.id", ondelete="CASCADE"
+    )
+
+
+class XcTestResultPublic(XcTestResultDataBase):
+    pass
+
+
+class TraceResultDataBase(SQLModel):
+    id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    execution_step_id: uuid.UUID = SQLField(
+        foreign_key="trace_result.id", ondelete="CASCADE"
+    )
+
+
+class SysmonDB(TraceResultDataBase, Sysmon, table=True):
+    __tablename__ = "sysmon"
+
+
+class CoreAnimationDB(TraceResultDataBase, CoreAnimation, table=True):
+    __tablename__ = "core_animation"
+
+
+class ProcessStdoutErrDB(TraceResultDataBase, ProcessStdoutErr, table=True):
+    __tablename__ = "process_stdout_err"
+
+
+class TraceResultBase(SQLModel):
+    export_status: StatusLiteral = SQLField(sa_type=String, default="not_started")
+
+
+class TraceResult(TraceResultBase, table=True):
+    __tablename__ = "trace_result"
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+    execution_step_id: uuid.UUID = SQLField(
+        foreign_key="execution_step.id", ondelete="CASCADE"
+    )
+
+    sysmon: SysmonDB = Relationship(cascade_delete=True)
+    core_animation: CoreAnimationDB = Relationship(cascade_delete=True)
+    process_stdout_err: ProcessStdoutErrDB = Relationship(cascade_delete=True)
+
+
+class TraceResultPublic(TraceResultBase):
+    sysmon: Sysmon
+    core_animation: CoreAnimation
+    process_stdout_err: ProcessStdoutErr
+
+
+######################################
+#          Execution Steps           #
+######################################
+
+
+class ExecutionStepBase(SQLModel):
+    id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
+
+    plan_repetition: int
+    plan_step_order: int
+    step_repetition: int
+    recording_start_strategy: RecordingStartStrategy = SQLField(sa_type=String)
+    reinstall_app: bool
+    metrics: list[Metric] = SQLField(sa_column=Column(JSON))
+    test_cases: list[str] = SQLField(min_length=1, sa_column=Column(JSON))
+    end_on_failure: bool
+    test_target_name: str
+
+    status: StatusLiteral = SQLField(sa_type=String, default="not_started")
+
+    created_at: datetime.datetime = CreatedAtField()
+    updated_at: datetime.datetime = UpdatedAtField()
+
+
+class ExecutionStep(ExecutionStepBase, table=True):
+    __tablename__ = "execution_step"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "plan_repetition",
+            "plan_step_order",
+            "step_repetition",
+            name="unique_execution_step",
+        ),
+    )
+    session_id: uuid.UUID = SQLField(foreign_key="session.id", ondelete="CASCADE")
+
+    xc_test_result: XcTestResult = Relationship(cascade_delete=True)
+    trace_result: TraceResult = Relationship(cascade_delete=True)
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class ExecutionStepPublic(ExecutionStepBase):
+    id: uuid.UUID
+    xc_test_result: XcTestResultPublic
+    trace_result: TraceResultPublic
+
+
+######################################
+#              Session               #
+######################################
+
+
+class TestSessionBase(SQLModel):
+    id: uuid.UUID = SQLField(primary_key=True)
+    status: StatusLiteral = SQLField(sa_type=String, default="not_started")
+
+    created_at: datetime.datetime = CreatedAtField()
+    updated_at: datetime.datetime = UpdatedAtField()
+
+
+class TestSession(TestSessionBase, table=True):
+    __tablename__ = "session"
+
+    # TODO: Consider storing device, plan, and build as JSON fields to avoid loosing data if the referenced record is
+    #  deleted
+    device_id: str = SQLField(
+        foreign_key="device.id", ondelete="SET NULL", nullable=True
+    )  # Set device_id to NULL if the device is deleted as we want to keep the session record
+    plan_id: uuid.UUID | None = SQLField(
+        foreign_key="session_testplan.id", ondelete="SET NULL", nullable=True
+    )  # Set plan_id to NULL if the plan is deleted as we want to keep the session record
+    build_id: uuid.UUID | None = SQLField(
+        foreign_key="build.id", ondelete="SET NULL", nullable=True
+    )  # Set build_id to NULL if the build is deleted as we want to keep the session record
+
+    device_snapshot: Device = SQLField(sa_column=Column(JSON))
+    plan_snapshot: SessionTestPlan = SQLField(sa_column=Column(JSON))
+    build_snapshot: Build = SQLField(sa_column=Column(JSON))
+
+    device: Device | None = Relationship()
+    plan: SessionTestPlan | None = Relationship()
+    build: Build | None = Relationship()
+    execution_steps: list[ExecutionStep] = Relationship(cascade_delete=True)
+
+
+class TestSessionPublic(TestSessionBase):
+    device: DeviceWithStatus | None
+    plan: SessionTestPlanPublic | None
+    build: BuildPublic | None
+    execution_steps: list[ExecutionStepPublic]
+
+
+class TestSessionCreate(BaseModel):
+    plan_id: uuid.UUID
+    build_id: uuid.UUID
