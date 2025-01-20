@@ -475,3 +475,4 @@ class TestSessionPublic(TestSessionBase):
 class TestSessionCreate(BaseModel):
     plan_id: uuid.UUID
     build_id: uuid.UUID
+    xc_test_configuration_name: str
