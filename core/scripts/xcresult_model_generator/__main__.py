@@ -121,7 +121,7 @@ def main():
     logger.info(f"Current path: {current_path}")
     input_directory = pathlib.Path(current_path, "schemas")
     output_directory = pathlib.Path(
-        current_path, "..", "..", "core", "xcresult", "models"
+        current_path, "..", "..", "core", "xc", "xcresult", "models"
     ).resolve()
 
     for schema_file in retrieve_json_files(input_directory):
