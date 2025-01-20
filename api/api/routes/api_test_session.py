@@ -28,7 +28,7 @@ async def list_test_sessions(*, session: SessionDep) -> list[TestSessionPublic]:
     """
     List all test sessions.
     """
-    pass
+    return api_test_session_service.list_test_sessions(session=session)
 
 
 @router.post("/")
@@ -89,7 +89,13 @@ async def read_test_session(
     """
     Get the details of a test session.
     """
-    pass
+    db_test_session = api_test_session_service.read_test_session(
+        session=session, test_session_id=test_session_id
+    )
+    if db_test_session is None:
+        raise HTTPException(status_code=404, detail="Test session not found")
+
+    return db_test_session
 
 
 @router.post("/{test_session_id}/cancel")

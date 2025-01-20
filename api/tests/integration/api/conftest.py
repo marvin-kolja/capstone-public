@@ -14,6 +14,11 @@ from api.models import (
     XcProjectTestPlan,
     Build,
     Xctestrun,
+    TestSession,
+    BuildPublic,
+    ExecutionStep,
+    SessionTestPlanPublic,
+    DeviceWithStatus,
 )
 
 
@@ -134,3 +139,55 @@ def new_db_fake_xctestrun(db, new_db_fake_build):
     db.commit()
 
     return xctestrun
+
+
+@pytest.fixture
+def new_db_fake_test_session(
+    db, new_db_fake_build, new_db_fake_device, new_test_plan, new_test_plan_step
+):
+    """
+    Add a new test session to the database.
+    """
+    public_build = BuildPublic.model_validate(new_db_fake_build)
+    public_device = DeviceWithStatus.model_validate(new_db_fake_device)
+    public_plan = SessionTestPlanPublic.model_validate(new_test_plan)
+
+    test_session = TestSession(
+        xc_test_configuration_name="test_config",
+        plan_id=new_test_plan.id,
+        build_id=new_db_fake_build.id,
+        device_id=new_db_fake_device.id,
+        plan_snapshot=public_plan.model_dump(mode="json"),
+        build_snapshot=public_build.model_dump(mode="json"),
+        device_snapshot=public_device.model_dump(mode="json"),
+    )
+    db.add(test_session)
+    db.commit()
+
+    return test_session
+
+
+@pytest.fixture
+def new_db_fake_execution_step(
+    db, new_db_fake_test_session, new_test_plan_step, new_test_plan
+):
+    """
+    Add a new execution step to the database.
+    """
+    execution_step = ExecutionStep(
+        step_repetition=1,
+        plan_step_order=0,
+        plan_repetition=1,
+        session_id=new_db_fake_test_session.id,
+        recording_start_strategy=new_test_plan_step.recording_start_strategy
+        or new_test_plan.recording_start_strategy,
+        test_cases=new_test_plan_step.test_cases,
+        metrics=new_test_plan_step.metrics or new_test_plan.metrics,
+        reinstall_app=new_test_plan_step.reinstall_app or new_test_plan.reinstall_app,
+        end_on_failure=new_test_plan.end_on_failure,
+        test_target_name="fake target name",  # TODO: replace with an actual value when needed
+    )
+    db.add(execution_step)
+    db.commit()
+
+    return execution_step

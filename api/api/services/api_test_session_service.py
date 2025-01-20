@@ -4,7 +4,8 @@ import uuid
 from typing import Optional
 
 from core.device.i_device import IDevice
-from sqlmodel import Session
+from sqlalchemy.orm import selectinload
+from sqlmodel import Session, select
 
 from core.test_session import (
     plan as core_plan,
@@ -23,6 +24,26 @@ from api.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def list_test_sessions(*, session: Session) -> list[TestSession]:
+    """
+    List all test sessions in the database.
+    """
+    return list(
+        session.exec(
+            select(TestSession).options(selectinload(TestSession.execution_steps))
+        ).all()
+    )
+
+
+def read_test_session(
+    *, session: Session, test_session_id: uuid.UUID
+) -> Optional[TestSession]:
+    """
+    Read a test session from the database by its ID.
+    """
+    return session.get(TestSession, test_session_id)
 
 
 def plan_execution(
