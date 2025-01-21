@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import pathlib
+import signal
 import tempfile
 from typing import Any, Generator, Optional
 
@@ -208,7 +209,7 @@ class Xctest:
         )
 
         try:
-            await async_run_process(command=command)
+            await async_run_process(command=command, signal_on_cancel=signal.SIGINT)
         except ProcessException as e:
             logger.error(
                 f"Failed to run the test for {xctestrun_path} due to process failure with return code: {e.return_code}"

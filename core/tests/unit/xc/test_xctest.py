@@ -1,5 +1,6 @@
 import json
 import pathlib
+import signal
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -293,6 +294,35 @@ class TestXctestRunTest:
                 xctestrun=fake_xctestrun,
                 only_testing=only_testing,
                 skip_testing=skip_testing,
+            )
+
+    @pytest.mark.asyncio
+    async def test_run_test_uses_correct_signal_on_cancel(
+        self, mock_xcodebuild_run, fake_udid
+    ):
+        """
+        GIVEN: A Xctest class
+
+        WHEN: calling `run_test`
+
+        THEN: The `signal_on_cancel` should be set to `signal.SIGINT`
+        """
+        fake_xctestrun = "/tmp/some_xctestrun.xctestrun"
+
+        with patch(
+            "core.xc.xctest.XcodebuildTestCommand"
+        ) as mock_xcodebuild_test_command:
+            await Xctest.run_test(
+                xctestrun_path=fake_xctestrun,
+                destination=IOSDestination(
+                    id=fake_udid,
+                ),
+                test_configuration="Some Configuration",
+            )
+
+            mock_xcodebuild_run.assert_called_once_with(
+                command=mock_xcodebuild_test_command.return_value,
+                signal_on_cancel=signal.SIGINT,
             )
 
     @pytest.mark.asyncio
