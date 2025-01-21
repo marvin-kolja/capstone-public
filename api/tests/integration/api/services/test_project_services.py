@@ -165,8 +165,8 @@ def test_start_build(
 @pytest.mark.parametrize(
     "build_status_last_update",
     [
-        ("success",),
-        ("failure",),
+        "success",
+        "failure",
     ],
 )
 @pytest.mark.asyncio
@@ -182,6 +182,7 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
     AND: The listener should stop
     """
     request_mock = AsyncMock(spec=Request)
+    request_mock.is_disconnected.return_value = False
 
     async def simulate_updates():
         another_build = Build(
@@ -194,9 +195,13 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
         db.add(another_build)
         db.commit()
 
+        await asyncio.sleep(0.1)
+
         another_build.status = "running"
         db.add(another_build)
         db.commit()
+
+        await asyncio.sleep(0.1)
 
         new_db_fake_build.status = build_status_last_update
         db.add(new_db_fake_build)
