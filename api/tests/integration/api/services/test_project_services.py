@@ -223,7 +223,7 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
 
 
 @pytest.mark.asyncio
-async def test_listen_to_build_updates(db, new_db_fake_build):
+async def test_listen_to_build_updates_disconnect(db, new_db_fake_build):
     """
     GIVEN: A build in the database
 
