@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from unittest.mock import MagicMock, patch, call, PropertyMock
 
@@ -230,11 +231,14 @@ class TestSession:
 
         mock_execution_plan.test_plan.end_on_failure = end_on_failure
 
+        mock_queue = MagicMock(spec=asyncio.Queue)
+
         session = Session(
             execution_plan=mock_execution_plan,
             session_id=MagicMock(),
             device=MagicMock(),
             output_dir=MagicMock(),
+            queue=mock_queue,
         )
 
         mock_execution_step_state = MagicMock(spec=ExecutionStepState)
@@ -254,10 +258,17 @@ class TestSession:
                 assert mock_run_execution_step.await_count == 1
                 assert mock_execution_step_state.set_failed.call_count == 1
                 assert mock_next_step.call_count == 1
+                assert mock_queue.put_nowait.call_count == 2
+                mock_queue.put_nowait.assert_has_calls(
+                    [call(mock_execution_step_state.snapshot()) for _ in range(2)]
+                )
             else:
                 assert mock_run_execution_step.await_count == 2
                 assert mock_execution_step_state.set_failed.call_count == 2
                 assert mock_next_step.call_count == 2
+                mock_queue.put_nowait.assert_has_calls(
+                    [call(mock_execution_step_state.snapshot()) for _ in range(4)]
+                )
 
     @pytest.mark.parametrize(
         "recording_start_strategy",

@@ -11,7 +11,7 @@ from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.commands.xctrace_command import Instrument
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import XctestrunConfig
-from core.test_session.session_state import SessionState
+from core.test_session.session_state import SessionState, ExecutionStepStateSnapshot
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.xc.xctest import Xctest
 from core.xc.xctrace.xctrace_interface import Xctrace
@@ -38,11 +38,14 @@ class Session:
         session_id: UUID,
         device: IDevice,
         output_dir: str,
+        queue: Optional[asyncio.Queue[ExecutionStepStateSnapshot]] = None,
     ):
         """
         :param execution_plan: The execution plan for the test session.
         :param session_id: The unique identifier for the test session.
         :param device: The device to run the tests on.
+        :param output_dir: The directory to store the trace and xcresult files.
+        :param queue: A queue to send the session state to.
         """
         self._execution_plan = execution_plan
         self._session_id = session_id
@@ -53,6 +56,7 @@ class Session:
             execution_plan=self._execution_plan,
             session_id=self._session_id,
         )
+        self._queue = queue
 
     async def run(self):
         """
@@ -92,12 +96,15 @@ class Session:
             logger.debug(f"Getting next execution step '{i}'")
             execution_step_state = self._session_state.next_execution_step()
             execution_step_state.set_running()
+            self._enqueue_state(execution_step_state.snapshot())
             try:
                 await self._run_execution_step(execution_step_state.execution_step)
                 execution_step_state.set_completed()
+                self._enqueue_state(execution_step_state.snapshot())
             except Exception as e:
                 logger.debug(f"Execution step failed", exc_info=e)
                 execution_step_state.set_failed(e)
+                self._enqueue_state(execution_step_state.snapshot())
                 if self._execution_plan.test_plan.end_on_failure:
                     logger.info("Ending test session because of failure.")
                     # If the test plan is set to end on failure, we need to end the session.
@@ -314,3 +321,25 @@ class Session:
                 device=self._device.lockdown_service.udid,
             )
         )
+
+    def _enqueue_state(self, state: ExecutionStepStateSnapshot):
+        """
+        Enqueue the state to the queue if available.
+
+        If the queue is full or shutdown, this will log a warning but not raise an exception. If any other exception
+        occurs, it will log an error with the exception, but not raise it.
+
+        :param state: The state to enqueue.
+        """
+        try:
+            if self._queue is not None:
+                logger.debug(f"Enqueueing state '{state}'")
+                self._queue.put_nowait(state)
+        except asyncio.QueueFull:
+            logging.warning("Queue is full. Dropping state.")
+        except asyncio.QueueShutDown:
+            logging.warning("Queue is shutdown. Dropping state.")
+        except Exception as e:
+            logging.error(
+                "Unexpected error when putting state in the queue", exc_info=e
+            )
