@@ -110,8 +110,15 @@ class Session:
                 await self._run_execution_step(execution_step_state)
                 execution_step_state.set_completed()
                 self._enqueue_state(execution_step_state.snapshot())
+            except asyncio.CancelledError:
+                logger.info(
+                    f"Execution step cancelled. Ending test session '{self._session_id}'"
+                )
+                execution_step_state.set_cancelled()
+                self._enqueue_state(execution_step_state.snapshot())
+                raise  # Re-raise to not swallow the cancellation
             except Exception as e:
-                logger.debug(f"Execution step failed", exc_info=e)
+                logger.warning(f"Execution step failed", exc_info=e)
                 execution_step_state.set_failed(e)
                 self._enqueue_state(execution_step_state.snapshot())
                 if self._execution_plan.test_plan.end_on_failure:
@@ -267,8 +274,6 @@ class Session:
                     test_task.cancel()
                     await test_task
                     raise trace_task.exception()
-        except Exception:
-            raise
         finally:
             if test_task:
                 logger.debug(f"Cleaning up test task '{test_task}'")

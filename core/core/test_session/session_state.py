@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from core.test_session.execution_plan import ExecutionStep, ExecutionPlan
 from core.test_session.session_step_hasher import hash_session_execution_step
 
-StatusLiteral = Literal["not_started", "running", "completed", "failed"]
+StatusLiteral = Literal["not_started", "running", "completed", "failed", "cancelled"]
 
 
 class ExecutionStepStateSnapshot(BaseModel):
@@ -105,6 +105,16 @@ class ExecutionStepState:
             raise ValueError("Cannot set failed after completed.")
         self.__status = "failed"
         self.__exception = exception
+
+    def set_cancelled(self):
+        """
+        Set the status to cancelled.
+
+        :raises ValueError: If the status is completed or failed.
+        """
+        if self.__status in ["completed", "failed"]:
+            raise ValueError("Cannot set cancelled after completed or failed.")
+        self.__status = "cancelled"
 
     def set_trace_path(self, trace_path: pathlib.Path):
         self.__trace_path = trace_path

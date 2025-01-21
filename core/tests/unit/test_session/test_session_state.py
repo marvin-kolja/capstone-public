@@ -214,6 +214,36 @@ class TestExecutionStepState:
         with pytest.raises(ValueError):
             execution_step_state.set_failed(Exception("Test"))
 
+    def test_set_cancelled(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: set_cancelled is called.
+
+        THEN: The status should be set to cancelled.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        execution_step_state.set_cancelled()
+
+        assert execution_step_state.status == "cancelled"
+
+    def test_set_cancelled_after_finished(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: status is completed or failed.
+        AND: set_cancelled is called.
+
+        THEN: It should raise a ValueError.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+
+        for status in ["completed", "failed"]:
+            execution_step_state._ExecutionStepState__status = status
+            with pytest.raises(ValueError):
+                execution_step_state.set_cancelled()
+
     @pytest.mark.parametrize(
         "status, exception",
         [
@@ -221,6 +251,7 @@ class TestExecutionStepState:
             ("running", None),
             ("completed", None),
             ("failed", Exception("Test")),
+            ("cancelled", None),
         ],
     )
     def test_snapshot_creation(self, mock_execution_step, status, exception):

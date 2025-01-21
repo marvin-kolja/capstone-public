@@ -274,6 +274,56 @@ class TestSession:
                     [call(mock_execution_step_state.snapshot()) for _ in range(4)]
                 )
 
+    @pytest.mark.asyncio
+    async def test_run_execution_plan_cancelled(
+        self,
+        mock_execution_plan,
+        mock_execution_step,
+    ):
+        """
+        GIVEN: A test session
+
+        WHEN: Running the execution plan, and it raises an asyncio.CancelledError
+
+        THEN: The session should set the current step state to cancelled
+        AND: It should break the loop and reraise the exception
+        """
+        mock_execution_plan.execution_steps = [mock_execution_step, mock_execution_step]
+        # Two steps to ensure the loop breaks after the first asyncio.CancelledError
+
+        mock_queue = MagicMock(spec=asyncio.Queue)
+
+        session = Session(
+            execution_plan=mock_execution_plan,
+            session_id=MagicMock(),
+            device=MagicMock(),
+            output_dir=MagicMock(),
+            queue=mock_queue,
+        )
+
+        mock_execution_step_state = MagicMock(spec=ExecutionStepState)
+
+        with (
+            patch.object(
+                session._session_state,
+                "next_execution_step",
+                return_value=mock_execution_step_state,
+            ) as mock_next_step,
+            patch.object(session, "_run_execution_step") as mock_run_execution_step,
+        ):
+            mock_run_execution_step.side_effect = asyncio.CancelledError
+
+            with pytest.raises(asyncio.CancelledError):
+                await session._run_execution_plan()
+
+            assert mock_run_execution_step.await_count == 1
+            assert mock_execution_step_state.set_cancelled.call_count == 1
+            assert mock_next_step.call_count == 1
+            assert mock_queue.put_nowait.call_count == 2
+            mock_queue.put_nowait.assert_has_calls(
+                [call(mock_execution_step_state.snapshot()) for _ in range(2)]
+            )
+
     @pytest.mark.parametrize(
         "recording_start_strategy",
         ["launch", "attach"],
