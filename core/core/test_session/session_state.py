@@ -1,3 +1,4 @@
+import pathlib
 from typing import Optional, Literal
 from uuid import UUID
 
@@ -25,6 +26,8 @@ class ExecutionStepStateSnapshot(BaseModel):
     # TODO: Consider making execution steps faux-immutable too.
     status: StatusLiteral
     exception: Optional[Exception]
+    xcresult_path: Optional[pathlib.Path]
+    trace_path: Optional[pathlib.Path]
 
     model_config = ConfigDict(
         frozen=True,  # Makes the model faux-immutable
@@ -47,6 +50,8 @@ class ExecutionStepState:
         self.__execution_step = execution_step
         self.__status: StatusLiteral = "not_started"
         self.__exception: Optional[Exception] = None
+        self.__trace_path: Optional[pathlib.Path] = None
+        self.__xcresult_path: Optional[pathlib.Path] = None
 
     @property
     def status(self) -> StatusLiteral:
@@ -59,6 +64,14 @@ class ExecutionStepState:
     @property
     def exception(self) -> Optional[Exception]:
         return self.__exception
+
+    @property
+    def trace_path(self) -> Optional[pathlib.Path]:
+        return self.__trace_path
+
+    @property
+    def xcresult_path(self) -> Optional[pathlib.Path]:
+        return self.__xcresult_path
 
     def set_running(self):
         """
@@ -93,6 +106,12 @@ class ExecutionStepState:
         self.__status = "failed"
         self.__exception = exception
 
+    def set_trace_path(self, trace_path: pathlib.Path):
+        self.__trace_path = trace_path
+
+    def set_xcresult_path(self, xcresult_path: pathlib.Path):
+        self.__xcresult_path = xcresult_path
+
     def snapshot(self) -> ExecutionStepStateSnapshot:
         """
         Get a snapshot of the current state of the execution step.
@@ -103,6 +122,8 @@ class ExecutionStepState:
             execution_step=self.__execution_step,
             status=self.__status,
             exception=self.__exception,
+            trace_path=self.__trace_path,
+            xcresult_path=self.__xcresult_path,
         )
 
 

@@ -12,7 +12,11 @@ from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.commands.xctrace_command import Instrument
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import XctestrunConfig
-from core.test_session.session_state import SessionState, ExecutionStepStateSnapshot
+from core.test_session.session_state import (
+    SessionState,
+    ExecutionStepStateSnapshot,
+    ExecutionStepState,
+)
 from core.test_session.session_step_hasher import hash_session_execution_step
 from core.xc.xctest import Xctest
 from core.xc.xctrace.xctrace_interface import Xctrace
@@ -103,7 +107,7 @@ class Session:
             execution_step_state.set_running()
             self._enqueue_state(execution_step_state.snapshot())
             try:
-                await self._run_execution_step(execution_step_state.execution_step)
+                await self._run_execution_step(execution_step_state)
                 execution_step_state.set_completed()
                 self._enqueue_state(execution_step_state.snapshot())
             except Exception as e:
@@ -115,19 +119,23 @@ class Session:
                     # If the test plan is set to end on failure, we need to end the session.
                     break
 
-    async def _run_execution_step(self, execution_step: ExecutionStep):
+    async def _run_execution_step(self, execution_step_state: ExecutionStepState):
         """
-        Run an execution step.
+        Run a single execution step by using the execution step state.
 
         1. Handle the installation of the app and the UI test app.
         2. Generate paths for trace and xcresult files.
         3. Execute tests and record metrics.
 
-        :param execution_step: The execution step to run.
+        :param execution_step_state: The execution step state to use.
         """
-        self._handle_app_installation(execution_step)
-        trace_path, xcresult_path = self._generate_result_paths(execution_step)
-        await self._execute_test_and_trace(execution_step, trace_path, xcresult_path)
+        self._handle_app_installation(execution_step_state.execution_step)
+        trace_path, xcresult_path = self._generate_result_paths(
+            execution_step_state.execution_step
+        )
+        await self._execute_test_and_trace(
+            execution_step_state, trace_path, xcresult_path
+        )
 
     def _get_app_bundle_id(self, app_path: str) -> str:
         """
@@ -171,14 +179,19 @@ class Session:
         :param execution_step: The execution step to use for the generation.
         :return: The paths for the trace and xcresult files as a tuple (trace_path, xcresult_path).
         """
-        base_file_path = pathlib.Path(self._output_dir) / hash_session_execution_step(
+        base_file_path = self._output_dir / hash_session_execution_step(
             self._session_id, execution_step
         )
         trace_path = base_file_path.with_suffix(".trace")
         xcresult_path = base_file_path.with_suffix(".xcresult")
         return trace_path, xcresult_path
 
-    async def _execute_test_and_trace(self, execution_step, trace_path, xcresult_path):
+    async def _execute_test_and_trace(
+        self,
+        execution_step_state: ExecutionStepState,
+        trace_path: pathlib.Path,
+        xcresult_path: pathlib.Path,
+    ):
         """
         Execute the test cases and record the metrics.
 
@@ -190,10 +203,12 @@ class Session:
            - Either way, both run in parallel in the end.
            - The one that executes second will wait for the app pid before starting.
 
-        :param execution_step: The execution step to use for the execution
+        :param execution_step_state: The execution step state to use.
         :param trace_path: The path to save the trace file to.
         :param xcresult_path: The path to save the xcresult file to.
         """
+        execution_step = execution_step_state.execution_step
+
         instruments = execution_step.instruments
         xctest_ids = execution_step.xctest_ids
         app_bundle_id = self._execution_plan.info_plists[
@@ -233,6 +248,10 @@ class Session:
             )
 
             if test_task in tasks[0]:
+                if test_task.done() and xcresult_path.exists():
+                    execution_step_state.set_xcresult_path(xcresult_path)
+                    self._enqueue_state(execution_step_state.snapshot())
+
                 if test_task.exception():
                     logger.warning(
                         f"Test task failed with exception. Cancelling trace task '{trace_task}'"
@@ -261,6 +280,13 @@ class Session:
                 trace_task.cancel()
                 with suppress(asyncio.CancelledError, ProcessException):
                     await trace_task
+
+            if trace_path.exists() and not execution_step_state.trace_path:
+                execution_step_state.set_trace_path(trace_path)
+                self._enqueue_state(execution_step_state.snapshot())
+            if xcresult_path.exists() and not execution_step_state.xcresult_path:
+                execution_step_state.set_xcresult_path(xcresult_path)
+                self._enqueue_state(execution_step_state.snapshot())
 
     def _create_xctest_task(
         self,

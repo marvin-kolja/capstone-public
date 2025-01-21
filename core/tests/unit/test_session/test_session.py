@@ -79,9 +79,10 @@ class TestSession:
             output_dir=MagicMock(),
         )
 
-        with patch.object(session, "_prepare") as mock_prepare, patch.object(
-            session, "_run_execution_plan"
-        ) as mock_run_execution_plan:
+        with (
+            patch.object(session, "_prepare") as mock_prepare,
+            patch.object(session, "_run_execution_plan") as mock_run_execution_plan,
+        ):
             await session.run()
 
             mock_prepare.assert_awaited_once()
@@ -197,13 +198,14 @@ class TestSession:
 
         mock_execution_step_state = MagicMock(spec=ExecutionStepState)
 
-        with patch.object(
-            session._session_state,
-            "next_execution_step",
-            return_value=mock_execution_step_state,
-        ) as mock_next_step, patch.object(
-            session, "_run_execution_step"
-        ) as mock_run_execution_step:
+        with (
+            patch.object(
+                session._session_state,
+                "next_execution_step",
+                return_value=mock_execution_step_state,
+            ) as mock_next_step,
+            patch.object(session, "_run_execution_step") as mock_run_execution_step,
+        ):
             await session._run_execution_plan()
 
             assert mock_next_step.call_count == 100
@@ -244,13 +246,14 @@ class TestSession:
 
         mock_execution_step_state = MagicMock(spec=ExecutionStepState)
 
-        with patch.object(
-            session._session_state,
-            "next_execution_step",
-            return_value=mock_execution_step_state,
-        ) as mock_next_step, patch.object(
-            session, "_run_execution_step"
-        ) as mock_run_execution_step:
+        with (
+            patch.object(
+                session._session_state,
+                "next_execution_step",
+                return_value=mock_execution_step_state,
+            ) as mock_next_step,
+            patch.object(session, "_run_execution_step") as mock_run_execution_step,
+        ):
             mock_run_execution_step.side_effect = Exception
 
             await session._run_execution_plan()
@@ -324,12 +327,14 @@ class TestSession:
         app_bundle_ids = (
             [app_bundle_id, ui_app_bundle_id] if ui_app_bundle_id else [app_bundle_id]
         )
+        mock_queue = MagicMock(spec=asyncio.Queue)
 
         session = Session(
             execution_plan=mock_execution_plan,
             session_id=session_id,
             device=mock_i_device,
             output_dir=output_dir,
+            queue=mock_queue,
         )
 
         mock_i_device.lockdown_service = MagicMock(udid=fake_udid)
@@ -365,20 +370,28 @@ class TestSession:
             mock_execution_plan.test_plan.xctestrun_config
         )
 
-        with patch.object(
-            session, "_i_services", MagicMock(spec=IServices)
-        ) as mock_i_services, patch(
-            "core.test_session.session.Xctest.run_test"
-        ) as mock_run_test, patch(
-            "core.test_session.session.Xctrace.record_launch"
-        ) as mock_record_launch, patch(
-            "core.test_session.session.Xctrace.record_attach"
-        ) as mock_record_attach:
+        mock_execution_step_state = ExecutionStepState(
+            execution_step=mock_execution_step
+        )
+
+        with (
+            patch.object(pathlib.Path, "exists", return_value=True),
+            patch.object(
+                session, "_i_services", MagicMock(spec=IServices)
+            ) as mock_i_services,
+            patch("core.test_session.session.Xctest.run_test") as mock_run_test,
+            patch(
+                "core.test_session.session.Xctrace.record_launch"
+            ) as mock_record_launch,
+            patch(
+                "core.test_session.session.Xctrace.record_attach"
+            ) as mock_record_attach,
+        ):
             mock_i_services.list_installed_apps.return_value = (
                 app_bundle_ids if apps_installed else []
             )
             mock_i_services.wait_for_app_pid.return_value = 1234
-            await session._run_execution_step(mock_execution_step)
+            await session._run_execution_step(mock_execution_step_state)
             mock_i_services.list_installed_apps.assert_called_once()
 
             if not apps_installed or reinstall_app:
@@ -415,6 +428,17 @@ class TestSession:
                 only_testing=[mock_test_case.xctest_id],
                 destination=IOSDestination(id=fake_udid),
             )
+
+            assert mock_execution_step_state.trace_path == (
+                output_dir
+                / hash_session_execution_step(session_id, mock_execution_step)
+            ).with_suffix(".trace")
+            assert mock_execution_step_state.xcresult_path == (
+                output_dir
+                / hash_session_execution_step(session_id, mock_execution_step)
+            ).with_suffix(".xcresult")
+
+            assert mock_queue.put_nowait.call_count == 2
 
     def test_get_app_bundle_id(self):
         """
@@ -498,9 +522,10 @@ class TestSession:
             output_dir=MagicMock(),
         )
 
-        with patch.object(session, "_i_services") as mock_i_services, patch.object(
-            session, "_get_app_bundle_id"
-        ) as mock_get_app_bundle_id:
+        with (
+            patch.object(session, "_i_services") as mock_i_services,
+            patch.object(session, "_get_app_bundle_id") as mock_get_app_bundle_id,
+        ):
             mock_i_services.list_installed_apps.return_value = (
                 [
                     app_bundle_id,
