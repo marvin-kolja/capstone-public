@@ -174,3 +174,91 @@ async def test_job_failure(job_runner):
     await asyncio.sleep(0.1)  # Wait for the job to finish
 
     assert not job_runner.job_exists(job_id), "Failed job should be removed."
+
+
+@pytest.mark.asyncio
+async def test__cancelable_wrapper_cancel():
+    """
+    GIVEN: A function that is wrapped with __cancelable_wrapper
+
+    WHEN: The function is cancelled
+
+    THEN: The task should be cancelled and awaited.
+    """
+    cancel_event = asyncio.Event()
+
+    async def test_func():
+        await asyncio.sleep(0.5)
+
+    wrapped_func = AsyncJobRunner._AsyncJobRunner__cancelable_wrapper(
+        test_func, cancel_event
+    )
+
+    task = asyncio.create_task(wrapped_func())
+    cancel_event.set()
+
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+@pytest.mark.asyncio
+async def test__cancelable_wrapper_already_finished():
+    """
+    GIVEN: A function that is wrapped with __cancelable_wrapper
+    AND: The task is already finished
+
+    WHEN: The function is cancelled
+
+    THEN: No cancellation error should be raised when awaiting the task.
+    AND: The task should return the expected result.
+    """
+    cancel_event = asyncio.Event()
+
+    async def test_func():
+        return "Done"
+
+    wrapped_func = AsyncJobRunner._AsyncJobRunner__cancelable_wrapper(
+        test_func, cancel_event
+    )
+
+    task = asyncio.create_task(wrapped_func())
+
+    await asyncio.sleep(0.01)  # Allow the task to work
+
+    cancel_event.set()
+
+    await task  # Should not raise an error
+    assert task.result() == "Done"
+
+
+@pytest.mark.asyncio
+async def test_cancel_job(job_runner):
+    """
+    GIVEN: A running scheduler
+
+    WHEN: A job is canceled while running
+
+    THEN: The job should be removed from the job list.
+    """
+    job_id = "test_cancel"
+    cancelled = False
+
+    # Test function that simulates work
+    async def test_func():
+        nonlocal cancelled
+        try:
+            await asyncio.sleep(0.5)
+        except asyncio.CancelledError:
+            cancelled = True
+            raise
+
+    job_runner.start_scheduler()
+    job_runner.add_job(test_func, job_id)
+
+    await asyncio.sleep(0.1)  # Wait for the job to start
+
+    job_runner.cancel_job(job_id)
+
+    await asyncio.sleep(0.01)  # Wait for the job to be cancelled
+
+    assert cancelled, "Job should be cancelled."

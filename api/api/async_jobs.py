@@ -1,8 +1,10 @@
+import asyncio
 import logging
 from multiprocessing import Lock
 from typing import Any, Callable, Optional
 
 import apscheduler.events
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ class AsyncJobRunner:
 
     Attributes:
         _job_ids: A list of job ids that have been added to the scheduler.
+        _cancel_events: A dictionary of cancel events for each job id.
 
         _instance: The singleton instance of the class.
         _scheduler: The APScheduler instance.
@@ -43,6 +46,7 @@ class AsyncJobRunner:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._job_ids = set()
+            cls._instance._cancel_events = dict()
         return cls._instance
 
     @classmethod
@@ -103,10 +107,19 @@ class AsyncJobRunner:
 
         self._job_ids.add(job_id)
         try:
-            self._scheduler.add_job(func, args=args, kwargs=kwargs, id=job_id)
+            cancel_event = asyncio.Event()
+            self._cancel_events[job_id] = cancel_event
+
+            self._scheduler.add_job(
+                self.__cancelable_wrapper(func, cancel_event=cancel_event),
+                args=args,
+                kwargs=kwargs,
+                id=job_id,
+            )
             logger.info(f"Added job '{job_id}' to the scheduler")
         except Exception:
             self._job_ids.remove(job_id)
+            self._cancel_events.pop(job_id)
             raise
 
         def _job_listener(event):
@@ -127,6 +140,7 @@ class AsyncJobRunner:
 
                     logger.debug(f"Removing job '{job_id}' from job ids")
                     self._job_ids.remove(job_id)
+                    self._cancel_events.pop(job_id).set()
                     self._scheduler.remove_listener(_job_listener)
 
         self._scheduler.add_listener(
@@ -135,6 +149,46 @@ class AsyncJobRunner:
             | apscheduler.events.EVENT_JOB_ERROR
             | apscheduler.events.EVENT_JOB_SUBMITTED,
         )
+
+    @staticmethod
+    def __cancelable_wrapper(func: callable, cancel_event: asyncio.Event):
+        """
+        Wrap the given function to allow for cancellation. Executes the function in an asyncio task and checks if the
+        cancel event is set at regular intervals. If the cancel event is set, the task is cancelled and awaited.
+
+        :param func: The function to wrap.
+        :param cancel_event: The cancel event.
+        :return: The wrapped function.
+        """
+
+        async def wrapper(*args, **kwargs):
+            task = asyncio.create_task(func(*args, **kwargs))
+            while True:
+                if task.done():
+                    break
+
+                if cancel_event.is_set():
+                    task.cancel()
+                    break
+                await asyncio.sleep(0.1)
+            return await task
+
+        return wrapper
+
+    def cancel_job(self, job_id: str):
+        """
+        Cancel a job with the given id.
+
+        :param job_id: The job id.
+        """
+        if not self.job_exists(job_id):
+            raise ValueError(f"Job with id '{job_id}' does not exist")
+
+        try:
+            self._scheduler.remove_job(job_id)
+        except JobLookupError:
+            pass  # Ignore as the job might already be in the executor
+        self._cancel_events.get(job_id).set()
 
     def job_exists(self, job_id: str) -> bool:
         """
