@@ -333,7 +333,7 @@ async def _parse_xcresult_to_xc_test_result_model(
     *,
     execution_step_id: uuid.UUID,
     xcresult_path: pathlib.Path,
-):
+) -> Optional[XcTestResult]:
     """
     Parse the xcresult file to a database test result model.
 
@@ -343,7 +343,12 @@ async def _parse_xcresult_to_xc_test_result_model(
     :return: The database test result model
     """
     xcresult_tool = XcresultTool(xcresult_path.resolve().as_posix())
-    summary = await xcresult_tool.get_test_summary()
+    try:
+        summary = await xcresult_tool.get_test_summary()
+    except Exception as e:
+        logger.warning("Failed to parse xcresult summary", exc_info=e)
+        return None
+
     db_xc_test_result = XcTestResult(
         execution_step_id=execution_step_id,
         result=summary.result,

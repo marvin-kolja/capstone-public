@@ -421,6 +421,31 @@ async def test_parse_xcresult_to_xc_test_result_model(test_summary):
         assert result.expected_failures == test_summary.expected_failures
 
 
+@pytest.mark.asyncio
+async def test_parse_xcresult_to_xc_test_result_model_exception():
+    """
+    GIVEN: a path to a xcresult file
+
+    WHEN: parsing the xcresult to a XcTestResult db model
+    AND: the `XcresultTool.get_test_summary` raises an exception
+
+    THEN: None should be returned
+    """
+    with patch(
+        "api.services.api_test_session_service.XcresultTool"
+    ) as mock_xcresult_tool:
+        mock_xcresult_tool_instance = AsyncMock()
+        mock_xcresult_tool.return_value = mock_xcresult_tool_instance
+        mock_xcresult_tool_instance.get_test_summary.side_effect = Exception
+
+        result = await _parse_xcresult_to_xc_test_result_model(
+            execution_step_id=uuid.uuid4(),
+            xcresult_path=pathlib.Path("/path/to/xcresult"),
+        )
+
+        assert result is None
+
+
 def test_parse_api_test_plan_to_core_test_plan(
     fake_public_test_plan, fake_public_test_plan_step
 ):
