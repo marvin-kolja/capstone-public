@@ -2,10 +2,12 @@ import asyncio
 import logging
 import pathlib
 import uuid
-from typing import Optional
+from contextlib import suppress
+from typing import Optional, AsyncGenerator
 
 from core.device.i_device import IDevice
 from core.test_session.session_state import ExecutionStepStateSnapshot
+from core.xc.xcresult.xcresulttool import XcresultTool
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
@@ -23,6 +25,7 @@ from api.models import (
     SessionTestPlanPublic,
     BuildPublic,
     DeviceWithStatus,
+    XcTestResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -198,16 +201,32 @@ async def _start_test_session_job(
     session.add(db_test_session)
     session.commit()
 
+    stop_event = asyncio.Event()
+    update_handler_task: Optional[asyncio.Task] = None
+
     try:
         output_dir = get_test_session_dir_path(test_session_id=db_test_session.id)
         output_dir.mkdir(exist_ok=True)
+
+        queue: asyncio.Queue[ExecutionStepStateSnapshot] = asyncio.Queue()
 
         test_session = core_test_session.Session(
             session_id=db_test_session.id,
             device=device,
             execution_plan=core_execution_plan,
             output_dir=output_dir,
+            queue=queue,
         )
+
+        update_handler_task = asyncio.create_task(
+            _handle_execution_state_updates_task(
+                session=session,
+                test_session_id=db_test_session.id,
+                stop_event=stop_event,
+                queue=queue,
+            )
+        )
+
         await test_session.run()
 
         db_test_session.status = "completed"
@@ -220,6 +239,123 @@ async def _start_test_session_job(
         db_test_session.status = "failed"
         session.add(db_test_session)
         session.commit()
+
+        stop_event.set()
+        with suppress(asyncio.CancelledError):
+            if update_handler_task:
+                await update_handler_task
+
+
+async def _handle_execution_state_updates_task(
+    *,
+    session: Session,
+    test_session_id: uuid.UUID,
+    stop_event: asyncio.Event,
+    queue: asyncio.Queue[ExecutionStepStateSnapshot],
+) -> None:
+    async for snapshot in _async_execution_state_updates_generator(
+        stop_event=stop_event, queue=queue
+    ):
+        await _handle_execution_state_snapshot(
+            session=session, test_session_id=test_session_id, snapshot=snapshot
+        )
+
+
+async def _async_execution_state_updates_generator(
+    *,
+    stop_event: asyncio.Event,
+    queue: asyncio.Queue[ExecutionStepStateSnapshot],
+) -> AsyncGenerator[ExecutionStepStateSnapshot, None]:
+    """
+    Generate the execution state updates from the queue until the stop event is set.
+
+    :param stop_event: The event to stop the generator. When set, the generator will stop generating updates after the
+    queue is empty.
+    :param queue: The queue to get the execution state updates from
+    """
+    while True:
+        try:
+            if stop_event.is_set() and queue.empty():
+                break
+
+            snapshot = queue.get_nowait()
+            yield snapshot
+        except asyncio.QueueEmpty:
+            await asyncio.sleep(0.1)
+        except asyncio.QueueShutDown:
+            logger.critical(
+                f"Queue to get session state updates was shutdown unexpectedly"
+            )
+            break
+
+
+async def _handle_execution_state_snapshot(
+    *,
+    session: Session,
+    test_session_id: uuid.UUID,
+    snapshot: ExecutionStepStateSnapshot,
+):
+    """
+    Handle the execution state snapshot by updating the database execution step model with the snapshot data.
+
+    If the snapshot has a xcresult path, this will be parsed and saved to the database as well.
+
+    :param session: Session to use for database operations
+    :param test_session_id: The ID of the test session
+    :param snapshot: The snapshot of the execution step state
+    """
+    db_execution_step = session.exec(
+        select(ExecutionStep).where(
+            ExecutionStep.session_id == test_session_id,
+            ExecutionStep.plan_step_order == snapshot.execution_step.plan_step_order,
+            ExecutionStep.step_repetition == snapshot.execution_step.step_repetition,
+            ExecutionStep.plan_repetition == snapshot.execution_step.plan_repetition,
+        )
+    ).one()
+
+    db_execution_step.status = snapshot.status
+    db_execution_step.trace_path = snapshot.trace_path
+    db_execution_step.xcresult_path = snapshot.xcresult_path
+
+    if snapshot.xcresult_path:
+        xc_test_result = await _parse_xcresult_to_xc_test_result_model(
+            execution_step_id=db_execution_step.id,
+            xcresult_path=snapshot.xcresult_path,
+        )
+        db_execution_step.xc_test_result = xc_test_result
+
+    session.add(db_execution_step)
+    session.commit()
+
+
+async def _parse_xcresult_to_xc_test_result_model(
+    *,
+    execution_step_id: uuid.UUID,
+    xcresult_path: pathlib.Path,
+):
+    """
+    Parse the xcresult file to a database test result model.
+
+    :param execution_step_id: The ID of the execution step in the database
+    :param xcresult_path: The path to the xcresult file
+
+    :return: The database test result model
+    """
+    xcresult_tool = XcresultTool(xcresult_path.resolve().as_posix())
+    summary = await xcresult_tool.get_test_summary()
+    db_xc_test_result = XcTestResult(
+        execution_step_id=execution_step_id,
+        result=summary.result,
+        skipped_tests=summary.skipped_tests,
+        failed_tests=summary.failed_tests,
+        passed_tests=summary.passed_tests,
+        test_failures=summary.test_failures,
+        total_test_count=summary.total_test_count,
+        start_time=summary.start_time,
+        end_time=summary.finish_time,
+        expected_failures=summary.expected_failures,
+    )
+    return db_xc_test_result
 
 
 def _parse_api_test_plan_to_core_test_plan(

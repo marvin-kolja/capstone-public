@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import uuid
 from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock, call
@@ -17,6 +18,8 @@ from api.services.api_test_session_service import (
     get_test_session_dir_path,
     start_test_session,
     _start_test_session_job,
+    _parse_xcresult_to_xc_test_result_model,
+    _async_execution_state_updates_generator,
 )
 
 
@@ -247,7 +250,9 @@ async def test_start_test_session_job(exception, expected_status):
         "api.services.api_test_session_service.core_test_session.Session"
     ) as mock_session, patch(
         "api.services.api_test_session_service.get_test_session_dir_path"
-    ) as mock_get_test_session_dir_path:
+    ) as mock_get_test_session_dir_path, patch(
+        "api.services.api_test_session_service._handle_execution_state_updates_task"
+    ) as mock_handle_execution_state_updates_task:
         db_session = MagicMock()
         db_test_session = MagicMock()
         status_value_mock = PropertyMock()
@@ -287,6 +292,132 @@ async def test_start_test_session_job(exception, expected_status):
 
         assert db_session.commit.call_count == 2
         assert db_session.add.call_count == 2
+
+        mock_handle_execution_state_updates_task.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_execution_state_updates_generator():
+    """
+    GIVEN: a queue with items
+    AND: a stop event
+
+    WHEN: the stop event is set
+    AND: the async execution state updates generator is called
+
+    THEN: the queue should be listened to
+    AND: the generator should yield all items in the queue
+    AND: the generator should stop afterward as the stop event is set
+    """
+    queue = asyncio.Queue()
+    stop_event = asyncio.Event()
+
+    # Fake queue items
+    for i in range(3):
+        queue.put_nowait(i)
+    stop_event.set()  # Tell the generator to stop after the queue is empty
+
+    current_item = 0
+
+    async for item in _async_execution_state_updates_generator(
+        queue=queue, stop_event=stop_event
+    ):
+        assert item == current_item
+        current_item += 1
+
+    assert current_item == 3
+
+
+@pytest.mark.asyncio
+async def test_async_execution_state_updates_generator_queue_shutdown():
+    """
+    GIVEN: a queue that is shut down
+
+    WHEN: the async execution state updates generator is called
+
+    THEN: the generator should stop immediately
+    """
+    queue = asyncio.Queue()
+    queue.shutdown(immediate=True)
+
+    stop_event = asyncio.Event()
+
+    async for item in _async_execution_state_updates_generator(
+        queue=queue, stop_event=stop_event
+    ):
+        assert False, "Should not reach here"
+
+    assert True
+
+
+@pytest.mark.asyncio
+async def test_async_execution_state_updates_generator_empty_queue():
+    """
+    GIVEN: an empty queue
+
+    WHEN: the async execution state updates generator is called
+
+    THEN: the generator should try to get an item from the queue until the stop event is set
+    """
+    queue = asyncio.Queue()
+    stop_event = asyncio.Event()
+
+    async def delayed_set_stop_event():
+        await asyncio.sleep(0.2)
+        stop_event.set()
+
+    delay_set_stop_event_task = asyncio.create_task(delayed_set_stop_event())
+
+    with patch.object(queue, "get_nowait") as mock_get:
+        mock_get.side_effect = asyncio.QueueEmpty
+
+        async for item in _async_execution_state_updates_generator(
+            queue=queue, stop_event=stop_event
+        ):
+            assert False, "Should not reach here"
+
+        assert mock_get.call_count > 0
+
+    await delay_set_stop_event_task
+
+
+@pytest.mark.asyncio
+async def test_parse_xcresult_to_xc_test_result_model(test_summary):
+    """
+    GIVEN: a test summary
+    AND: an execution step ID
+    AND: a path to a xcresult file
+
+    WHEN: parsing the xcresult to a XcTestResult db model
+
+    THEN: the xcresult tool should be called with the correct path
+    AND: the db model should be returned with the correct attributes
+    """
+    execution_step_id = MagicMock(spec=uuid.UUID)
+    xcresult_path = pathlib.Path("/path/to/xcresult")
+
+    with patch(
+        "api.services.api_test_session_service.XcresultTool"
+    ) as mock_xcresult_tool:
+        mock_xcresult_tool_instance = AsyncMock()
+        mock_xcresult_tool.return_value = mock_xcresult_tool_instance
+        mock_xcresult_tool_instance.get_test_summary.return_value = test_summary
+
+        result = await _parse_xcresult_to_xc_test_result_model(
+            execution_step_id=execution_step_id,
+            xcresult_path=xcresult_path,
+        )
+
+        mock_xcresult_tool.assert_called_once_with("/path/to/xcresult")
+        assert result.execution_step_id == execution_step_id
+        assert result.skipped_tests == test_summary.skipped_tests
+        assert result.failed_tests == test_summary.failed_tests
+        assert result.passed_tests == test_summary.passed_tests
+        assert result.test_failures == test_summary.test_failures
+        assert result.total_test_count == test_summary.total_test_count
+        assert result.start_time == test_summary.start_time
+        assert result.end_time == test_summary.finish_time
+        assert result.expected_failures == test_summary.expected_failures
 
 
 def test_parse_api_test_plan_to_core_test_plan(

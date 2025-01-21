@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 from core.device.i_device import IDevice, IDeviceInfo, IDeviceStatus
 from core.device.i_device_manager import IDeviceManager
+from core.xc.xcresult.models.test_results.summary import Summary
 from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
 
@@ -92,3 +93,50 @@ async def async_client() -> Generator[AsyncClient, None, None]:
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+@pytest.fixture(scope="session")
+def test_summary():
+    """
+    Return a test summary object.
+
+    This is a real test summary object from a Xcode test run.
+    """
+
+    return Summary.model_validate(
+        {
+            "devicesAndConfigurations": [
+                {
+                    "device": {
+                        "architecture": "arm64e",
+                        "deviceId": "00000000-0000000000000000",
+                        "deviceName": "iPhone",
+                        "modelName": "iPhone SE",
+                        "osVersion": "17.5.1",
+                        "platform": "iOS",
+                    },
+                    "expectedFailures": 0,
+                    "failedTests": 0,
+                    "passedTests": 1,
+                    "skippedTests": 0,
+                    "testPlanConfiguration": {
+                        "configurationId": "1",
+                        "configurationName": "Test Scheme Action",
+                    },
+                }
+            ],
+            "environmentDescription": "RP Swift · Built with macOS 15.1.1",
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "finishTime": 1737456113.034,
+            "passedTests": 1,
+            "result": "Passed",
+            "skippedTests": 0,
+            "startTime": 1737456094.16,
+            "statistics": [],
+            "testFailures": [],
+            "title": "Test - RP Swift",
+            "topInsights": [],
+            "totalTestCount": 1,
+        }
+    )
