@@ -244,15 +244,16 @@ async def test_build(
     ios_destination,
     xc_project_test_plan,
 ):
-    build_artefacts = await app_builder.build(
-        scheme=xc_project_scheme,
-        configuration=xc_project_configuration,
-        output_dir=build_output_dir,
-        destination=ios_destination,
-    )
     build_for_testing_artefacts = await app_builder.build_for_testing(
         scheme=xc_project_scheme,
         test_plan=xc_project_test_plan,
+        configuration=xc_project_configuration,
+        output_dir=build_output_dir,
+        destination=ios_destination,
+        clean=True,
+    )
+    build_artefacts = await app_builder.build(
+        scheme=xc_project_scheme,
         configuration=xc_project_configuration,
         output_dir=build_output_dir,
         destination=ios_destination,
