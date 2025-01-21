@@ -10,7 +10,15 @@ from core.xc.xcresult.models.test_results import summary as xcresult_test_summar
 from core.xc.xctrace.xml_parser import Sysmon, CoreAnimation, ProcessStdoutErr
 from pydantic import ConfigDict, BaseModel, BeforeValidator
 from sqlalchemy import UniqueConstraint
-from sqlmodel import SQLModel, Field as SQLField, Relationship, Column, JSON, String
+from sqlmodel import (
+    SQLModel,
+    Field as SQLField,
+    Relationship,
+    Column,
+    JSON,
+    String,
+    Enum,
+)
 
 from api.custom_db_types import PathType, CreatedAtField, UpdatedAtField
 
@@ -312,7 +320,9 @@ class StartBuildRequest(BaseModel):
 class XcTestResultDataBase(SQLModel):
     start_time: Optional[float]
     end_time: Optional[float]
-    result: xcresult_test_summary.TestResult = SQLField(sa_column=Column(JSON))
+    result: xcresult_test_summary.TestResult = SQLField(
+        sa_column=Column(Enum(xcresult_test_summary.TestResult))
+    )
     total_test_count: int
     passed_tests: int
     failed_tests: int
