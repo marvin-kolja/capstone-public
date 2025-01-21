@@ -398,6 +398,12 @@ class ExecutionStepBase(SQLModel):
     test_target_name: str
 
     status: StatusLiteral = SQLField(sa_type=String, default="not_started")
+    xcresult_path: pathlib.Path | None = SQLField(
+        sa_column=Column(PathType, nullable=True)
+    )
+    trace_path: pathlib.Path | None = SQLField(
+        sa_column=Column(PathType, nullable=True)
+    )
 
     created_at: datetime.datetime = CreatedAtField()
     updated_at: datetime.datetime = UpdatedAtField()
