@@ -16,7 +16,7 @@ from core.test_session.session_step_hasher import hash_session_execution_step
 from core.xc.xctest import Xctest
 from core.xc.xctrace.xctrace_interface import Xctrace
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class Session:
@@ -58,6 +58,7 @@ class Session:
         """
         This will prepare the test session and then run the steps in the test plan.
         """
+        logger.info(f"Starting test session '{self._session_id}'")
         await self._prepare()
         await self._run_execution_plan()
 
@@ -70,6 +71,7 @@ class Session:
         - Check if the execution plan is valid.
         - Check if the device is ready for testing.
         """
+        logger.debug(f"Preparing test session '{self._session_id}'")
         if self._execution_plan.execution_steps is None:
             raise ValueError("Execution plan is not planned.")
         if not self._execution_plan.execution_steps:
@@ -80,15 +82,24 @@ class Session:
         """
         Uses the execution plan to execute the execution steps one by one.
         """
-        for _ in range(len(self._execution_plan.execution_steps)):
+        number_of_steps = len(self._execution_plan.execution_steps)
+
+        logger.debug(
+            f"Run execution plan with '{number_of_steps}' steps for test session '{self._session_id}'"
+        )
+
+        for i in range(number_of_steps):
+            logger.debug(f"Getting next execution step '{i}'")
             execution_step_state = self._session_state.next_execution_step()
             execution_step_state.set_running()
             try:
                 await self._run_execution_step(execution_step_state.execution_step)
                 execution_step_state.set_completed()
             except Exception as e:
+                logger.debug(f"Execution step failed", exc_info=e)
                 execution_step_state.set_failed(e)
                 if self._execution_plan.test_plan.end_on_failure:
+                    logger.info("Ending test session because of failure.")
                     # If the test plan is set to end on failure, we need to end the session.
                     break
 
@@ -198,6 +209,8 @@ class Session:
                     f"Invalid recording start strategy: {execution_step.recording_start_strategy}"
                 )
 
+            logger.debug(f"Awaiting tasks '{trace_task}' and '{test_task}'")
+
             # Await both tasks but cancel the other if one fails.
             tasks = await asyncio.wait(
                 [trace_task, test_task], return_when=asyncio.FIRST_COMPLETED
@@ -205,11 +218,17 @@ class Session:
 
             if test_task in tasks[0]:
                 if test_task.exception():
+                    logger.warning(
+                        f"Test task failed with exception. Cancelling trace task '{trace_task}'"
+                    )
                     trace_task.cancel()
                     await trace_task
                     raise test_task.exception()
             if trace_task in tasks[0]:
                 if trace_task.exception():
+                    logger.warning(
+                        f"Trace task failed with exception. Cancelling test task '{test_task}'"
+                    )
                     test_task.cancel()
                     await test_task
                     raise trace_task.exception()
@@ -217,10 +236,12 @@ class Session:
             raise
         finally:
             if test_task:
+                logger.debug(f"Cleaning up test task '{test_task}'")
                 test_task.cancel()
                 with suppress(asyncio.CancelledError, ProcessException):
                     await test_task
             if trace_task:
+                logger.debug(f"Cleaning up trace task '{trace_task}'")
                 trace_task.cancel()
                 with suppress(asyncio.CancelledError, ProcessException):
                     await trace_task
@@ -238,6 +259,7 @@ class Session:
         :param xctest_ids: The test cases to run.
         :return: A task running the tests.
         """
+        logger.debug(f"Creating xctest task for '{xctest_ids}'")
         return asyncio.create_task(
             Xctest.run_test(
                 xcresult_path=xcresult_path,
@@ -258,6 +280,7 @@ class Session:
         :param app_bundle_id: The app bundle id to launch
         :return: A task running the trace.
         """
+        logger.debug(f"Creating trace launch task for '{app_bundle_id}'")
         return asyncio.create_task(
             Xctrace.record_launch(
                 trace_path=trace_path,
@@ -281,6 +304,7 @@ class Session:
         :param pid: The process id to attach to
         :return: A task running the trace.
         """
+        logger.debug(f"Creating trace attach task for '{pid}'")
         return asyncio.create_task(
             Xctrace.record_attach(
                 trace_path=trace_path,
