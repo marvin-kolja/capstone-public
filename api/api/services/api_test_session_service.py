@@ -233,14 +233,19 @@ async def _start_test_session_job(
             db_test_session.status = "completed"
             session.add(db_test_session)
             session.commit()
+        except asyncio.CancelledError:
+            logger.info(f"Test session '{db_test_session.id}' was cancelled")
+            db_test_session.status = "cancelled"
+            session.add(db_test_session)
+            session.commit()
         except Exception as e:
-            logger.exception(
+            logger.error(
                 f"Error running test session '{db_test_session.id}'", exc_info=e
             )
             db_test_session.status = "failed"
             session.add(db_test_session)
             session.commit()
-
+        finally:
             stop_event.set()
             with suppress(asyncio.CancelledError):
                 if update_handler_task:
