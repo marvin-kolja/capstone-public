@@ -1,9 +1,11 @@
+import asyncio
 import logging
 import pathlib
 import uuid
 from typing import Optional
 
 from core.device.i_device import IDevice
+from core.test_session.session_state import ExecutionStepStateSnapshot
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
@@ -204,7 +206,7 @@ async def _start_test_session_job(
             session_id=db_test_session.id,
             device=device,
             execution_plan=core_execution_plan,
-            output_dir=output_dir.resolve().as_posix(),
+            output_dir=output_dir,
         )
         await test_session.run()
 
