@@ -1,13 +1,15 @@
 import uuid
-from unittest.mock import MagicMock, patch, call, AsyncMock
+from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 from core.device.i_device import IDeviceStatus
 from core.device.i_device_manager import IDeviceManager
 from fastapi import HTTPException
-from pydantic import BaseModel
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session
 
+from api.async_jobs import AsyncJobRunner
+from api.depends import get_job_runner
+from api.main import app
 from api.models import (
     Build,
     SessionTestPlan,
@@ -123,6 +125,111 @@ async def test_start_test_session():
         )
 
         mock_get_device.assert_called_once_with(mock_public_device.id)
+
+
+@pytest.fixture
+def mock_async_job_runner_dependency():
+    mock_job_runner = MagicMock(spec=AsyncJobRunner)
+
+    async def override_job_runner():
+        return mock_job_runner
+
+    app.dependency_overrides[get_job_runner] = override_job_runner
+
+    yield mock_job_runner
+
+    app.dependency_overrides = {}
+
+
+def test_cancel_test_session(client, mock_async_job_runner_dependency):
+    """
+    GIVEN: a running test session
+
+    WHEN: the test session is cancelled
+
+    THEN: the test session should be cancelled
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    mock_db_test_session = MagicMock()
+    mock_db_test_session.id = fake_test_session_id
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=mock_db_test_session,
+    ) as mock_read_test_session:
+
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/cancel",
+        )
+
+        assert r.status_code == 200, r.text
+
+        mock_read_test_session.assert_called_once()
+
+        mock_async_job_runner_dependency.job_exists.assert_called_once_with(
+            job_id=fake_test_session_id.hex
+        )
+        mock_async_job_runner_dependency.cancel_job.assert_called_once_with(
+            job_id=fake_test_session_id.hex
+        )
+
+
+def test_cancel_test_session_test_session_not_found(client):
+    """
+    GIVEN: a test session that does not exist
+
+    WHEN: the test session is cancelled
+
+    THEN: a 404 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=None,
+    ) as mock_read_test_session:
+
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/cancel",
+        )
+
+        assert r.status_code == 404, r.text
+
+        mock_read_test_session.assert_called_once()
+
+
+def test_cancel_test_session_test_session_not_running(
+    client, mock_async_job_runner_dependency
+):
+    """
+    GIVEN: a test session that is not running
+
+    WHEN: the test session is cancelled
+
+    THEN: a 400 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    mock_db_test_session = MagicMock()
+    mock_db_test_session.id = fake_test_session_id
+
+    mock_async_job_runner_dependency.job_exists.return_value = False
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=mock_db_test_session,
+    ):
+
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/cancel",
+        )
+
+        assert r.status_code == 400, r.text
+
+        mock_async_job_runner_dependency.job_exists.assert_called_once_with(
+            job_id=fake_test_session_id.hex
+        )
 
 
 @pytest.fixture

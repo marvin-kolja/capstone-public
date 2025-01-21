@@ -104,7 +104,18 @@ async def cancel_test_session(
     """
     Cancels a running test session.
     """
-    pass
+    db_test_session = api_test_session_service.read_test_session(
+        session=session, test_session_id=test_session_id
+    )
+    if db_test_session is None:
+        raise HTTPException(status_code=404, detail="Test session not found")
+
+    job_id = db_test_session.id.hex
+
+    if job_runner.job_exists(job_id=job_id) is False:
+        raise HTTPException(status_code=400, detail="Test session is not running")
+
+    job_runner.cancel_job(job_id=job_id)
 
 
 @router.get("/{test_session_id}/execution-step-stream")
