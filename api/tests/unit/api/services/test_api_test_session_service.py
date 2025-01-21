@@ -202,15 +202,13 @@ def test_start_test_session():
     ) as mock_start_test_session_job, patch(
         "api.services.api_test_session_service.AsyncJobRunner"
     ) as mock_job_runner:
-        session = MagicMock()
         i_device = MagicMock()
         db_test_session = MagicMock()
         core_execution_plan = MagicMock()
 
         start_test_session(
-            session=session,
             i_device=i_device,
-            db_test_session=db_test_session,
+            test_session_id=db_test_session.id,
             job_runner=mock_job_runner,
             core_execution_plan=core_execution_plan,
         )
@@ -218,8 +216,7 @@ def test_start_test_session():
         mock_job_runner.add_job.assert_called_once_with(
             func=mock_start_test_session_job,
             kwargs={
-                "session": session,
-                "db_test_session": db_test_session,
+                "test_session_id": db_test_session.id,
                 "device": i_device,
                 "core_execution_plan": core_execution_plan,
             },
@@ -246,15 +243,20 @@ async def test_start_test_session_job(exception, expected_status):
     AND: the test session should be run
     AND: the status of the test session should be set to completed or failed based on any exceptions
     """
+    mock_db_session = MagicMock()
     with patch(
         "api.services.api_test_session_service.core_test_session.Session"
     ) as mock_session, patch(
         "api.services.api_test_session_service.get_test_session_dir_path"
     ) as mock_get_test_session_dir_path, patch(
         "api.services.api_test_session_service._handle_execution_state_updates_task"
-    ) as mock_handle_execution_state_updates_task:
-        db_session = MagicMock()
+    ) as mock_handle_execution_state_updates_task, patch(
+        "api.services.api_test_session_service.Session", return_value=mock_db_session
+    ), patch(
+        "api.services.api_test_session_service.read_test_session"
+    ) as mock_read_test_session:
         db_test_session = MagicMock()
+        mock_read_test_session.return_value = db_test_session
         status_value_mock = PropertyMock()
         type(db_test_session).status = status_value_mock
 
@@ -272,8 +274,7 @@ async def test_start_test_session_job(exception, expected_status):
             mock_session_instance.run = AsyncMock()
 
         await _start_test_session_job(
-            session=db_session,
-            db_test_session=db_test_session,
+            test_session_id=db_test_session.id,
             device=device,
             core_execution_plan=core_execution_plan,
         )
@@ -290,8 +291,8 @@ async def test_start_test_session_job(exception, expected_status):
             ]
         )
 
-        assert db_session.commit.call_count == 2
-        assert db_session.add.call_count == 2
+        assert mock_db_session.__enter__.return_value.commit.call_count == 2
+        assert mock_db_session.__enter__.return_value.add.call_count == 2
 
         mock_handle_execution_state_updates_task.assert_called_once()
 

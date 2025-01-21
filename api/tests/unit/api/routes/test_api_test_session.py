@@ -116,9 +116,8 @@ async def test_start_test_session():
             xc_test_configuration_name=session_create.xc_test_configuration_name,
         )
         mock_start_session.assert_called_once_with(
-            session=session,
             job_runner=job_runner,
-            db_test_session=mock_db_test_session,
+            test_session_id=mock_generate_id.return_value,
             core_execution_plan=mock_execution_plan,
             i_device=mock_get_device.return_value,
         )

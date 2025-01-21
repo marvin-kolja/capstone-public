@@ -72,9 +72,8 @@ async def start_test_session(
     )
 
     api_test_session_service.start_test_session(
-        session=session,
         job_runner=job_runner,
-        db_test_session=db_test_session,
+        test_session_id=session_id,
         core_execution_plan=core_execution_plan,
         i_device=device_manager.get_device(public_device.id),
     )

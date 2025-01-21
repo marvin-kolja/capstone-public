@@ -313,14 +313,18 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
         Path, "exists"
     ) as path_exists_mock, patch(
         "api.services.project_service.Xctestrun"
-    ) as xctestrun_model_mock:
+    ) as xctestrun_model_mock, patch(
+        "api.services.project_service.Session", return_value=db_session_mock
+    ), patch(
+        "api.services.project_service.read_build"
+    ) as read_build_mock:
         xctest_mock.parse_xctestrun.return_value = xctestrun_mock
         path_exists_mock.return_value = app_path_exists_after_first_build
+        read_build_mock.return_value = build_mock
 
         await _build_project_job(
-            session=db_session_mock,
             app_builder=app_builder_mock,
-            db_build=build_mock,
+            build_id=build_mock.id,
             output_dir="output_dir",
         )
 
@@ -358,8 +362,8 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
         )
 
         # 1 for start, 1 for adding xctestrun, 1 for adding build
-        assert db_session_mock.add.call_count == 3
-        assert db_session_mock.commit.call_count == 3
+        assert db_session_mock.__enter__.return_value.add.call_count == 3
+        assert db_session_mock.__enter__.return_value.commit.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -383,23 +387,27 @@ async def test_build_project_job_failure(random_device_id):
 
     app_builder_mock.build_for_testing.side_effect = Exception("Failed to build")
 
-    await _build_project_job(
-        session=db_session_mock,
-        app_builder=app_builder_mock,
-        db_build=build_mock,
-        output_dir="output_dir",
-    )
+    with patch(
+        "api.services.project_service.Session", return_value=db_session_mock
+    ), patch("api.services.project_service.read_build") as read_build_mock:
+        read_build_mock.return_value = build_mock
 
-    status_mock.assert_has_calls(
-        [
-            call("running"),
-            call("failure"),
-        ]
-    )
+        await _build_project_job(
+            app_builder=app_builder_mock,
+            build_id=build_mock.id,
+            output_dir="output_dir",
+        )
 
-    # 1 for start, 1 for failure
-    assert db_session_mock.add.call_count == 2
-    assert db_session_mock.commit.call_count == 2
+        status_mock.assert_has_calls(
+            [
+                call("running"),
+                call("failure"),
+            ]
+        )
+
+        # 1 for start, 1 for failure
+        assert db_session_mock.__enter__.return_value.add.call_count == 2
+        assert db_session_mock.__enter__.return_value.commit.call_count == 2
 
 
 @pytest.mark.asyncio

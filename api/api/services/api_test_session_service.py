@@ -19,6 +19,7 @@ from core.test_session import (
 
 from api.async_jobs import AsyncJobRunner
 from api.config import settings
+from api.db import engine
 from api.models import (
     TestSession,
     ExecutionStep,
@@ -159,9 +160,8 @@ def construct_db_execution_step_model(
 
 def start_test_session(
     *,
-    session: Session,
     i_device: IDevice,
-    db_test_session: TestSession,
+    test_session_id: uuid.UUID,
     job_runner: AsyncJobRunner,
     core_execution_plan: execution_plan.ExecutionPlan,
 ):
@@ -171,12 +171,11 @@ def start_test_session(
     job_runner.add_job(
         func=_start_test_session_job,
         kwargs={
-            "session": session,
-            "db_test_session": db_test_session,
+            "test_session_id": test_session_id,
             "device": i_device,
             "core_execution_plan": core_execution_plan,
         },
-        job_id=db_test_session.id.hex,
+        job_id=test_session_id.hex,
     )
 
 
@@ -189,61 +188,63 @@ def get_test_session_dir_path(*, test_session_id: uuid.UUID) -> pathlib.Path:
 
 async def _start_test_session_job(
     *,
-    session: Session,
-    db_test_session: TestSession,
+    test_session_id: uuid.UUID,
     device: IDevice,
     core_execution_plan: execution_plan.ExecutionPlan,
 ):
     """
     Execute the test session and update the status of the test session in the database based on the result.
     """
-    db_test_session.status = "running"
-    session.add(db_test_session)
-    session.commit()
-
-    stop_event = asyncio.Event()
-    update_handler_task: Optional[asyncio.Task] = None
-
-    try:
-        output_dir = get_test_session_dir_path(test_session_id=db_test_session.id)
-        output_dir.mkdir(exist_ok=True)
-
-        queue: asyncio.Queue[ExecutionStepStateSnapshot] = asyncio.Queue()
-
-        test_session = core_test_session.Session(
-            session_id=db_test_session.id,
-            device=device,
-            execution_plan=core_execution_plan,
-            output_dir=output_dir,
-            queue=queue,
+    with Session(engine) as session:
+        db_test_session = read_test_session(
+            session=session, test_session_id=test_session_id
         )
+        db_test_session.status = "running"
+        session.add(db_test_session)
+        session.commit()
 
-        update_handler_task = asyncio.create_task(
-            _handle_execution_state_updates_task(
-                session=session,
-                test_session_id=db_test_session.id,
-                stop_event=stop_event,
+        stop_event = asyncio.Event()
+        update_handler_task: Optional[asyncio.Task] = None
+
+        try:
+            output_dir = get_test_session_dir_path(test_session_id=db_test_session.id)
+            output_dir.mkdir(exist_ok=True)
+
+            queue: asyncio.Queue[ExecutionStepStateSnapshot] = asyncio.Queue()
+
+            test_session = core_test_session.Session(
+                session_id=db_test_session.id,
+                device=device,
+                execution_plan=core_execution_plan,
+                output_dir=output_dir,
                 queue=queue,
             )
-        )
 
-        await test_session.run()
+            update_handler_task = asyncio.create_task(
+                _handle_execution_state_updates_task(
+                    session=session,
+                    test_session_id=db_test_session.id,
+                    stop_event=stop_event,
+                    queue=queue,
+                )
+            )
+            await test_session.run()
 
-        db_test_session.status = "completed"
-        session.add(db_test_session)
-        session.commit()
-    except Exception as e:
-        logger.exception(
-            f"Error running test session '{db_test_session.id}'", exc_info=e
-        )
-        db_test_session.status = "failed"
-        session.add(db_test_session)
-        session.commit()
+            db_test_session.status = "completed"
+            session.add(db_test_session)
+            session.commit()
+        except Exception as e:
+            logger.exception(
+                f"Error running test session '{db_test_session.id}'", exc_info=e
+            )
+            db_test_session.status = "failed"
+            session.add(db_test_session)
+            session.commit()
 
-        stop_event.set()
-        with suppress(asyncio.CancelledError):
-            if update_handler_task:
-                await update_handler_task
+            stop_event.set()
+            with suppress(asyncio.CancelledError):
+                if update_handler_task:
+                    await update_handler_task
 
 
 async def _handle_execution_state_updates_task(

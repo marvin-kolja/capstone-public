@@ -149,9 +149,8 @@ def test_start_build(
         mock_add_job.assert_called_once_with(
             _build_project_job,
             kwargs={
-                "session": db,
+                "build_id": new_db_fake_build.id,
                 "app_builder": app_builder,
-                "db_build": new_db_fake_build,
                 "output_dir": "/output_dir",
             },
             job_id=job_id,

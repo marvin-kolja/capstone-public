@@ -14,6 +14,7 @@ from sqlmodel import Session, select
 
 from api.async_jobs import AsyncJobRunner
 from api.config import settings
+from api.db import engine
 from api.models import (
     XcProjectPublic,
     XcProject,
@@ -236,9 +237,8 @@ def start_build(
     job_runner.add_job(
         _build_project_job,
         kwargs={
-            "session": session,
             "app_builder": app_builder,
-            "db_build": db_build,
+            "build_id": db_build.id,
             "output_dir": build_output_dir(db_build=db_build).resolve().as_posix(),
         },
         job_id=job_id,
@@ -254,92 +254,98 @@ def build_output_dir(*, db_build: Build) -> pathlib.Path:
 
 async def _build_project_job(
     *,
-    session: Session,
     app_builder: AppBuilder,
-    db_build: Build,
+    build_id: uuid.UUID,
     output_dir: str,
 ):
-    logger.info(f"Starting build for project '{db_build.project_id}'")
+    with Session(engine) as session:
+        db_build = read_build(session=session, build_id=build_id)
 
-    destination = IOSDestination(id=db_build.device_id)
+        logger.info(f"Starting build for project '{db_build.project_id}'")
 
-    logger.debug(f"Setting build status to 'running' for build '{db_build.id}'")
+        destination = IOSDestination(id=db_build.device_id)
 
-    db_build.status = "running"
-    session.add(db_build)
-    session.commit()
+        logger.debug(f"Setting build status to 'running' for build '{db_build.id}'")
 
-    logger.debug(f"Starting build for testing for project '{db_build.project_id}'")
-
-    try:
-        build_for_testing_result = await app_builder.build_for_testing(
-            configuration=db_build.configuration,
-            scheme=db_build.scheme,
-            destination=destination,
-            test_plan=db_build.test_plan,
-            output_dir=output_dir,
-            clean=True,  # Always clean the build directory
-        )
-
-        logger.debug(
-            f"Build for testing for project '{db_build.project_id}' finished successfully"
-        )
-
-        logger.debug(
-            f"Parsing xctestrun file '{build_for_testing_result.xctestrun_path}'"
-        )
-        xctestrun = Xctest.parse_xctestrun(build_for_testing_result.xctestrun_path)
-
-        logger.debug(f"Creating xctestrun for build '{db_build.id}'")
-        db_xctestrun = Xctestrun(
-            path=pathlib.Path(build_for_testing_result.xctestrun_path),
-            test_configurations=[
-                test_configuration.Name
-                for test_configuration in xctestrun.TestConfigurations
-            ],
-            build_id=db_build.id,
-        )
-        db_build.xctestrun = db_xctestrun
+        db_build.status = "running"
         session.add(db_build)
         session.commit()
 
-        requires_normal_build = False
-        # Usually, the app that is tested is built when building for testing, as it is set as a Target Dependency in the
-        # Build Phases of the Test Target. However, we don't know what the developer has done in the project, so we
-        # check if the app exists in the derived data directory. If it doesn't, we perform another build.
+        logger.debug(f"Starting build for testing for project '{db_build.project_id}'")
 
-        for test_configuration in xctestrun.TestConfigurations:
-            for test_target in test_configuration.TestTargets:
-                if not pathlib.Path(test_target.app_path).exists():
-                    requires_normal_build = True
-                    break
-
-        if requires_normal_build:
-            logger.debug(
-                f"Normal build required for project '{db_build.project_id}', starting..."
-            )
-            await app_builder.build(
+        try:
+            build_for_testing_result = await app_builder.build_for_testing(
                 configuration=db_build.configuration,
                 scheme=db_build.scheme,
                 destination=destination,
+                test_plan=db_build.test_plan,
                 output_dir=output_dir,
-                clean=False,  # Don't clean the build directory, as it was already cleaned in the build for testing step
+                clean=True,  # Always clean the build directory
             )
 
-        logger.debug(
-            f"Normal build for project '{db_build.project_id}' finished successfully"
-        )
+            logger.debug(
+                f"Build for testing for project '{db_build.project_id}' finished successfully"
+            )
 
-        db_build.status = "success"
-        session.add(db_build)
-        session.commit()
+            logger.debug(
+                f"Parsing xctestrun file '{build_for_testing_result.xctestrun_path}'"
+            )
+            xctestrun = Xctest.parse_xctestrun(build_for_testing_result.xctestrun_path)
 
-        logger.info(f"Build for project '{db_build.project_id}' finished successfully")
-    except Exception as e:
-        logger.error(f"Build for project '{db_build.project_id}' failed", exc_info=e)
-        db_build.status = "failure"
-        session.add(db_build)
-        session.commit()
+            logger.debug(f"Creating xctestrun for build '{db_build.id}'")
+            db_xctestrun = Xctestrun(
+                path=pathlib.Path(build_for_testing_result.xctestrun_path),
+                test_configurations=[
+                    test_configuration.Name
+                    for test_configuration in xctestrun.TestConfigurations
+                ],
+                build_id=db_build.id,
+            )
+            db_build.xctestrun = db_xctestrun
+            session.add(db_build)
+            session.commit()
+
+            requires_normal_build = False
+            # Usually, the app that is tested is built when building for testing, as it is set as a Target Dependency in the
+            # Build Phases of the Test Target. However, we don't know what the developer has done in the project, so we
+            # check if the app exists in the derived data directory. If it doesn't, we perform another build.
+
+            for test_configuration in xctestrun.TestConfigurations:
+                for test_target in test_configuration.TestTargets:
+                    if not pathlib.Path(test_target.app_path).exists():
+                        requires_normal_build = True
+                        break
+
+            if requires_normal_build:
+                logger.debug(
+                    f"Normal build required for project '{db_build.project_id}', starting..."
+                )
+                await app_builder.build(
+                    configuration=db_build.configuration,
+                    scheme=db_build.scheme,
+                    destination=destination,
+                    output_dir=output_dir,
+                    clean=False,  # Don't clean the build directory, as it was already cleaned in the build for testing step
+                )
+
+            logger.debug(
+                f"Normal build for project '{db_build.project_id}' finished successfully"
+            )
+
+            db_build.status = "success"
+            session.add(db_build)
+            session.commit()
+
+            logger.info(
+                f"Build for project '{db_build.project_id}' finished successfully"
+            )
+        except Exception as e:
+            logger.error(
+                f"Build for project '{db_build.project_id}' failed", exc_info=e
+            )
+            db_build.status = "failure"
+            session.add(db_build)
+            session.commit()
 
 
 async def listen_to_build_updates(
