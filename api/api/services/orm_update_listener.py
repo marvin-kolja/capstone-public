@@ -12,13 +12,15 @@ T = TypeVar("T", bound=SQLModel)
 
 
 class ModelUpdateListener(Generic[T]):
-    def __init__(self, db_instance: T, model_class: Type[T]):
-        if not isinstance(db_instance, model_class):
-            raise ValueError(f"db_instance must be an instance of '{model_class}'")
+    def __init__(self, model_class: Type[T], db_instance: Optional[T] = None):
+        if db_instance is not None:
+            if not isinstance(db_instance, model_class):
+                raise ValueError(f"db_instance must be an instance of '{model_class}'")
 
         self._model_class = model_class
         self._queue: asyncio.Queue[T] = asyncio.Queue()
-        self._queue.put_nowait(db_instance)  # Queue initial state
+        if db_instance is not None:
+            self._queue.put_nowait(db_instance)  # Queue initial state
         self._stop_event = asyncio.Event()
 
     def stop(self):

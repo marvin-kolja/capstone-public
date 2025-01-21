@@ -16,3 +16,16 @@ def test_orm_update_listener_invalid_instance():
     """
     with pytest.raises(ValueError):
         ModelUpdateListener(db_instance=SQLModel(), model_class=Build)
+
+
+def test_orm_update_listener_no_instance():
+    """
+    GIVEN: An instance of ModelUpdateListener
+    AND: A sql model instance
+
+    WHEN: The db_instance is None
+
+    THEN: The listener is created without an initial state
+    """
+    listener = ModelUpdateListener(model_class=Build)
+    assert listener._queue.empty()
