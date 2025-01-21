@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from core.test_session.execution_plan import ExecutionPlan, ExecutionStep
 from core.test_session.plan import PlanStep, StepTestCase
@@ -212,3 +213,62 @@ class TestExecutionStepState:
 
         with pytest.raises(ValueError):
             execution_step_state.set_failed(Exception("Test"))
+
+    @pytest.mark.parametrize(
+        "status, exception",
+        [
+            ("not_started", None),
+            ("running", None),
+            ("completed", None),
+            ("failed", Exception("Test")),
+        ],
+    )
+    def test_snapshot_creation(self, mock_execution_step, status, exception):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: snapshot is called.
+
+        THEN: A snapshot of the current state should be returned.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+        execution_step_state._ExecutionStepState__status = status
+        execution_step_state._ExecutionStepState__exception = exception
+
+        snapshot = execution_step_state.snapshot()
+
+        assert snapshot.execution_step == mock_execution_step
+        assert snapshot.status == status
+        assert snapshot.exception == exception
+
+    def test_snapshot_immutable(self, mock_execution_step):
+        """
+        GIVEN: A new execution step state
+
+        WHEN: snapshot is called.
+
+        THEN: The snapshot should be immutable.
+        """
+        execution_step_state = ExecutionStepState(execution_step=mock_execution_step)
+        execution_step_state._ExecutionStepState__status = "completed"
+        execution_step_state._ExecutionStepState__exception = Exception("Test")
+
+        snapshot = execution_step_state.snapshot()
+
+        with pytest.raises(ValidationError) as exc_info:
+            snapshot.status = "running"
+        assert exc_info.value.errors()[0]["loc"] == ("status",)
+        assert exc_info.value.errors()[0]["msg"] == "Instance is frozen"
+        assert exc_info.value.errors()[0]["type"] == "frozen_instance"
+
+        with pytest.raises(ValidationError) as exc_info:
+            snapshot.exception = None
+        assert exc_info.value.errors()[0]["loc"] == ("exception",)
+        assert exc_info.value.errors()[0]["msg"] == "Instance is frozen"
+        assert exc_info.value.errors()[0]["type"] == "frozen_instance"
+
+        with pytest.raises(ValidationError) as exc_info:
+            snapshot.execution_step = MagicMock()
+        assert exc_info.value.errors()[0]["loc"] == ("execution_step",)
+        assert exc_info.value.errors()[0]["msg"] == "Instance is frozen"
+        assert exc_info.value.errors()[0]["type"] == "frozen_instance"

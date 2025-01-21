@@ -1,10 +1,35 @@
 from typing import Optional, Literal
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict
+
 from core.test_session.execution_plan import ExecutionStep, ExecutionPlan
 from core.test_session.session_step_hasher import hash_session_execution_step
 
 StatusLiteral = Literal["not_started", "running", "completed", "failed"]
+
+
+class ExecutionStepStateSnapshot(BaseModel):
+    """
+    Contains the current state of an execution step as a frozen data class. This can be used to represent the state of
+    an execution step at a particular point in time without exposing the internal state of the execution step, which
+    could be modified.
+
+    Attributes:
+        execution_step: The execution step.
+        status: The current status of the execution step.
+        exception: The exception that occurred during the execution step.
+    """
+
+    execution_step: ExecutionStep
+    # TODO: Consider making execution steps faux-immutable too.
+    status: StatusLiteral
+    exception: Optional[Exception]
+
+    model_config = ConfigDict(
+        frozen=True,  # Makes the model faux-immutable
+        arbitrary_types_allowed=True,  # Required for the exception attribute
+    )
 
 
 class ExecutionStepState:
@@ -67,6 +92,18 @@ class ExecutionStepState:
             raise ValueError("Cannot set failed after completed.")
         self.__status = "failed"
         self.__exception = exception
+
+    def snapshot(self) -> ExecutionStepStateSnapshot:
+        """
+        Get a snapshot of the current state of the execution step.
+
+        :return: The snapshot of the execution step state.
+        """
+        return ExecutionStepStateSnapshot(
+            execution_step=self.__execution_step,
+            status=self.__status,
+            exception=self.__exception,
+        )
 
 
 class SessionState:
