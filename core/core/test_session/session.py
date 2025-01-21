@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import pathlib
 from contextlib import suppress
 from typing import Optional
 from uuid import UUID
@@ -27,7 +28,7 @@ class Session:
         _execution_plan (ExecutionPlan): The execution plan for the test session.
         _session_id (UUID): The unique identifier for the test session.
         _device (IDevice): The device to run the tests on.
-        _output_dir (str): The directory to store the trace and xcresult files.
+        _output_dir (pathlib.Path): The directory to store the trace and xcresult files.
         _i_services (IServices): The services to interact with the device.
         _session_state (Optional[SessionState]): The state of the test session.
     """
@@ -37,7 +38,7 @@ class Session:
         execution_plan: ExecutionPlan,
         session_id: UUID,
         device: IDevice,
-        output_dir: str,
+        output_dir: pathlib.Path,
         queue: Optional[asyncio.Queue[ExecutionStepStateSnapshot]] = None,
     ):
         """
@@ -46,10 +47,14 @@ class Session:
         :param device: The device to run the tests on.
         :param output_dir: The directory to store the trace and xcresult files.
         :param queue: A queue to send the session state to.
+
+        :raises FileNotFoundError: If the output directory does not exist.
         """
         self._execution_plan = execution_plan
         self._session_id = session_id
         self._device = device
+        if not output_dir.exists():
+            raise FileNotFoundError(f"Output directory '{output_dir}' does not exist.")
         self._output_dir = output_dir
         self._i_services = IServices(self._device)
         self._session_state = SessionState(
@@ -158,15 +163,19 @@ class Session:
             elif bundle_id not in installed_apps:
                 self._i_services.install_app(path_to_install)
 
-    def _generate_result_paths(self, execution_step) -> tuple[str, str]:
+    def _generate_result_paths(
+        self, execution_step: ExecutionStep
+    ) -> tuple[pathlib.Path, pathlib.Path]:
         """
         Generate the paths for the trace and xcresult files.
         :param execution_step: The execution step to use for the generation.
         :return: The paths for the trace and xcresult files as a tuple (trace_path, xcresult_path).
         """
-        base_file_path = f"{self._output_dir}/{hash_session_execution_step(self._session_id, execution_step)}"
-        trace_path = f"{base_file_path}.trace"
-        xcresult_path = f"{base_file_path}.xcresult"
+        base_file_path = pathlib.Path(self._output_dir) / hash_session_execution_step(
+            self._session_id, execution_step
+        )
+        trace_path = base_file_path.with_suffix(".trace")
+        xcresult_path = base_file_path.with_suffix(".xcresult")
         return trace_path, xcresult_path
 
     async def _execute_test_and_trace(self, execution_step, trace_path, xcresult_path):
@@ -255,7 +264,7 @@ class Session:
 
     def _create_xctest_task(
         self,
-        xcresult_path: str,
+        xcresult_path: pathlib.Path,
         xctest_ids: list[str],
         xctestrun_config: XctestrunConfig,
     ):
@@ -269,7 +278,7 @@ class Session:
         logger.debug(f"Creating xctest task for '{xctest_ids}'")
         return asyncio.create_task(
             Xctest.run_test(
-                xcresult_path=xcresult_path,
+                xcresult_path=xcresult_path.resolve().as_posix(),
                 test_configuration=xctestrun_config.test_configuration,
                 xctestrun_path=xctestrun_config.path,
                 only_testing=xctest_ids,
@@ -278,7 +287,10 @@ class Session:
         )
 
     def _create_trace_launch_task(
-        self, trace_path: str, instruments: list[Instrument], app_bundle_id: str
+        self,
+        trace_path: pathlib.Path,
+        instruments: list[Instrument],
+        app_bundle_id: str,
     ):
         """
         Run the trace task using the launch strategy.
@@ -290,7 +302,7 @@ class Session:
         logger.debug(f"Creating trace launch task for '{app_bundle_id}'")
         return asyncio.create_task(
             Xctrace.record_launch(
-                trace_path=trace_path,
+                trace_path=trace_path.resolve().as_posix(),
                 instruments=instruments,
                 app_to_launch=app_bundle_id,
                 append_trace=False,
@@ -300,7 +312,7 @@ class Session:
 
     def _create_trace_attach_task(
         self,
-        trace_path: str,
+        trace_path: pathlib.Path,
         instruments: list[Instrument],
         pid: int,
     ):
@@ -314,7 +326,7 @@ class Session:
         logger.debug(f"Creating trace attach task for '{pid}'")
         return asyncio.create_task(
             Xctrace.record_attach(
-                trace_path=trace_path,
+                trace_path=trace_path.resolve().as_posix(),
                 instruments=instruments,
                 pid=pid,
                 append_trace=False,

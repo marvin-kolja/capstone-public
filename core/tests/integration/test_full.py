@@ -79,7 +79,7 @@ def fix_xcodebuild_sudo_issue(build_output_dir, test_output_dir):
 
         Xctest._temporary_file_path = _temporary_file_path
 
-        test_output_dir_path = pathlib.Path(test_output_dir)
+        test_output_dir_path = test_output_dir
         for path in [test_output_dir_path]:
             if path.exists():
                 # if the dir is created by sudo, the current user does not have access to it thus we need to change the
@@ -117,7 +117,7 @@ def build_output_dir():
 def test_output_dir(tmp_dir):
     test_path = pathlib.Path(tmp_dir, "test_output_dir")
     test_path.mkdir()
-    yield test_path.resolve().as_posix()
+    yield test_path
 
 
 @pytest.fixture(scope="module")
@@ -381,9 +381,9 @@ async def test_execute_tests(
 ):
     await session.run()
 
-    assert pathlib.Path(test_output_dir).exists()
+    assert test_output_dir.exists()
 
-    files = list(pathlib.Path(test_output_dir).glob("*"))
+    files = list(test_output_dir.glob("*"))
 
     assert len(files) == 2
     assert len([file for file in files if file.suffix == ".trace"]) == 1
@@ -395,17 +395,17 @@ async def test_execute_tests(
         )
 
     for execution_step in execution_plan.execution_steps:
-        trace_path = pathlib.Path(
-            test_output_dir,
-            f"{hash_session_execution_step(session_id, execution_step)}.trace",
+        trace_path = (
+            test_output_dir
+            / f"{hash_session_execution_step(session_id, execution_step)}.trace"
         )
-        toc_path = pathlib.Path(
-            test_output_dir,
-            f"{hash_session_execution_step(session_id, execution_step)}_toc.xml",
+        toc_path = (
+            test_output_dir
+            / f"{hash_session_execution_step(session_id, execution_step)}_toc.xml"
         )
-        data_path = pathlib.Path(
-            test_output_dir,
-            f"{hash_session_execution_step(session_id, execution_step)}_data.xml",
+        data_path = (
+            test_output_dir
+            / f"{hash_session_execution_step(session_id, execution_step)}_data.xml"
         )
         await Xctrace.export_toc(trace_path.as_posix(), toc_path.as_posix())
         await Xctrace.export_data(
@@ -430,9 +430,9 @@ async def test_execute_tests(
         assert data[0].get("core-animation-fps-estimate") is not None
         assert data[0].get("stdouterr-output") is None
 
-        xcresult_path = pathlib.Path(
-            test_output_dir,
-            f"{hash_session_execution_step(session_id, execution_step)}.xcresult",
+        xcresult_path = (
+            test_output_dir
+            / f"{hash_session_execution_step(session_id, execution_step)}.xcresult"
         )
         xcresult_tool = XcresultTool(xcresult_path.as_posix())
 

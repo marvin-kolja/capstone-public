@@ -1,4 +1,5 @@
 import asyncio
+import pathlib
 import uuid
 from unittest.mock import MagicMock, patch, call, PropertyMock
 
@@ -43,7 +44,7 @@ class TestSession:
         """
         session_id_mock = MagicMock(spec=uuid.UUID)
         mock_device = MagicMock(spec=IDevice)
-        mock_output_dir = MagicMock(spec=str)
+        mock_output_dir = MagicMock(spec=pathlib.Path)
 
         session = Session(
             execution_plan=mock_execution_plan,
@@ -304,6 +305,7 @@ class TestSession:
         app_bundle_id,
         ui_app_bundle_id,
         apps_installed,
+        tmp_path,
     ):
         """
         GIVEN: A test session
@@ -317,7 +319,7 @@ class TestSession:
 
         TODO: In the future the method should be split into smaller methods so this test can be a lot less messy
         """
-        output_dir = "/tmp/output"
+        output_dir = tmp_path
         session_id = uuid.uuid4()
         app_bundle_ids = (
             [app_bundle_id, ui_app_bundle_id] if ui_app_bundle_id else [app_bundle_id]
