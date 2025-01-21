@@ -1,8 +1,11 @@
+import asyncio
 import pathlib
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 from core.test_session.session_state import ExecutionStepStateSnapshot
+from core.xc.xcresult.models.test_results.summary import TestResult
+from fastapi import Request
 
 from api.models import (
     SessionTestPlanPublic,
@@ -10,12 +13,15 @@ from api.models import (
     DeviceWithStatus,
     TestSession,
     ExecutionStep,
+    XcTestResult,
+    ExecutionStepPublic,
 )
 
 # noinspection PyProtectedMember
 from api.services.api_test_session_service import (
     create_test_session,
     _handle_execution_state_snapshot,
+    listen_to_execution_step_updates,
 )
 
 
@@ -132,3 +138,104 @@ async def test_handle_execution_state_updates_task(
                 execution_step_id=db_execution_step.id,
                 xcresult_path=xcresult_path,
             )
+
+
+@pytest.mark.asyncio
+async def test_listen_to_execution_step_updates(
+    db, new_db_fake_execution_step, new_db_fake_test_session
+):
+    """
+    GIVEN: A test session and an execution step in the database
+    AND: Simulated updates to the execution step
+
+    WHEN: Listening to execution step updates
+
+    THEN: Only the updates of the execution step should be listened to that are in the test session
+    AND: The listener should stop when the test session is completed/failed/cancelled
+    """
+    request_mock = AsyncMock(spec=Request)
+    request_mock.is_disconnected.return_value = False
+
+    new_db_fake_test_session.status = "in_progress"
+    db.add(new_db_fake_test_session)
+    db.commit()
+
+    async def simulate_updates():
+        new_db_fake_execution_step.status = "completed"
+        db.add(new_db_fake_execution_step)
+        db.commit()
+
+        await asyncio.sleep(0.1)
+
+        new_db_fake_execution_step.xcresult_path = pathlib.Path(
+            "/test/xcresult.xcresult"
+        )
+        db.add(new_db_fake_execution_step)
+        db.commit()
+
+        await asyncio.sleep(0.1)
+
+        new_db_fake_execution_step.xc_test_result = XcTestResult(
+            skipped_tests=0,
+            execution_step_id=new_db_fake_execution_step.id,
+            expected_failures=0,
+            start_time=0,
+            end_time=1,
+            failed_tests=0,
+            passed_tests=1,
+            total_test_count=0,
+            test_failures=[],
+            result=TestResult.passed,
+        )
+        db.add(new_db_fake_execution_step)
+        db.commit()
+
+        await asyncio.sleep(0.1)
+
+        new_db_fake_test_session.status = "completed"
+        db.add(new_db_fake_test_session)
+        db.commit()
+
+    task = asyncio.create_task(simulate_updates())
+
+    update_count = 0
+
+    async for event in listen_to_execution_step_updates(
+        test_session_id=new_db_fake_test_session.id, request=request_mock
+    ):
+        update_count += 1
+
+        # event is a json string and ends with two newlines
+        assert event.endswith("\n\n")
+        json_string = event[:-2]
+        assert (
+            ExecutionStepPublic.model_validate_json(json_string).id
+            == new_db_fake_execution_step.id
+        )
+
+    await task
+
+    assert update_count == 3
+    request_mock.is_disconnected.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_listen_to_execution_step_updates_disconnect(
+    db, new_db_fake_test_session
+):
+    """
+    GIVEN: A test session in the database
+
+    WHEN: Listening to execution step updates
+
+    THEN: The listener should stop when the request is disconnected
+    """
+    request_mock = AsyncMock(spec=Request)
+    request_mock.is_disconnected.side_effect = AsyncMock(return_value=True)
+
+    async for event in listen_to_execution_step_updates(
+        test_session_id=new_db_fake_test_session.id, request=request_mock
+    ):
+        continue
+
+    request_mock.is_disconnected.assert_called()

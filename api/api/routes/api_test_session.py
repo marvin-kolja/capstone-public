@@ -1,8 +1,9 @@
 import uuid
 
 from core.device.i_device_manager import IDeviceManager
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import Session
+from starlette.responses import StreamingResponse
 
 from api.custom_responses import SSEStreamingResponse
 from api.depends import SessionDep, AsyncJobRunnerDep, DeviceManagerDep
@@ -120,12 +121,30 @@ async def cancel_test_session(
 
 @router.get("/{test_session_id}/execution-step-stream")
 async def stream_execution_step_updates(
-    *, session: SessionDep, test_session_id: uuid.UUID
+    *, session: SessionDep, test_session_id: uuid.UUID, request: Request
 ) -> SSEStreamingResponse:
     """
     Stream updates of the execution steps of a test session. Can return any execution step when it is updated.
     """
-    pass
+    db_test_session = api_test_session_service.read_test_session(
+        session=session, test_session_id=test_session_id
+    )
+    if db_test_session is None:
+        raise HTTPException(status_code=404, detail="Test session not found")
+
+    if (
+        db_test_session.status == "completed"
+        or db_test_session.status == "failed"
+        or db_test_session.status == "cancelled"
+    ):
+        raise HTTPException(status_code=400, detail="Test session is not running")
+
+    return StreamingResponse(
+        api_test_session_service.listen_to_execution_step_updates(
+            test_session_id=db_test_session.id, request=request
+        ),
+        media_type="text/event-stream",
+    )
 
 
 @router.post("/{test_session_id}/process-trace-results")

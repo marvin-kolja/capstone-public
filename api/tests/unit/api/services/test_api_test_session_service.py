@@ -20,6 +20,7 @@ from api.services.api_test_session_service import (
     _start_test_session_job,
     _parse_xcresult_to_xc_test_result_model,
     _async_execution_state_updates_generator,
+    session_is_done,
 )
 
 
@@ -501,3 +502,30 @@ def test_parse_api_test_plan_to_core_test_plan(
     expected_test_cases = [tc for tc in fake_public_test_plan_step.test_cases]
     actual_test_cases = [tc.xctest_id for tc in step.test_cases]
     assert actual_test_cases == expected_test_cases
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        "completed",
+        "failed",
+        "cancelled",
+    ],
+)
+def test_session_is_done(status):
+    """
+    GIVEN: A test session
+
+    WHEN: Checking if the test session is done
+
+    THEN: The function should return True if the status is completed, failed, or cancelled
+    """
+    test_session = MagicMock()
+    test_session.status = status
+
+    with patch("api.services.api_test_session_service.read_test_session") as mock_read:
+        mock_read.return_value = test_session
+
+        assert session_is_done(
+            session=MagicMock(), test_session_id=uuid.uuid4()
+        ), f"Session should be done if status is {status}"

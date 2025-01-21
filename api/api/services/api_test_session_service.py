@@ -8,6 +8,7 @@ from typing import Optional, AsyncGenerator
 from core.device.i_device import IDevice
 from core.test_session.session_state import ExecutionStepStateSnapshot
 from core.xc.xcresult.xcresulttool import XcresultTool
+from fastapi import Request
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
@@ -27,7 +28,9 @@ from api.models import (
     BuildPublic,
     DeviceWithStatus,
     XcTestResult,
+    ExecutionStepPublic,
 )
+from api.services.orm_update_listener import ModelUpdateListener
 
 logger = logging.getLogger(__name__)
 
@@ -425,3 +428,54 @@ def generate_session_id() -> uuid.UUID:
     Generate a new UUID for a test session.
     """
     return uuid.uuid4()
+
+
+async def session_is_done(*, session: Session, test_session_id: uuid.UUID) -> bool:
+    """
+    Check if the test session is done (completed, failed or cancelled).
+
+    :param session: The database session to use
+    :param test_session_id: The ID of the test session
+    :return:
+    """
+    db_test_session = read_test_session(
+        session=session, test_session_id=test_session_id
+    )
+    return db_test_session.status in {"completed", "failed", "cancelled"}
+
+
+async def listen_to_execution_step_updates(
+    *, test_session_id: uuid.UUID, request: Request
+) -> AsyncGenerator[str, None]:
+    """
+    An async generator that listens to updates of a build and yields the updated build.
+
+    This is done until the build status is set to 'success' or 'failure', or the request is disconnected.
+    """
+
+    listener: ModelUpdateListener[ExecutionStep] = ModelUpdateListener(
+        db_instance=None,
+        model_class=ExecutionStep,
+    )
+
+    async for update in listener.listen():
+        with Session(engine) as session:
+            is_done = await session_is_done(
+                session=session, test_session_id=test_session_id
+            )
+
+            if update is None:
+                if await request.is_disconnected():
+                    logger.debug(f"Request disconnected, stopping listener")
+                    listener.stop()
+                if is_done:
+                    logger.debug(
+                        f"Test session '{test_session_id}' status is done, stopping listener"
+                    )
+                    listener.stop()
+                continue
+
+            if update.session_id != test_session_id:
+                continue  # Skip updates for other test sessions
+
+            yield ExecutionStepPublic.model_validate(update).model_dump_json() + "\n\n"

@@ -232,6 +232,66 @@ def test_cancel_test_session_test_session_not_running(
         )
 
 
+def test_stream_execution_step_updates_test_session_not_found(client):
+    """
+    GIVEN: a test session that does not exist
+
+    WHEN: the execution step updates are streamed
+
+    THEN: a 404 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=None,
+    ) as mock_read_test_session:
+
+        r = client.get(
+            f"/test-sessions/{fake_test_session_id}/execution-step-stream",
+        )
+
+        assert r.status_code == 404, r.text
+
+        mock_read_test_session.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        "completed",
+        "failed",
+        "cancelled",
+    ],
+)
+def test_stream_execution_step_updates_test_session_not_running(client, status):
+    """
+    GIVEN: a test session that is completed
+
+    WHEN: the execution step updates are streamed
+
+    THEN: a 400 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    mock_db_test_session = MagicMock()
+    mock_db_test_session.id = fake_test_session_id
+    mock_db_test_session.status = "completed"
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=mock_db_test_session,
+    ) as mock_read_test_session:
+
+        r = client.get(
+            f"/test-sessions/{fake_test_session_id}/execution-step-stream",
+        )
+
+        assert r.status_code == 400, r.text
+
+        mock_read_test_session.assert_called_once()
+
+
 @pytest.fixture
 def fake_project_id():
     return uuid.uuid4()
