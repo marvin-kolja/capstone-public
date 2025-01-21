@@ -138,7 +138,7 @@ async def test_job_execution_and_removal(job_runner):
     job_runner.start_scheduler()
 
     async def test_func():
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.01)
 
     job_id = "test_execution"
     job_runner.add_job(test_func, job_id)
