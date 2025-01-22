@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 
+import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.routing import APIRoute
 
 from api.config import settings
 from api.depends import async_job_runner
+from api.log_config import LOGGING_CONFIG
 from api.routes import devices, api_test_plans, projects, api_test_session
 
 
@@ -32,11 +34,10 @@ app = FastAPI(generate_unique_id_function=custom_generate_unique_id, lifespan=li
 app.include_router(api_router)
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(
         "api.main:app",
         host="127.0.0.1",
         port=8000,
         reload=settings.ENVIRONMENT == "local",
+        log_config=LOGGING_CONFIG,
     )
