@@ -350,7 +350,7 @@ class XcTestResultPublic(XcTestResultDataBase):
 
 class TraceResultDataBase(SQLModel):
     id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
-    execution_step_id: uuid.UUID = SQLField(
+    trace_result_id: uuid.UUID = SQLField(
         foreign_key="trace_result.id", ondelete="CASCADE"
     )
 
