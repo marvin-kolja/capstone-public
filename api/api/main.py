@@ -16,8 +16,8 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 api_router = APIRouter()
 api_router.include_router(devices.router)
-api_router.include_router(api_test_plans.router)
 api_router.include_router(projects.router)
+api_router.include_router(api_test_plans.router)
 api_router.include_router(api_test_session.router)
 
 
