@@ -41,6 +41,10 @@ app = FastAPI(
             # Clients that use the OpenAPI specification will have to provide the port themselves.
             "description": "The local running server",
         },
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "The development server",
+        },
     ],
     root_path="/",
     root_path_in_servers=False,
