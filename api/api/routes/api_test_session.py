@@ -149,12 +149,25 @@ async def stream_execution_step_updates(
 
 @router.post("/{test_session_id}/process-trace-results")
 async def export_test_session_results(
-    *, session: SessionDep, test_session_id: uuid.UUID
+    *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
 ):
     """
     Start processing the trace results of a test session.
     """
-    pass
+    db_test_session = api_test_session_service.read_test_session(
+        session=session, test_session_id=test_session_id
+    )
+    if db_test_session is None:
+        raise HTTPException(status_code=404, detail="Test session not found")
+
+    if db_test_session.status != "completed":
+        raise HTTPException(
+            status_code=400, detail="Test session must be completed to process results"
+        )
+
+    api_test_session_service.process_trace_results(
+        test_session_id=db_test_session.id, job_runner=job_runner
+    )
 
 
 def _validate_test_session_input(

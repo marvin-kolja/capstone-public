@@ -292,6 +292,94 @@ def test_stream_execution_step_updates_test_session_not_running(client, status):
         mock_read_test_session.assert_called_once()
 
 
+def test_export_test_session_results_not_found(client):
+    """
+    GIVEN: a test session that does not exist
+
+    WHEN: POSTing to `/test-sessions/{test_session_id}/export-results`
+
+    THEN: a 404 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=None,
+    ) as mock_read_test_session:
+
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/process-trace-results",
+        )
+
+        assert r.status_code == 404, r.text
+
+        mock_read_test_session.assert_called_once()
+
+
+def test_export_test_session_results_not_completed(client):
+    """
+    GIVEN: a test session that is not completed
+
+    WHEN: POSTing to `/test-sessions/{test_session_id}/process-trace-results`
+
+    THEN: a 400 error should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    mock_db_test_session = MagicMock()
+    mock_db_test_session.id = fake_test_session_id
+    mock_db_test_session.status = "in_progress"
+
+    with patch(
+        "api.routes.api_test_session.api_test_session_service.read_test_session",
+        return_value=mock_db_test_session,
+    ) as mock_read_test_session:
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/process-trace-results",
+        )
+
+        assert r.status_code == 400, r.text
+
+        mock_read_test_session.assert_called_once()
+
+
+def test_export_test_session_results_200(client, mock_async_job_runner_dependency):
+    """
+    GIVEN: a test session that is completed
+
+    WHEN: POSTing to `/test-sessions/{test_session_id}/process-trace-results`
+
+    THEN: a 200 response should be returned
+    """
+    fake_test_session_id = uuid.uuid4()
+
+    mock_db_test_session = MagicMock()
+    mock_db_test_session.id = fake_test_session_id
+    mock_db_test_session.status = "completed"
+
+    with (
+        patch(
+            "api.routes.api_test_session.api_test_session_service.read_test_session",
+            return_value=mock_db_test_session,
+        ) as mock_read_test_session,
+        patch(
+            "api.routes.api_test_session.api_test_session_service.process_trace_results",
+        ) as mock_process_results,
+    ):
+
+        r = client.post(
+            f"/test-sessions/{fake_test_session_id}/process-trace-results",
+        )
+
+        assert r.status_code == 200, r.text
+
+        mock_read_test_session.assert_called_once()
+        mock_process_results.assert_called_once_with(
+            test_session_id=fake_test_session_id,
+            job_runner=mock_async_job_runner_dependency,
+        )
+
+
 @pytest.fixture
 def fake_project_id():
     return uuid.uuid4()

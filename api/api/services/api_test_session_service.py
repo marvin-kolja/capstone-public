@@ -8,6 +8,8 @@ from typing import Optional, AsyncGenerator
 from core.device.i_device import IDevice
 from core.test_session.session_state import ExecutionStepStateSnapshot
 from core.xc.xcresult.xcresulttool import XcresultTool
+from core.xc.xctrace.xctrace_interface import Xctrace
+from core.xc.xctrace.xml_parser import Schema, Sysmon, ProcessStdoutErr, CoreAnimation
 from fastapi import Request
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
@@ -29,6 +31,11 @@ from api.models import (
     DeviceWithStatus,
     XcTestResult,
     ExecutionStepPublic,
+    SysmonDB,
+    ProcessStdoutErrDB,
+    CoreAnimationDB,
+    TraceResultDataBase,
+    TraceResult,
 )
 from api.services.orm_update_listener import ModelUpdateListener
 
@@ -477,3 +484,196 @@ async def listen_to_execution_step_updates(
                 continue  # Skip updates for other test sessions
 
             yield ExecutionStepPublic.model_validate(update).model_dump_json() + "\n\n"
+
+
+def process_trace_results_job_id(*, test_session_id: uuid.UUID) -> str:
+    """
+    Return the job ID for processing the trace results of a test session.
+    """
+    return "process_trace_results-" + test_session_id.hex
+
+
+def process_trace_results(*, test_session_id: uuid.UUID, job_runner: AsyncJobRunner):
+    """
+    Start processing the trace results of a test session in the background
+    """
+    job_runner.add_job(
+        func=_process_trace_results_job,
+        kwargs={"test_session_id": test_session_id},
+        job_id=process_trace_results_job_id(test_session_id=test_session_id),
+    )
+
+
+async def _process_trace_results_job(*, test_session_id: uuid.UUID):
+    """
+    Process the trace results of each execution step of a test session.
+
+    :param test_session_id: The ID of the test session
+    """
+    with Session(engine) as session:
+        db_test_session = read_test_session(
+            session=session, test_session_id=test_session_id
+        )
+
+        for db_execution_step in db_test_session.execution_steps:
+            try:
+                await process_execution_step_trace_results(
+                    session=session, db_execution_step=db_execution_step
+                )
+            except ValueError:
+                logger.debug(
+                    f"Skipping processing of trace results for execution step '{db_execution_step.id}'"
+                )
+                pass
+
+
+async def process_execution_step_trace_results(
+    *, session: Session, db_execution_step: ExecutionStep
+):
+    """
+    Start processing the trace results of a test session.
+
+    - Parses the trace file of the execution step and stores the results in the database.
+    - Updates the trace result export status in the database.
+
+    :raises ValueError: If the execution step has no trace path or the trace result export status is 'completed' or
+    'running'.
+    """
+    if not db_execution_step.trace_path:
+        logger.warning(f"Execution step '{db_execution_step.id}' has no trace path")
+        raise ValueError
+
+    if db_execution_step.trace_result is None:
+        db_execution_step.trace_result = TraceResult(
+            execution_step_id=db_execution_step.id,
+        )
+
+    if db_execution_step.trace_result.export_status == "completed":
+        logger.debug(
+            f"Execution step '{db_execution_step.id}' trace results already exported"
+        )
+        raise ValueError
+    if db_execution_step.trace_result.export_status == "running":
+        logger.warning(
+            f"Execution step '{db_execution_step.id}' trace results export already running"
+        )
+        raise ValueError
+
+    try:
+        db_execution_step.trace_result.export_status = "running"
+
+        combined_data = await process_trace_file(
+            trace_path=db_execution_step.trace_path
+        )
+        store_trace_results(
+            session=session,
+            trace_result_id=db_execution_step.trace_result.id,
+            data=combined_data,
+        )
+
+        db_execution_step.trace_result.export_status = "completed"
+    except asyncio.CancelledError:
+        logger.info(
+            f"Processing trace file '{db_execution_step.trace_path}' was cancelled"
+        )
+        db_execution_step.trace_result.export_status = "cancelled"
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error processing trace file '{db_execution_step.trace_path}'",
+            exc_info=e,
+        )
+        db_execution_step.trace_result.export_status = "failed"
+    finally:
+        session.add(db_execution_step)
+        session.commit()
+
+
+async def process_trace_file(
+    *, trace_path: pathlib.Path
+) -> list[Sysmon | ProcessStdoutErr | CoreAnimation]:
+    """
+    Export the trace file to a toc and data file, and parse the data file to a dictionary using the toc file.
+
+    :param trace_path: The path to the trace file
+    :return: A list of all parsed data from the trace file. The list can contain multiple types of Schema data.
+    """
+    if not trace_path.exists():
+        raise FileNotFoundError(f"Trace file '{trace_path}' does not exist")
+
+    stem = trace_path.stem
+    parent = trace_path.parent
+    toc_path = parent / (stem + "_toc.xml")
+    data_path = parent / (stem + "_data.xml")
+
+    toc_path.unlink(missing_ok=True)
+    data_path.unlink(missing_ok=True)
+
+    await Xctrace.export_toc(
+        trace_path=trace_path.as_posix(),
+        toc_path=toc_path.as_posix(),
+    )
+    await Xctrace.export_data(
+        trace_path=trace_path.as_posix(),
+        data_path=data_path.as_posix(),
+        schemas=Schema.all(),
+        run=1,
+    )
+    toc = Xctrace.parse_toc_xml(toc_path.as_posix())
+    data = Xctrace.parse_data_xml(data_path.as_posix(), toc=toc)
+
+    single_run = data[0]
+
+    sysmon = single_run.get(Schema.SYSMON_PROCESS)
+    stdouterr = single_run.get(Schema.STDOUTERR_OUTPUT)
+    core_animation = single_run.get(Schema.CORE_ANIMATION_FPS_ESTIMATE)
+
+    merged_data = []
+
+    if sysmon:
+        merged_data.extend(sysmon)
+    if stdouterr:
+        merged_data.extend(stdouterr)
+    if core_animation:
+        merged_data.extend(core_animation)
+
+    return merged_data
+
+
+def store_trace_results(
+    *,
+    session: Session,
+    trace_result_id: uuid.UUID,
+    data: list[Sysmon | ProcessStdoutErr | CoreAnimation],
+):
+    """
+    Store the parsed trace results of a test session in the database.
+
+    :param session: The database session
+    :param trace_result_id: The ID of the trace result in the database
+    :param data: The parsed trace results data. List can have multiple types of different schema data. The method will
+    store the data based on the schema type.
+    """
+    logger.debug(f"Storing trace results for trace result ID '{trace_result_id}'")
+    if not data:
+        return
+
+    for item in data:
+        model_class: type[TraceResultDataBase]
+
+        if isinstance(item, Sysmon):
+            model_class = SysmonDB
+        elif isinstance(item, ProcessStdoutErr):
+            model_class = ProcessStdoutErrDB
+        elif isinstance(item, CoreAnimation):
+            model_class = CoreAnimationDB
+        else:
+            raise ValueError(f"Unknown data type: {item}")
+
+        db_instance = model_class(
+            trace_result_id=trace_result_id,
+            **item.model_dump(),
+        )
+
+        session.add(db_instance)
+    session.commit()

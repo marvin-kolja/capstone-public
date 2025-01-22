@@ -6,8 +6,16 @@ from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock, call
 import pytest
 from core.test_session import execution_plan
 from core.test_session.metrics import Metric
+from core.xc.xctrace.xml_parser import Schema, Sysmon, ProcessStdoutErr, CoreAnimation
+from sqlmodel import Session
 
-from api.models import SessionTestPlanPublic, SessionTestPlanStepPublic
+from api.async_jobs import AsyncJobRunner
+from api.models import (
+    SessionTestPlanPublic,
+    SessionTestPlanStepPublic,
+    ExecutionStep,
+    TraceResult,
+)
 
 # noinspection PyProtectedMember
 from api.services.api_test_session_service import (
@@ -21,6 +29,12 @@ from api.services.api_test_session_service import (
     _parse_xcresult_to_xc_test_result_model,
     _async_execution_state_updates_generator,
     session_is_done,
+    process_trace_file,
+    store_trace_results,
+    process_execution_step_trace_results,
+    _process_trace_results_job,
+    process_trace_results,
+    process_trace_results_job_id,
 )
 
 
@@ -526,3 +540,338 @@ def test_session_is_done(status):
         assert session_is_done(
             session=MagicMock(), test_session_id=uuid.uuid4()
         ), f"Session should be done if status is {status}"
+
+
+@pytest.mark.asyncio
+async def test_process_trace_results_schedules_and_runs_job():
+    """
+    GIVEN: a test session ID
+
+    WHEN: calling `process_trace_results`
+
+    THEN: It should schedule as job
+    AND: The `_process_trace_results_job` should be called
+    """
+    job_runner = AsyncJobRunner()
+    job_runner.start_scheduler()
+    test_session_id = uuid.uuid4()
+
+    with patch(
+        "api.services.api_test_session_service._process_trace_results_job"
+    ) as mock_process_trace_results_job:
+        mock_process_trace_results_job.side_effect = AsyncMock()
+
+        process_trace_results(test_session_id=test_session_id, job_runner=job_runner)
+
+        assert job_runner.job_exists(
+            process_trace_results_job_id(test_session_id=test_session_id)
+        ), "The job should be scheduled"
+
+        await asyncio.sleep(0.1)
+
+        mock_process_trace_results_job.assert_called_once_with(
+            test_session_id=test_session_id
+        )
+
+    job_runner.shutdown_scheduler()
+
+
+@pytest.fixture
+def trace_result_mock():
+    trace_result_mock = MagicMock(spec=TraceResult)
+    trace_result_mock.export_status = "not_started"
+
+    return trace_result_mock
+
+
+@pytest.fixture
+def execution_step_mock(trace_result_mock):
+    execution_step_mock = MagicMock(spec=ExecutionStep)
+    execution_step_mock.trace_path = "/path/to/trace"
+    execution_step_mock.trace_result = trace_result_mock
+
+    return execution_step_mock
+
+
+@pytest.mark.asyncio
+async def test_process_trace_results_job(execution_step_mock, mock_db_session):
+    """
+    GIVEN: a test session ID
+
+    WHEN: calling `_process_trace_results_job`
+
+    THEN: It should get the current test session form the DB
+    AND: Call the `process_execution_step_trace_results` function for each execution step
+    """
+    test_session_mock = MagicMock()
+    test_session_mock.execution_steps = [
+        execution_step_mock,
+        execution_step_mock,
+        execution_step_mock,
+    ]
+
+    with patch(
+        "api.services.api_test_session_service.read_test_session",
+        return_value=test_session_mock,
+    ), patch(
+        "api.services.api_test_session_service.process_execution_step_trace_results"
+    ) as mock_process_execution_step_trace_results:
+        await _process_trace_results_job(
+            test_session_id=MagicMock(spec=uuid.UUID),
+        )
+
+        mock_process_execution_step_trace_results.assert_has_calls(
+            [
+                call(session=mock_db_session, db_execution_step=execution_step_mock)
+                for _ in range(3)
+            ]
+        )
+
+
+@pytest.mark.asyncio
+async def test_process_execution_step_trace_results_no_trace_file(execution_step_mock):
+    """
+    GIVEN: an execution step with no trace file
+
+    WHEN: processing the trace results
+
+    THEN: a ValueError should be raised
+    AND: the db sessions add or commit should not be called
+    """
+    db_session = MagicMock(spec=Session)
+    execution_step_mock.trace_path = None
+
+    with pytest.raises(ValueError):
+        await process_execution_step_trace_results(
+            session=db_session,
+            db_execution_step=execution_step_mock,
+        )
+
+    assert db_session.add.call_count == 0
+    assert db_session.commit.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "export_status",
+    [
+        "running",
+        "completed",
+    ],
+)
+@pytest.mark.asyncio
+async def test_process_execution_step_trace_results_already_running_or_complete(
+    export_status, execution_step_mock, trace_result_mock
+):
+    """
+    GIVEN: an execution step with a trace file and a status of running or completed
+
+    WHEN: processing the trace results
+
+    THEN: None should be returned
+    """
+    db_session = MagicMock(spec=Session)
+
+    execution_step_mock.trace_path = "/path/to/trace"
+    trace_result_mock.export_status = export_status
+
+    with pytest.raises(ValueError):
+        await process_execution_step_trace_results(
+            session=db_session,
+            db_execution_step=execution_step_mock,
+        )
+
+    assert db_session.add.call_count == 0
+    assert db_session.commit.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_process_execution_step_trace_results_cancel(
+    execution_step_mock, trace_result_mock
+):
+    """
+    GIVEN: an execution with a trace file
+
+    WHEN: processing the trace results
+    AND: cancelling the function
+
+    THEN: The asyncio.CancelledError should be raised
+    AND: The export status should be set to cancelled
+    """
+
+    async def simulate_work(*args, **kwargs):
+        await asyncio.sleep(0.5)
+
+    db_session = MagicMock(spec=Session)
+    execution_step_mock.trace_path = "/path/to/trace"
+    trace_result_mock.export_status = "not_started"
+
+    with patch(
+        "api.services.api_test_session_service.process_trace_file"
+    ) as process_trace_file_mock, patch(
+        "api.services.api_test_session_service.store_trace_results"
+    ):
+        process_trace_file_mock.side_effect = simulate_work
+        task = asyncio.create_task(
+            process_execution_step_trace_results(
+                session=db_session,
+                db_execution_step=execution_step_mock,
+            )
+        )
+        await asyncio.sleep(0.1)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        assert trace_result_mock.export_status == "cancelled"
+
+
+@pytest.mark.asyncio
+async def test_process_execution_step_trace_results_failure(
+    execution_step_mock, trace_result_mock
+):
+    """
+    GIVEN: an execution with a trace file
+
+    WHEN: processing the trace results
+    AND: the trace file processing fails
+
+    THEN: The export status should be set to failed
+    """
+
+    db_session = MagicMock(spec=Session)
+    execution_step_mock.trace_path = "/path/to/trace"
+    trace_result_mock.export_status = "not_started"
+
+    with patch(
+        "api.services.api_test_session_service.process_trace_file"
+    ) as process_trace_file_mock, patch(
+        "api.services.api_test_session_service.store_trace_results"
+    ):
+        process_trace_file_mock.side_effect = Exception
+
+        await process_execution_step_trace_results(
+            session=db_session,
+            db_execution_step=execution_step_mock,
+        )
+
+        assert trace_result_mock.export_status == "failed"
+
+
+@pytest.mark.asyncio
+async def test_process_trace_file_success():
+    """
+    GIVEN: a trace file
+
+    WHEN: processing the trace file
+
+    THEN: the correct methods should be called
+    AND: the correct values should be returned
+    """
+    fake_trace_path = pathlib.Path("/path/to/some-id.trace")
+
+    sysmon_mock = MagicMock()
+    stdouterr_mock = MagicMock()
+    core_animation_fps_estimate_mock = MagicMock()
+
+    parse_data_xml_return = [
+        {
+            Schema.SYSMON_PROCESS: [sysmon_mock],
+            Schema.STDOUTERR_OUTPUT: [stdouterr_mock],
+            Schema.CORE_ANIMATION_FPS_ESTIMATE: [core_animation_fps_estimate_mock],
+        }
+    ]
+
+    with patch(
+        "api.services.api_test_session_service.Xctrace"
+    ) as mock_xctrace, patch.object(pathlib.Path, "exists", return_value=True):
+        mock_xctrace.export_toc = AsyncMock()
+        mock_xctrace.export_data = AsyncMock()
+        mock_xctrace.parse_toc_xml = MagicMock()
+        mock_xctrace.parse_data_xml = MagicMock(return_value=parse_data_xml_return)
+
+        result = await process_trace_file(
+            trace_path=fake_trace_path,
+        )
+
+        mock_xctrace.export_toc.assert_awaited_once_with(
+            trace_path="/path/to/some-id.trace",
+            toc_path="/path/to/some-id_toc.xml",
+        )
+        mock_xctrace.export_data.assert_awaited_once_with(
+            trace_path="/path/to/some-id.trace",
+            data_path="/path/to/some-id_data.xml",
+            schemas=Schema.all(),
+            run=1,
+        )
+        mock_xctrace.parse_toc_xml.assert_called_once_with(
+            "/path/to/some-id_toc.xml",
+        )
+        mock_xctrace.parse_data_xml.assert_called_once_with(
+            "/path/to/some-id_data.xml",
+            toc=mock_xctrace.parse_toc_xml.return_value,
+        )
+
+        assert result == [
+            sysmon_mock,
+            stdouterr_mock,
+            core_animation_fps_estimate_mock,
+        ], "The result should be the parsed data from the trace file"
+
+
+@pytest.mark.asyncio
+async def test_process_trace_file_trace_does_not_exist():
+    """
+    GIVEN: a trace file that does not exist
+
+    WHEN: processing the trace file
+
+    THEN: an empty list should be returned
+    """
+    fake_trace_path = pathlib.Path("/path/to/some-id.trace")
+
+    with patch.object(pathlib.Path, "exists", return_value=False):
+        with pytest.raises(FileNotFoundError):
+            await process_trace_file(trace_path=fake_trace_path)
+
+
+def test_store_trace_results_invalid_type():
+    """
+    GIVEN: list of trace results with invalid type
+
+    WHEN: Trying to store them
+
+    THEN: a ValueError should be raised
+    """
+
+    with pytest.raises(ValueError):
+        store_trace_results(
+            session=MagicMock(),
+            trace_result_id=MagicMock(spec=uuid.UUID),
+            data=[1, 2, 3],
+        )
+
+
+async def test_store_trace_results_session_add():
+    """
+    GIVEN: list of trace results
+
+    WHEN: Storing them
+
+    THEN: the session should be called to add all trace results
+    AND: the session should commit the changes
+    """
+    session_mock = MagicMock(spec=Session)
+
+    store_trace_results(
+        session=session_mock,
+        trace_result_id=uuid.uuid4(),
+        data=[
+            MagicMock(spec=Sysmon),
+            MagicMock(spec=ProcessStdoutErr),
+            MagicMock(spec=CoreAnimation),
+        ],
+    )
+
+    assert session_mock.add.call_count == 3
+    assert session_mock.commit.call_count == 1
