@@ -32,9 +32,10 @@ components:
           title: Test Plan
           type: string
         xctestrun:
-          anyOf:
-          - $ref: '#/components/schemas/XctestrunPublic'
-          - type: 'null'
+          $ref: '#/components/schemas/XctestrunPublic'
+          type:
+          - object
+          - 'null'
       required:
       - scheme
       - configuration
@@ -87,9 +88,10 @@ components:
           title: Product Version
           type: string
         status:
-          anyOf:
-          - $ref: '#/components/schemas/IDeviceStatus'
-          - type: 'null'
+          $ref: '#/components/schemas/IDeviceStatus'
+          type:
+          - object
+          - 'null'
         udid:
           title: Udid
           type: string
@@ -159,29 +161,31 @@ components:
           title: Test Target Name
           type: string
         trace_path:
-          anyOf:
-          - format: path
-            type: string
-          - type: 'null'
+          format: path
           title: Trace Path
+          type:
+          - string
+          - 'null'
         trace_result:
-          anyOf:
-          - $ref: '#/components/schemas/TraceResultPublic'
-          - type: 'null'
+          $ref: '#/components/schemas/TraceResultPublic'
+          type:
+          - object
+          - 'null'
         updated_at:
           format: date-time
           title: Updated At
           type: string
         xc_test_result:
-          anyOf:
-          - $ref: '#/components/schemas/XcTestResultPublic'
-          - type: 'null'
+          $ref: '#/components/schemas/XcTestResultPublic'
+          type:
+          - object
+          - 'null'
         xcresult_path:
-          anyOf:
-          - format: path
-            type: string
-          - type: 'null'
+          format: path
           title: Xcresult Path
+          type:
+          - string
+          - 'null'
       required:
       - id
       - plan_repetition
@@ -216,18 +220,18 @@ components:
           title: Ddi Mounted
           type: boolean
         developer_mode_enabled:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Developer Mode Enabled
+          type:
+          - boolean
+          - 'null'
         paired:
           title: Paired
           type: boolean
         tunnel_connected:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Tunnel Connected
+          type:
+          - boolean
+          - 'null'
       required:
       - paired
       - developer_mode_enabled
@@ -260,11 +264,11 @@ components:
     SessionTestPlanCreate:
       properties:
         end_on_failure:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           default: false
           title: End On Failure
+          type:
+          - boolean
+          - 'null'
         metrics:
           items:
             $ref: '#/components/schemas/Metric'
@@ -278,29 +282,29 @@ components:
           title: Project Id
           type: string
         recording_start_strategy:
-          anyOf:
-          - enum:
-            - launch
-            - attach
-            type: string
-          - type: 'null'
           default: launch
+          enum:
+          - launch
+          - attach
           title: Recording Start Strategy
+          type:
+          - string
+          - 'null'
         recording_strategy:
-          anyOf:
-          - enum:
-            - per_step
-            - per_test
-            type: string
-          - type: 'null'
           default: per_test
+          enum:
+          - per_step
+          - per_test
           title: Recording Strategy
+          type:
+          - string
+          - 'null'
         reinstall_app:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           default: false
           title: Reinstall App
+          type:
+          - boolean
+          - 'null'
         repetition_strategy:
           enum:
           - entire_suite
@@ -395,35 +399,35 @@ components:
     SessionTestPlanStepCreate:
       properties:
         metrics:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/Metric'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/Metric'
           title: Metrics
+          type:
+          - array
+          - 'null'
         name:
           title: Name
           type: string
         recording_start_strategy:
-          anyOf:
-          - enum:
-            - launch
-            - attach
-            type: string
-          - type: 'null'
+          enum:
+          - launch
+          - attach
           title: Recording Start Strategy
+          type:
+          - string
+          - 'null'
         reinstall_app:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Reinstall App
+          type:
+          - boolean
+          - 'null'
         repetitions:
-          anyOf:
-          - minimum: 1.0
-            type: integer
-          - type: 'null'
           default: 1
+          minimum: 1.0
           title: Repetitions
+          type:
+          - integer
+          - 'null'
         test_cases:
           items:
             type: string
@@ -442,12 +446,12 @@ components:
           title: Id
           type: string
         metrics:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/Metric'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/Metric'
           title: Metrics
+          type:
+          - array
+          - 'null'
         name:
           title: Name
           type: string
@@ -455,25 +459,25 @@ components:
           title: Order
           type: integer
         recording_start_strategy:
-          anyOf:
-          - enum:
-            - launch
-            - attach
-            type: string
-          - type: 'null'
+          enum:
+          - launch
+          - attach
           title: Recording Start Strategy
+          type:
+          - string
+          - 'null'
         reinstall_app:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Reinstall App
+          type:
+          - boolean
+          - 'null'
         repetitions:
-          anyOf:
-          - minimum: 1.0
-            type: integer
-          - type: 'null'
           default: 1
+          minimum: 1.0
           title: Repetitions
+          type:
+          - integer
+          - 'null'
         test_cases:
           items:
             type: string
@@ -490,104 +494,104 @@ components:
     SessionTestPlanStepUpdate:
       properties:
         metrics:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/Metric'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/Metric'
           title: Metrics
+          type:
+          - array
+          - 'null'
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Name
+          type:
+          - string
+          - 'null'
         recording_start_strategy:
-          anyOf:
-          - enum:
-            - launch
-            - attach
-            type: string
-          - type: 'null'
+          enum:
+          - launch
+          - attach
           title: Recording Start Strategy
+          type:
+          - string
+          - 'null'
         reinstall_app:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Reinstall App
+          type:
+          - boolean
+          - 'null'
         repetitions:
-          anyOf:
-          - minimum: 1.0
-            type: integer
-          - type: 'null'
           default: 1
+          minimum: 1.0
           title: Repetitions
+          type:
+          - integer
+          - 'null'
         test_cases:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
+          items:
+            type: string
           title: Test Cases
+          type:
+          - array
+          - 'null'
       title: SessionTestPlanStepUpdate
       type: object
     SessionTestPlanUpdate:
       properties:
         end_on_failure:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: End On Failure
+          type:
+          - boolean
+          - 'null'
         metrics:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/Metric'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/Metric'
           title: Metrics
+          type:
+          - array
+          - 'null'
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Name
+          type:
+          - string
+          - 'null'
         recording_start_strategy:
-          anyOf:
-          - enum:
-            - launch
-            - attach
-            type: string
-          - type: 'null'
+          enum:
+          - launch
+          - attach
           title: Recording Start Strategy
+          type:
+          - string
+          - 'null'
         recording_strategy:
-          anyOf:
-          - enum:
-            - per_step
-            - per_test
-            type: string
-          - type: 'null'
+          enum:
+          - per_step
+          - per_test
           title: Recording Strategy
+          type:
+          - string
+          - 'null'
         reinstall_app:
-          anyOf:
-          - type: boolean
-          - type: 'null'
           title: Reinstall App
+          type:
+          - boolean
+          - 'null'
         repetition_strategy:
-          anyOf:
-          - enum:
-            - entire_suite
-            - per_step
-            type: string
-          - type: 'null'
+          enum:
+          - entire_suite
+          - per_step
           title: Repetition Strategy
+          type:
+          - string
+          - 'null'
         repetitions:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Repetitions
+          type:
+          - integer
+          - 'null'
         xc_test_plan_name:
-          anyOf:
-          - type: string
-          - type: 'null'
           title: Xc Test Plan Name
+          type:
+          - string
+          - 'null'
       title: SessionTestPlanUpdate
       type: object
     StartBuildRequest:
@@ -614,23 +618,23 @@ components:
     Sysmon:
       properties:
         cpu:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Cpu
+          type:
+          - number
+          - 'null'
         memory:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Memory
+          type:
+          - number
+          - 'null'
         recently_died:
           title: Recently Died
           type: boolean
         resident_size:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Resident Size
+          type:
+          - number
+          - 'null'
         timestamp:
           title: Timestamp
           type: integer
@@ -886,10 +890,10 @@ components:
     XcTestResultPublic:
       properties:
         end_time:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: End Time
+          type:
+          - number
+          - 'null'
         expected_failures:
           title: Expected Failures
           type: integer
@@ -905,10 +909,10 @@ components:
           title: Skipped Tests
           type: integer
         start_time:
-          anyOf:
-          - type: number
-          - type: 'null'
           title: Start Time
+          type:
+          - number
+          - 'null'
         test_failures:
           items:
             $ref: '#/components/schemas/TestFailure'
