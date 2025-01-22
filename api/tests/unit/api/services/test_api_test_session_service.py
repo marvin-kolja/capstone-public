@@ -233,7 +233,7 @@ def test_start_test_session():
     ],
 )
 @pytest.mark.asyncio
-async def test_start_test_session_job(exception, expected_status):
+async def test_start_test_session_job(exception, expected_status, mock_db_session):
     """
     GIVEN: a session, a test session, a device, and a core execution plan
 
@@ -244,7 +244,6 @@ async def test_start_test_session_job(exception, expected_status):
     AND: the test session should be run
     AND: the status of the test session should be set to completed or failed based on any exceptions
     """
-    mock_db_session = MagicMock()
     with patch(
         "api.services.api_test_session_service.core_test_session.Session"
     ) as mock_session, patch(
@@ -252,8 +251,6 @@ async def test_start_test_session_job(exception, expected_status):
     ) as mock_get_test_session_dir_path, patch(
         "api.services.api_test_session_service._handle_execution_state_updates_task"
     ) as mock_handle_execution_state_updates_task, patch(
-        "api.services.api_test_session_service.Session", return_value=mock_db_session
-    ), patch(
         "api.services.api_test_session_service.read_test_session"
     ) as mock_read_test_session:
         db_test_session = MagicMock()
@@ -292,8 +289,8 @@ async def test_start_test_session_job(exception, expected_status):
             ]
         )
 
-        assert mock_db_session.__enter__.return_value.commit.call_count == 2
-        assert mock_db_session.__enter__.return_value.add.call_count == 2
+        assert mock_db_session.commit.call_count == 2
+        assert mock_db_session.add.call_count == 2
 
         mock_handle_execution_state_updates_task.assert_called_once()
 

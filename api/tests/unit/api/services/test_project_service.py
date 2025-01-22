@@ -278,7 +278,9 @@ def test_validate_build_request(
     ],
 )
 @pytest.mark.asyncio
-async def test_build_project_job(random_device_id, app_path_exists_after_first_build):
+async def test_build_project_job(
+    random_device_id, app_path_exists_after_first_build, mock_db_session
+):
     """
     GIVEN: A mocked db session
     AND: A mocked AppBuilder from `core`
@@ -290,7 +292,6 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
     THEN: The app_builder.build_for_testing is called with the correct parameters
     AND: The app_builder.build is called with the correct parameters if required
     """
-    db_session_mock = MagicMock(spec=Session)
     app_builder_mock = MagicMock(spec=AppBuilder)
 
     build_mock = MagicMock(spec=Build)
@@ -314,8 +315,6 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
     ) as path_exists_mock, patch(
         "api.services.project_service.Xctestrun"
     ) as xctestrun_model_mock, patch(
-        "api.services.project_service.Session", return_value=db_session_mock
-    ), patch(
         "api.services.project_service.read_build"
     ) as read_build_mock:
         xctest_mock.parse_xctestrun.return_value = xctestrun_mock
@@ -362,12 +361,12 @@ async def test_build_project_job(random_device_id, app_path_exists_after_first_b
         )
 
         # 1 for start, 1 for adding xctestrun, 1 for adding build
-        assert db_session_mock.__enter__.return_value.add.call_count == 3
-        assert db_session_mock.__enter__.return_value.commit.call_count == 3
+        assert mock_db_session.add.call_count == 3
+        assert mock_db_session.commit.call_count == 3
 
 
 @pytest.mark.asyncio
-async def test_build_project_job_failure(random_device_id):
+async def test_build_project_job_failure(random_device_id, mock_db_session):
     """
     GIVEN: A mocked db session
     AND: A mocked AppBuilder from `core`
@@ -377,7 +376,6 @@ async def test_build_project_job_failure(random_device_id):
 
     THEN: The db build entry should have a failed status
     """
-    db_session_mock = MagicMock(spec=Session)
     app_builder_mock = MagicMock(spec=AppBuilder)
 
     build_mock = MagicMock(spec=Build)
@@ -387,9 +385,7 @@ async def test_build_project_job_failure(random_device_id):
 
     app_builder_mock.build_for_testing.side_effect = Exception("Failed to build")
 
-    with patch(
-        "api.services.project_service.Session", return_value=db_session_mock
-    ), patch("api.services.project_service.read_build") as read_build_mock:
+    with patch("api.services.project_service.read_build") as read_build_mock:
         read_build_mock.return_value = build_mock
 
         await _build_project_job(
@@ -406,8 +402,8 @@ async def test_build_project_job_failure(random_device_id):
         )
 
         # 1 for start, 1 for failure
-        assert db_session_mock.__enter__.return_value.add.call_count == 2
-        assert db_session_mock.__enter__.return_value.commit.call_count == 2
+        assert mock_db_session.add.call_count == 2
+        assert mock_db_session.commit.call_count == 2
 
 
 @pytest.mark.asyncio
