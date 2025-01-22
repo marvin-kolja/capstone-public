@@ -17,20 +17,32 @@ LOGGING_CONFIG = {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
         },
+        "file": {
+            "formatter": "default",
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": "api.log",
+        },
+        "file_access": {
+            "formatter": "default",
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": "access.log",
+        },
     },
     "loggers": {
         "": {  # root logger
             "level": ROOT_LEVEL,
-            "handlers": ["default"],
+            "handlers": ["default", "file"],
         },
         "uvicorn.error": {
             "level": "DEBUG",
-            "handlers": ["default"],
+            "handlers": ["default", "file"],
             "propagate": False,
         },
         "uvicorn.access": {
             "level": "DEBUG",
-            "handlers": ["default"],
+            "handlers": ["default", "file_access"],
             "propagate": False,
         },
     },
