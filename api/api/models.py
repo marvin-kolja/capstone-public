@@ -378,15 +378,15 @@ class TraceResult(TraceResultBase, table=True):
         foreign_key="execution_step.id", ondelete="CASCADE"
     )
 
-    sysmon: SysmonDB = Relationship(cascade_delete=True)
-    core_animation: CoreAnimationDB = Relationship(cascade_delete=True)
-    process_stdout_err: ProcessStdoutErrDB = Relationship(cascade_delete=True)
+    sysmon: list[SysmonDB] = Relationship(cascade_delete=True)
+    core_animation: list[CoreAnimationDB] = Relationship(cascade_delete=True)
+    process_stdout_err: list[ProcessStdoutErrDB] = Relationship(cascade_delete=True)
 
 
 class TraceResultPublic(TraceResultBase):
-    sysmon: Sysmon
-    core_animation: CoreAnimation
-    process_stdout_err: ProcessStdoutErr
+    sysmon: list[Sysmon]
+    core_animation: list[CoreAnimation]
+    process_stdout_err: list[ProcessStdoutErr]
 
 
 ######################################
