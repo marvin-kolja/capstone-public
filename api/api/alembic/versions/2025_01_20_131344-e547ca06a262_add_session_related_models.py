@@ -129,9 +129,9 @@ def upgrade() -> None:
         sa.Column("fps", sa.Float(), nullable=False),
         sa.Column("gpu_utilization", sa.Float(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("execution_step_id", sa.Uuid(), nullable=False),
+        sa.Column("trace_result_id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["execution_step_id"], ["trace_result.id"], ondelete="CASCADE"
+            ["trace_result_id"], ["trace_result.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -140,9 +140,9 @@ def upgrade() -> None:
         sa.Column("timestamp", sa.Integer(), nullable=False),
         sa.Column("console_text", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("execution_step_id", sa.Uuid(), nullable=False),
+        sa.Column("trace_result_id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["execution_step_id"], ["trace_result.id"], ondelete="CASCADE"
+            ["trace_result_id"], ["trace_result.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -154,9 +154,9 @@ def upgrade() -> None:
         sa.Column("resident_size", sa.Float(), nullable=True),
         sa.Column("recently_died", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("execution_step_id", sa.Uuid(), nullable=False),
+        sa.Column("trace_result_id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["execution_step_id"], ["trace_result.id"], ondelete="CASCADE"
+            ["trace_result_id"], ["trace_result.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
     )
