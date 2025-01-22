@@ -1,0 +1,1865 @@
+components:
+  schemas:
+    BuildPublic:
+      properties:
+        configuration:
+          title: Configuration
+          type: string
+        device_id:
+          title: Device Id
+          type: string
+        id:
+          format: uuid
+          title: Id
+          type: string
+        project_id:
+          format: uuid
+          title: Project Id
+          type: string
+        scheme:
+          title: Scheme
+          type: string
+        status:
+          default: pending
+          enum:
+          - pending
+          - running
+          - success
+          - failure
+          title: Status
+          type: string
+        test_plan:
+          title: Test Plan
+          type: string
+        xctestrun:
+          anyOf:
+          - $ref: '#/components/schemas/XctestrunPublic'
+          - type: 'null'
+      required:
+      - scheme
+      - configuration
+      - test_plan
+      - device_id
+      - id
+      - project_id
+      - xctestrun
+      title: BuildPublic
+      type: object
+    CoreAnimation:
+      properties:
+        fps:
+          title: Fps
+          type: number
+        gpu_utilization:
+          title: Gpu Utilization
+          type: number
+        timestamp:
+          title: Timestamp
+          type: integer
+      required:
+      - timestamp
+      - fps
+      - gpu_utilization
+      title: CoreAnimation
+      type: object
+    DeviceWithStatus:
+      properties:
+        build_version:
+          title: Build Version
+          type: string
+        connected:
+          default: false
+          title: Connected
+          type: boolean
+        device_class:
+          title: Device Class
+          type: string
+        device_name:
+          title: Device Name
+          type: string
+        id:
+          title: Id
+          type: string
+        product_type:
+          title: Product Type
+          type: string
+        product_version:
+          title: Product Version
+          type: string
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/IDeviceStatus'
+          - type: 'null'
+        udid:
+          title: Udid
+          type: string
+      required:
+      - device_class
+      - device_name
+      - build_version
+      - product_version
+      - product_type
+      - id
+      - udid
+      title: DeviceWithStatus
+      type: object
+    ExecutionStepPublic:
+      properties:
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        end_on_failure:
+          title: End On Failure
+          type: boolean
+        id:
+          format: uuid
+          title: Id
+          type: string
+        metrics:
+          items:
+            $ref: '#/components/schemas/Metric'
+          title: Metrics
+          type: array
+        plan_repetition:
+          title: Plan Repetition
+          type: integer
+        plan_step_order:
+          title: Plan Step Order
+          type: integer
+        recording_start_strategy:
+          enum:
+          - launch
+          - attach
+          title: Recording Start Strategy
+          type: string
+        reinstall_app:
+          title: Reinstall App
+          type: boolean
+        status:
+          default: not_started
+          enum:
+          - not_started
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+          type: string
+        step_repetition:
+          title: Step Repetition
+          type: integer
+        test_cases:
+          items:
+            type: string
+          minItems: 1
+          title: Test Cases
+          type: array
+        test_target_name:
+          title: Test Target Name
+          type: string
+        trace_path:
+          anyOf:
+          - format: path
+            type: string
+          - type: 'null'
+          title: Trace Path
+        trace_result:
+          anyOf:
+          - $ref: '#/components/schemas/TraceResultPublic'
+          - type: 'null'
+        updated_at:
+          format: date-time
+          title: Updated At
+          type: string
+        xc_test_result:
+          anyOf:
+          - $ref: '#/components/schemas/XcTestResultPublic'
+          - type: 'null'
+        xcresult_path:
+          anyOf:
+          - format: path
+            type: string
+          - type: 'null'
+          title: Xcresult Path
+      required:
+      - id
+      - plan_repetition
+      - plan_step_order
+      - step_repetition
+      - recording_start_strategy
+      - reinstall_app
+      - metrics
+      - test_cases
+      - end_on_failure
+      - test_target_name
+      - xcresult_path
+      - trace_path
+      - created_at
+      - updated_at
+      - xc_test_result
+      - trace_result
+      title: ExecutionStepPublic
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    IDeviceStatus:
+      properties:
+        ddi_mounted:
+          title: Ddi Mounted
+          type: boolean
+        developer_mode_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Developer Mode Enabled
+        paired:
+          title: Paired
+          type: boolean
+        tunnel_connected:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Tunnel Connected
+      required:
+      - paired
+      - developer_mode_enabled
+      - ddi_mounted
+      - tunnel_connected
+      title: IDeviceStatus
+      type: object
+    Metric:
+      description: Enum of metrics that can be collected during a test session.
+      enum:
+      - cpu
+      - memory
+      - fps
+      - gpu
+      title: Metric
+      type: string
+    ProcessStdoutErr:
+      properties:
+        console_text:
+          title: Console Text
+          type: string
+        timestamp:
+          title: Timestamp
+          type: integer
+      required:
+      - timestamp
+      - console_text
+      title: ProcessStdoutErr
+      type: object
+    SessionTestPlanCreate:
+      properties:
+        end_on_failure:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          title: End On Failure
+        metrics:
+          items:
+            $ref: '#/components/schemas/Metric'
+          title: Metrics
+          type: array
+        name:
+          title: Name
+          type: string
+        project_id:
+          format: uuid
+          title: Project Id
+          type: string
+        recording_start_strategy:
+          anyOf:
+          - enum:
+            - launch
+            - attach
+            type: string
+          - type: 'null'
+          default: launch
+          title: Recording Start Strategy
+        recording_strategy:
+          anyOf:
+          - enum:
+            - per_step
+            - per_test
+            type: string
+          - type: 'null'
+          default: per_test
+          title: Recording Strategy
+        reinstall_app:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          title: Reinstall App
+        repetition_strategy:
+          enum:
+          - entire_suite
+          - per_step
+          title: Repetition Strategy
+          type: string
+        repetitions:
+          minimum: 1.0
+          title: Repetitions
+          type: integer
+        xc_test_plan_name:
+          title: Xc Test Plan Name
+          type: string
+      required:
+      - name
+      - xc_test_plan_name
+      - repetitions
+      - repetition_strategy
+      - metrics
+      - project_id
+      title: SessionTestPlanCreate
+      type: object
+    SessionTestPlanPublic:
+      properties:
+        end_on_failure:
+          title: End On Failure
+          type: boolean
+        id:
+          format: uuid
+          title: Id
+          type: string
+        metrics:
+          items:
+            $ref: '#/components/schemas/Metric'
+          title: Metrics
+          type: array
+        name:
+          title: Name
+          type: string
+        project_id:
+          format: uuid
+          title: Project Id
+          type: string
+        recording_start_strategy:
+          enum:
+          - launch
+          - attach
+          title: Recording Start Strategy
+          type: string
+        recording_strategy:
+          enum:
+          - per_step
+          - per_test
+          title: Recording Strategy
+          type: string
+        reinstall_app:
+          title: Reinstall App
+          type: boolean
+        repetition_strategy:
+          enum:
+          - entire_suite
+          - per_step
+          title: Repetition Strategy
+          type: string
+        repetitions:
+          minimum: 1.0
+          title: Repetitions
+          type: integer
+        steps:
+          items:
+            $ref: '#/components/schemas/SessionTestPlanStepPublic'
+          title: Steps
+          type: array
+        xc_test_plan_name:
+          title: Xc Test Plan Name
+          type: string
+      required:
+      - name
+      - xc_test_plan_name
+      - end_on_failure
+      - repetitions
+      - repetition_strategy
+      - metrics
+      - recording_strategy
+      - recording_start_strategy
+      - reinstall_app
+      - id
+      - steps
+      - project_id
+      title: SessionTestPlanPublic
+      type: object
+    SessionTestPlanStepCreate:
+      properties:
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Metric'
+            type: array
+          - type: 'null'
+          title: Metrics
+        name:
+          title: Name
+          type: string
+        recording_start_strategy:
+          anyOf:
+          - enum:
+            - launch
+            - attach
+            type: string
+          - type: 'null'
+          title: Recording Start Strategy
+        reinstall_app:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reinstall App
+        repetitions:
+          anyOf:
+          - minimum: 1.0
+            type: integer
+          - type: 'null'
+          default: 1
+          title: Repetitions
+        test_cases:
+          items:
+            type: string
+          minItems: 1
+          title: Test Cases
+          type: array
+      required:
+      - name
+      - test_cases
+      title: SessionTestPlanStepCreate
+      type: object
+    SessionTestPlanStepPublic:
+      properties:
+        id:
+          format: uuid
+          title: Id
+          type: string
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Metric'
+            type: array
+          - type: 'null'
+          title: Metrics
+        name:
+          title: Name
+          type: string
+        order:
+          title: Order
+          type: integer
+        recording_start_strategy:
+          anyOf:
+          - enum:
+            - launch
+            - attach
+            type: string
+          - type: 'null'
+          title: Recording Start Strategy
+        reinstall_app:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reinstall App
+        repetitions:
+          anyOf:
+          - minimum: 1.0
+            type: integer
+          - type: 'null'
+          default: 1
+          title: Repetitions
+        test_cases:
+          items:
+            type: string
+          minItems: 1
+          title: Test Cases
+          type: array
+      required:
+      - name
+      - test_cases
+      - id
+      - order
+      title: SessionTestPlanStepPublic
+      type: object
+    SessionTestPlanStepUpdate:
+      properties:
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Metric'
+            type: array
+          - type: 'null'
+          title: Metrics
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        recording_start_strategy:
+          anyOf:
+          - enum:
+            - launch
+            - attach
+            type: string
+          - type: 'null'
+          title: Recording Start Strategy
+        reinstall_app:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reinstall App
+        repetitions:
+          anyOf:
+          - minimum: 1.0
+            type: integer
+          - type: 'null'
+          default: 1
+          title: Repetitions
+        test_cases:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Test Cases
+      title: SessionTestPlanStepUpdate
+      type: object
+    SessionTestPlanUpdate:
+      properties:
+        end_on_failure:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: End On Failure
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Metric'
+            type: array
+          - type: 'null'
+          title: Metrics
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        recording_start_strategy:
+          anyOf:
+          - enum:
+            - launch
+            - attach
+            type: string
+          - type: 'null'
+          title: Recording Start Strategy
+        recording_strategy:
+          anyOf:
+          - enum:
+            - per_step
+            - per_test
+            type: string
+          - type: 'null'
+          title: Recording Strategy
+        reinstall_app:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reinstall App
+        repetition_strategy:
+          anyOf:
+          - enum:
+            - entire_suite
+            - per_step
+            type: string
+          - type: 'null'
+          title: Repetition Strategy
+        repetitions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Repetitions
+        xc_test_plan_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Xc Test Plan Name
+      title: SessionTestPlanUpdate
+      type: object
+    StartBuildRequest:
+      properties:
+        configuration:
+          title: Configuration
+          type: string
+        device_id:
+          title: Device Id
+          type: string
+        scheme:
+          title: Scheme
+          type: string
+        test_plan:
+          title: Test Plan
+          type: string
+      required:
+      - scheme
+      - configuration
+      - test_plan
+      - device_id
+      title: StartBuildRequest
+      type: object
+    Sysmon:
+      properties:
+        cpu:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Cpu
+        memory:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Memory
+        recently_died:
+          title: Recently Died
+          type: boolean
+        resident_size:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Resident Size
+        timestamp:
+          title: Timestamp
+          type: integer
+      required:
+      - timestamp
+      - cpu
+      - memory
+      - resident_size
+      - recently_died
+      title: Sysmon
+      type: object
+    TestFailure:
+      properties:
+        failureText:
+          title: Failuretext
+          type: string
+        targetName:
+          title: Targetname
+          type: string
+        testIdentifier:
+          title: Testidentifier
+          type: integer
+        testName:
+          title: Testname
+          type: string
+      required:
+      - testName
+      - targetName
+      - failureText
+      - testIdentifier
+      title: TestFailure
+      type: object
+    TestResult:
+      enum:
+      - Passed
+      - Failed
+      - Skipped
+      - Expected Failure
+      - unknown
+      title: TestResult
+      type: string
+    TestSessionCreate:
+      properties:
+        build_id:
+          format: uuid
+          title: Build Id
+          type: string
+        plan_id:
+          format: uuid
+          title: Plan Id
+          type: string
+        xc_test_configuration_name:
+          title: Xc Test Configuration Name
+          type: string
+      required:
+      - plan_id
+      - build_id
+      - xc_test_configuration_name
+      title: TestSessionCreate
+      type: object
+    TestSessionPublic:
+      properties:
+        build_snapshot:
+          $ref: '#/components/schemas/BuildPublic'
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        device_snapshot:
+          $ref: '#/components/schemas/DeviceWithStatus'
+        execution_steps:
+          items:
+            $ref: '#/components/schemas/ExecutionStepPublic'
+          title: Execution Steps
+          type: array
+        id:
+          format: uuid
+          title: Id
+          type: string
+        plan_snapshot:
+          $ref: '#/components/schemas/SessionTestPlanPublic'
+        status:
+          default: not_started
+          enum:
+          - not_started
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+          type: string
+        updated_at:
+          format: date-time
+          title: Updated At
+          type: string
+        xc_test_configuration_name:
+          title: Xc Test Configuration Name
+          type: string
+      required:
+      - xc_test_configuration_name
+      - created_at
+      - updated_at
+      - id
+      - device_snapshot
+      - plan_snapshot
+      - build_snapshot
+      - execution_steps
+      title: TestSessionPublic
+      type: object
+    TraceResultPublic:
+      properties:
+        core_animation:
+          items:
+            $ref: '#/components/schemas/CoreAnimation'
+          title: Core Animation
+          type: array
+        export_status:
+          default: not_started
+          enum:
+          - not_started
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Export Status
+          type: string
+        process_stdout_err:
+          items:
+            $ref: '#/components/schemas/ProcessStdoutErr'
+          title: Process Stdout Err
+          type: array
+        sysmon:
+          items:
+            $ref: '#/components/schemas/Sysmon'
+          title: Sysmon
+          type: array
+      required:
+      - sysmon
+      - core_animation
+      - process_stdout_err
+      title: TraceResultPublic
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+    XcProjectConfigurationPublic:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: XcProjectConfigurationPublic
+      type: object
+    XcProjectCreate:
+      properties:
+        path:
+          format: path
+          title: Path
+          type: string
+      required:
+      - path
+      title: XcProjectCreate
+      type: object
+    XcProjectPublic:
+      properties:
+        configurations:
+          items:
+            $ref: '#/components/schemas/XcProjectConfigurationPublic'
+          title: Configurations
+          type: array
+        id:
+          format: uuid
+          title: Id
+          type: string
+        name:
+          title: Name
+          type: string
+        path:
+          format: path
+          title: Path
+          type: string
+        schemes:
+          items:
+            $ref: '#/components/schemas/XcProjectSchemePublic'
+          title: Schemes
+          type: array
+        targets:
+          items:
+            $ref: '#/components/schemas/XcProjectTargetPublic'
+          title: Targets
+          type: array
+      required:
+      - path
+      - id
+      - name
+      - configurations
+      - schemes
+      - targets
+      title: XcProjectPublic
+      type: object
+    XcProjectSchemePublic:
+      properties:
+        name:
+          title: Name
+          type: string
+        xc_test_plans:
+          items:
+            $ref: '#/components/schemas/XcProjectTestPlanPublic'
+          title: Xc Test Plans
+          type: array
+      required:
+      - name
+      - xc_test_plans
+      title: XcProjectSchemePublic
+      type: object
+    XcProjectTargetPublic:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: XcProjectTargetPublic
+      type: object
+    XcProjectTestPlanPublic:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: XcProjectTestPlanPublic
+      type: object
+    XcTestResultPublic:
+      properties:
+        end_time:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: End Time
+        expected_failures:
+          title: Expected Failures
+          type: integer
+        failed_tests:
+          title: Failed Tests
+          type: integer
+        passed_tests:
+          title: Passed Tests
+          type: integer
+        result:
+          $ref: '#/components/schemas/TestResult'
+        skipped_tests:
+          title: Skipped Tests
+          type: integer
+        start_time:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Start Time
+        test_failures:
+          items:
+            $ref: '#/components/schemas/TestFailure'
+          title: Test Failures
+          type: array
+        total_test_count:
+          title: Total Test Count
+          type: integer
+      required:
+      - start_time
+      - end_time
+      - result
+      - total_test_count
+      - passed_tests
+      - failed_tests
+      - skipped_tests
+      - expected_failures
+      - test_failures
+      title: XcTestResultPublic
+      type: object
+    XctestrunPublic:
+      properties:
+        id:
+          format: uuid
+          title: Id
+          type: string
+        path:
+          format: path
+          title: Path
+          type: string
+        test_configurations:
+          items:
+            type: string
+          title: Test Configurations
+          type: array
+      required:
+      - path
+      - test_configurations
+      - id
+      title: XctestrunPublic
+      type: object
+info:
+  title: FastAPI
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /devices/:
+    get:
+      description: List all devices.
+      operationId: devices-list_devices
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DeviceWithStatus'
+                title: Response Devices-List Devices
+                type: array
+          description: Successful Response
+      summary: List Devices
+      tags:
+      - devices
+  /devices/{device_id}:
+    get:
+      description: Get the details of a device.
+      operationId: devices-read_device
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceWithStatus'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Device
+      tags:
+      - devices
+  /devices/{device_id}/ddi/mount:
+    post:
+      description: Mount a device DDI (Developer Disk Image).
+      operationId: devices-mount_ddi
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Mount Ddi
+      tags:
+      - devices
+  /devices/{device_id}/ddi/unmount:
+    post:
+      description: Unmount a device DDI (Developer Disk Image).
+      operationId: devices-unmount_ddi
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Unmount Ddi
+      tags:
+      - devices
+  /devices/{device_id}/developer-mode/enable:
+    post:
+      description: Enable developer mode on a device.
+      operationId: devices-enable_developer_mode
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Enable Developer Mode
+      tags:
+      - devices
+  /devices/{device_id}/pair:
+    post:
+      description: Start pairing process for a device.
+      operationId: devices-pair_device
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Pair Device
+      tags:
+      - devices
+  /devices/{device_id}/tunnel/connect:
+    post:
+      description: Establish a tunnel connection to a device.
+      operationId: devices-connect_tunnel
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Connect Tunnel
+      tags:
+      - devices
+  /devices/{device_id}/unpair:
+    post:
+      description: Unpair a device.
+      operationId: devices-unpair_device
+      parameters:
+      - in: path
+        name: device_id
+        required: true
+        schema:
+          title: Device Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Unpair Device
+      tags:
+      - devices
+  /projects/:
+    get:
+      description: List all projects.
+      operationId: projects-list_projects
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/XcProjectPublic'
+                title: Response Projects-List Projects
+                type: array
+          description: Successful Response
+      summary: List Projects
+      tags:
+      - projects
+    post:
+      description: Add a new project.
+      operationId: projects-add_project
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XcProjectCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XcProjectPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add Project
+      tags:
+      - projects
+  /projects/{project_id}:
+    get:
+      description: Get the details of a project.
+      operationId: projects-read_project
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XcProjectPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Project
+      tags:
+      - projects
+  /projects/{project_id}/builds:
+    get:
+      description: List builds that belong to a project.
+      operationId: projects-list_builds
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BuildPublic'
+                title: Response Projects-List Builds
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Builds
+      tags:
+      - projects
+    post:
+      description: Start a new build for a project.
+      operationId: projects-start_build
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartBuildRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Start Build
+      tags:
+      - projects
+  /projects/{project_id}/builds/{build_id}:
+    get:
+      description: Get the details of a build.
+      operationId: projects-read_build
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      - in: path
+        name: build_id
+        required: true
+        schema:
+          format: uuid
+          title: Build Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Build
+      tags:
+      - projects
+  /projects/{project_id}/builds/{build_id}/available-tests:
+    get:
+      description: 'This will list the available tests for a builds'' xctestrun file.
+        Provided the build is finished, the xctestrun file
+
+        is available and the device the build war run on is connected. If any of these
+        conditions are not met, an error will
+
+        be raised.'
+      operationId: projects-list_available_tests
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      - in: path
+        name: build_id
+        required: true
+        schema:
+          format: uuid
+          title: Build Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                title: Response Projects-List Available Tests
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Available Tests
+      tags:
+      - projects
+  /projects/{project_id}/builds/{build_id}/update-stream:
+    get:
+      description: Stream build status updates.
+      operationId: projects-stream_build_updates
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      - in: path
+        name: build_id
+        required: true
+        schema:
+          format: uuid
+          title: Build Id
+          type: string
+      responses:
+        '200':
+          content:
+            text/event-stream:
+              schema:
+                type: string
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Stream Build Updates
+      tags:
+      - projects
+  /projects/{project_id}/refresh:
+    post:
+      description: Refreshes the data of a project.
+      operationId: projects-refresh_project
+      parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          format: uuid
+          title: Project Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XcProjectPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Refresh Project
+      tags:
+      - projects
+  /test-plans/:
+    get:
+      description: List user created test plans.
+      operationId: testPlans-list_test_plans
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SessionTestPlanPublic'
+                title: Response Testplans-List Test Plans
+                type: array
+          description: Successful Response
+      summary: List Test Plans
+      tags:
+      - testPlans
+    post:
+      description: Create a new test plan.
+      operationId: testPlans-create_test_plan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionTestPlanCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTestPlanPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Test Plan
+      tags:
+      - testPlans
+  /test-plans/{test_plan_id}:
+    delete:
+      description: Delete a test plan.
+      operationId: testPlans-delete_test_plan
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Test Plan
+      tags:
+      - testPlans
+    get:
+      description: Get a test plan.
+      operationId: testPlans-read_test_plan
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTestPlanPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Test Plan
+      tags:
+      - testPlans
+    patch:
+      description: Update a test plan.
+      operationId: testPlans-update_test_plan
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionTestPlanUpdate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTestPlanPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Test Plan
+      tags:
+      - testPlans
+  /test-plans/{test_plan_id}/steps:
+    post:
+      description: Create a new step in a test plan.
+      operationId: testPlans-create_test_plan_step
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionTestPlanStepCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTestPlanStepPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Test Plan Step
+      tags:
+      - testPlans
+  /test-plans/{test_plan_id}/steps/reorder:
+    post:
+      description: Reorder steps in a test plan.
+      operationId: testPlans-reorder_test_plan_steps
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                format: uuid
+                type: string
+              title: Step Ids
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reorder Test Plan Steps
+      tags:
+      - testPlans
+  /test-plans/{test_plan_id}/steps/{step_id}:
+    delete:
+      description: Delete a step in a test plan.
+      operationId: testPlans-delete_test_plan_step
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      - in: path
+        name: step_id
+        required: true
+        schema:
+          format: uuid
+          title: Step Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Test Plan Step
+      tags:
+      - testPlans
+    patch:
+      description: Update a step in a test plan.
+      operationId: testPlans-update_test_plan_step
+      parameters:
+      - in: path
+        name: test_plan_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Plan Id
+          type: string
+      - in: path
+        name: step_id
+        required: true
+        schema:
+          format: uuid
+          title: Step Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionTestPlanStepUpdate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTestPlanStepPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Test Plan Step
+      tags:
+      - testPlans
+  /test-sessions/:
+    get:
+      description: List all test sessions.
+      operationId: testSession-list_test_sessions
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TestSessionPublic'
+                title: Response Testsession-List Test Sessions
+                type: array
+          description: Successful Response
+      summary: List Test Sessions
+      tags:
+      - testSession
+    post:
+      description: Create and start new test session.
+      operationId: testSession-start_test_session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestSessionCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSessionPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Start Test Session
+      tags:
+      - testSession
+  /test-sessions/{test_session_id}:
+    get:
+      description: Get the details of a test session.
+      operationId: testSession-read_test_session
+      parameters:
+      - in: path
+        name: test_session_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSessionPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Test Session
+      tags:
+      - testSession
+  /test-sessions/{test_session_id}/cancel:
+    post:
+      description: Cancels a running test session.
+      operationId: testSession-cancel_test_session
+      parameters:
+      - in: path
+        name: test_session_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Cancel Test Session
+      tags:
+      - testSession
+  /test-sessions/{test_session_id}/execution-step-stream:
+    get:
+      description: Stream updates of the execution steps of a test session. Can return
+        any execution step when it is updated.
+      operationId: testSession-stream_execution_step_updates
+      parameters:
+      - in: path
+        name: test_session_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Stream Execution Step Updates
+      tags:
+      - testSession
+  /test-sessions/{test_session_id}/process-trace-results:
+    post:
+      description: Start processing the trace results of a test session.
+      operationId: testSession-export_test_session_results
+      parameters:
+      - in: path
+        name: test_session_id
+        required: true
+        schema:
+          format: uuid
+          title: Test Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Export Test Session Results
+      tags:
+      - testSession
+servers:
+- description: The local running server
+  url: http://127.0.0.1
+- description: The development server
+  url: http://127.0.0.1:8000
+
