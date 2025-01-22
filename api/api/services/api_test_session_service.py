@@ -430,7 +430,7 @@ def generate_session_id() -> uuid.UUID:
     return uuid.uuid4()
 
 
-async def session_is_done(*, session: Session, test_session_id: uuid.UUID) -> bool:
+def session_is_done(*, session: Session, test_session_id: uuid.UUID) -> bool:
     """
     Check if the test session is done (completed, failed or cancelled).
 
@@ -460,9 +460,7 @@ async def listen_to_execution_step_updates(
 
     async for update in listener.listen():
         with Session(engine) as session:
-            is_done = await session_is_done(
-                session=session, test_session_id=test_session_id
-            )
+            is_done = session_is_done(session=session, test_session_id=test_session_id)
 
             if update is None:
                 if await request.is_disconnected():
