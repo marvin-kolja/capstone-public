@@ -30,7 +30,22 @@ async def lifespan(app: FastAPI):
         async_job_runner.shutdown_scheduler()
 
 
-app = FastAPI(generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan)
+app = FastAPI(
+    generate_unique_id_function=custom_generate_unique_id,
+    lifespan=lifespan,
+    servers=[
+        {
+            "url": "http://127.0.0.1",
+            # The server is only accessible locally. The port is excluded on purpose as it is not known at this point.
+            # As we are running this server only on localhost, the application should find a free port to bind to.
+            # Clients that use the OpenAPI specification will have to provide the port themselves.
+            "description": "The local running server",
+        },
+    ],
+    root_path="/",
+    root_path_in_servers=False,
+)
+
 app.include_router(api_router)
 
 if __name__ == "__main__":
@@ -38,6 +53,7 @@ if __name__ == "__main__":
         "api.main:app",
         host="127.0.0.1",
         port=8000,
+        # TODO: Find and use free port in production. We could also do this from outside and pass it as a parameter.
         reload=settings.ENVIRONMENT == "local",
         log_config=LOGGING_CONFIG,
     )
