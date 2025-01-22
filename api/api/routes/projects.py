@@ -34,7 +34,7 @@ async def add_project(
     """
     try:
         xc_project_interface = project_service.get_core_xc_project(path=project.path)
-    except ValueError as e:
+    except (ValueError, FileNotFoundError) as e:
         raise HTTPException(status_code=400, detail="Invalid project path") from e
 
     try:

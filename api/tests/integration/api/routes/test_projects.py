@@ -133,8 +133,12 @@ async def test_add_project(db, path_to_example_project, client):
     assert_real_project_values(public_project, path_to_example_project)
 
 
+@pytest.mark.parametrize(
+    "invalid_path",
+    [str(pathlib.Path(__file__)), "/tmp/this/should/not/exist.xcodeproj"],
+)
 @pytest.mark.asyncio
-async def test_add_project_invalid_path(client):
+async def test_add_project_invalid_path(client, invalid_path):
     """
     GIVEN: An invalid project path
 
@@ -144,7 +148,7 @@ async def test_add_project_invalid_path(client):
     """
     r = client.post(
         "/projects/",
-        json={"path": str(pathlib.Path(__file__))},
+        json={"path": invalid_path},
     )
     assert r.status_code == 400
 
