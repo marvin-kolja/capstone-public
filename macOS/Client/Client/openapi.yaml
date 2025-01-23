@@ -205,13 +205,42 @@ components:
       - trace_result
       title: ExecutionStepPublic
       type: object
-    HTTPValidationError:
+    HTTPExceptionContent:
+      description: Common response body for HTTP exception JSON responses.
       properties:
+        code:
+          title: Status Code
+          type: integer
+        detail:
+          items: {}
+          title: Exception Detail
+          type:
+          - array
+          - object
+          - string
+          - 'null'
+      required:
+      - code
+      title: HTTPExceptionContent
+      type: object
+    HTTPValidationError:
+      description: 'Validation error response body for HTTP 422 responses.
+
+
+        Mirrors the FastAPI HTTPValidationError model, but is required as error handling
+        is done in a custom way.'
+      properties:
+        code:
+          title: Status Code
+          type: integer
         detail:
           items:
             $ref: '#/components/schemas/ValidationError'
           title: Detail
           type: array
+      required:
+      - code
+      - detail
       title: HTTPValidationError
       type: object
     IDeviceStatus:
@@ -778,6 +807,11 @@ components:
       title: TraceResultPublic
       type: object
     ValidationError:
+      description: 'Validation error detail for HTTP 422 responses.
+
+
+        Mirrors the FastAPI ValidationError model, but is required as error handling
+        is done in a custom way.'
       properties:
         loc:
           items:
@@ -973,6 +1007,12 @@ paths:
                 title: Response Devices-List Devices
                 type: array
           description: Successful Response
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Devices
       tags:
       - devices
@@ -994,12 +1034,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeviceWithStatus'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Read Device
       tags:
       - devices
@@ -1020,12 +1072,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Mount Ddi
       tags:
       - devices
@@ -1046,12 +1116,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Unmount Ddi
       tags:
       - devices
@@ -1072,12 +1160,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Enable Developer Mode
       tags:
       - devices
@@ -1098,12 +1204,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Pair Device
       tags:
       - devices
@@ -1124,12 +1248,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Connect Tunnel
       tags:
       - devices
@@ -1150,12 +1292,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Unpair Device
       tags:
       - devices
@@ -1173,6 +1333,12 @@ paths:
                 title: Response Projects-List Projects
                 type: array
           description: Successful Response
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Projects
       tags:
       - projects
@@ -1192,12 +1358,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/XcProjectPublic'
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Add Project
       tags:
       - projects
@@ -1220,12 +1398,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/XcProjectPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Read Project
       tags:
       - projects
@@ -1256,7 +1446,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Builds
       tags:
       - projects
@@ -1284,12 +1480,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuildPublic'
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Start Build
       tags:
       - projects
@@ -1319,12 +1533,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuildPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Read Build
       tags:
       - projects
@@ -1363,12 +1589,30 @@ paths:
                 title: Response Projects-List Available Tests
                 type: array
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Available Tests
       tags:
       - projects
@@ -1398,12 +1642,24 @@ paths:
               schema:
                 type: string
           description: Successful Response
+        '404':
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
-            application/json:
+            text/event-stream:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Stream Build Updates
       tags:
       - projects
@@ -1426,12 +1682,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/XcProjectPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Refresh Project
       tags:
       - projects
@@ -1449,6 +1717,12 @@ paths:
                 title: Response Testplans-List Test Plans
                 type: array
           description: Successful Response
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Test Plans
       tags:
       - testPlans
@@ -1468,12 +1742,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionTestPlanPublic'
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Create Test Plan
       tags:
       - testPlans
@@ -1495,12 +1781,24 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Delete Test Plan
       tags:
       - testPlans
@@ -1522,12 +1820,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionTestPlanPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Read Test Plan
       tags:
       - testPlans
@@ -1555,12 +1865,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionTestPlanPublic'
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Update Test Plan
       tags:
       - testPlans
@@ -1589,12 +1917,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionTestPlanStepPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Create Test Plan Step
       tags:
       - testPlans
@@ -1626,12 +1966,24 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Reorder Test Plan Steps
       tags:
       - testPlans
@@ -1660,12 +2012,24 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Delete Test Plan Step
       tags:
       - testPlans
@@ -1700,12 +2064,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionTestPlanStepPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Update Test Plan Step
       tags:
       - testPlans
@@ -1723,6 +2099,12 @@ paths:
                 title: Response Testsession-List Test Sessions
                 type: array
           description: Successful Response
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: List Test Sessions
       tags:
       - testSession
@@ -1742,12 +2124,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestSessionPublic'
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Start Test Session
       tags:
       - testSession
@@ -1770,12 +2164,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestSessionPublic'
           description: Successful Response
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Read Test Session
       tags:
       - testSession
@@ -1797,12 +2203,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Cancel Test Session
       tags:
       - testSession
@@ -1825,12 +2249,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Stream Execution Step Updates
       tags:
       - testSession
@@ -1852,12 +2294,30 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Not Found
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
+          description: Unprocessable Content
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPExceptionContent'
+          description: Internal Server Error
       summary: Export Test Session Results
       tags:
       - testSession
