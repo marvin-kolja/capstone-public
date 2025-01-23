@@ -212,11 +212,8 @@ components:
           title: Status Code
           type: integer
         detail:
-          items: {}
           title: Exception Detail
           type:
-          - array
-          - object
           - string
           - 'null'
       required:

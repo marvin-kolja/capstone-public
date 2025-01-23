@@ -31,7 +31,7 @@ class HTTPExceptionContent(BaseModel):
     """
 
     code: int = Field(..., title="Status Code")
-    detail: list | dict | str | None = Field(None, title="Exception Detail")
+    detail: str | None = Field(None, title="Exception Detail")
 
 
 class ValidationError(BaseModel):
