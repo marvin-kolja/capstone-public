@@ -5,7 +5,10 @@ from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import Session
 from starlette.responses import StreamingResponse
 
-from api.custom_responses import SSEStreamingResponse
+from api.custom_responses import (
+    SSEStreamingResponse,
+    build_common_http_exception_responses,
+)
 from api.depends import SessionDep, AsyncJobRunnerDep, DeviceManagerDep
 from api.models import (
     TestSessionCreate,
@@ -24,7 +27,10 @@ from api.services import (
 router = APIRouter(prefix="/test-sessions", tags=["testSession"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    responses=build_common_http_exception_responses([500]),
+)
 async def list_test_sessions(*, session: SessionDep) -> list[TestSessionPublic]:
     """
     List all test sessions.
@@ -32,7 +38,10 @@ async def list_test_sessions(*, session: SessionDep) -> list[TestSessionPublic]:
     return api_test_session_service.list_test_sessions(session=session)
 
 
-@router.post("/")
+@router.post(
+    "/",
+    responses=build_common_http_exception_responses([400, 422, 500]),
+)
 async def start_test_session(
     *,
     session: SessionDep,
@@ -82,7 +91,10 @@ async def start_test_session(
     return db_test_session
 
 
-@router.get("/{test_session_id}")
+@router.get(
+    "/{test_session_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def read_test_session(
     *, session: SessionDep, test_session_id: uuid.UUID
 ) -> TestSessionPublic:
@@ -98,7 +110,10 @@ async def read_test_session(
     return db_test_session
 
 
-@router.post("/{test_session_id}/cancel")
+@router.post(
+    "/{test_session_id}/cancel",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def cancel_test_session(
     *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
 ):
@@ -119,7 +134,10 @@ async def cancel_test_session(
     job_runner.cancel_job(job_id=job_id)
 
 
-@router.get("/{test_session_id}/execution-step-stream")
+@router.get(
+    "/{test_session_id}/execution-step-stream",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def stream_execution_step_updates(
     *, session: SessionDep, test_session_id: uuid.UUID, request: Request
 ) -> SSEStreamingResponse:
@@ -147,7 +165,10 @@ async def stream_execution_step_updates(
     )
 
 
-@router.post("/{test_session_id}/process-trace-results")
+@router.post(
+    "/{test_session_id}/process-trace-results",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def export_test_session_results(
     *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
 ):

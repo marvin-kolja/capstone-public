@@ -4,7 +4,10 @@ from core.xc.app_builder import AppBuilder
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from api.custom_responses import SSEStreamingResponse
+from api.custom_responses import (
+    SSEStreamingResponse,
+    build_common_http_exception_responses,
+)
 from api.depends import SessionDep, DeviceManagerDep, AsyncJobRunnerDep
 from api.services import project_service, device_service
 from api.models import (
@@ -17,7 +20,10 @@ from api.models import (
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    responses=build_common_http_exception_responses([500]),
+)
 async def list_projects(*, session: SessionDep) -> list[XcProjectPublic]:
     """
     List all projects.
@@ -25,7 +31,10 @@ async def list_projects(*, session: SessionDep) -> list[XcProjectPublic]:
     return project_service.list_projects(session=session)
 
 
-@router.post("/")
+@router.post(
+    "/",
+    responses=build_common_http_exception_responses([400, 422, 500]),
+)
 async def add_project(
     *, session: SessionDep, project: XcProjectCreate
 ) -> XcProjectPublic:
@@ -45,7 +54,10 @@ async def add_project(
         raise HTTPException(status_code=500, detail="Failed to add project") from e
 
 
-@router.get("/{project_id}")
+@router.get(
+    "/{project_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def read_project(
     *, session: SessionDep, project_id: uuid.UUID
 ) -> XcProjectPublic:
@@ -58,7 +70,10 @@ async def read_project(
     return project
 
 
-@router.post("/{project_id}/refresh")
+@router.post(
+    "/{project_id}/refresh",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def refresh_project(
     *, session: SessionDep, project_id: uuid.UUID
 ) -> XcProjectPublic:
@@ -83,7 +98,10 @@ async def refresh_project(
     )
 
 
-@router.get("/{project_id}/builds")
+@router.get(
+    "/{project_id}/builds",
+    responses=build_common_http_exception_responses([422, 500]),
+)
 async def list_builds(
     *, session: SessionDep, project_id: uuid.UUID
 ) -> list[BuildPublic]:
@@ -93,7 +111,10 @@ async def list_builds(
     return project_service.list_builds(session=session, project_id=project_id)
 
 
-@router.post("/{project_id}/builds")
+@router.post(
+    "/{project_id}/builds",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def start_build(
     *,
     session: SessionDep,
@@ -153,7 +174,10 @@ async def start_build(
     return db_build
 
 
-@router.get("/{project_id}/builds/{build_id}")
+@router.get(
+    "/{project_id}/builds/{build_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def read_build(
     *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID
 ) -> BuildPublic:
@@ -171,6 +195,7 @@ async def read_build(
 @router.get(
     "/{project_id}/builds/{build_id}/update-stream",
     response_class=SSEStreamingResponse,
+    responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def stream_build_updates(
     *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID, request: Request
@@ -196,7 +221,10 @@ async def stream_build_updates(
     )
 
 
-@router.get("/{project_id}/builds/{build_id}/available-tests")
+@router.get(
+    "/{project_id}/builds/{build_id}/available-tests",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def list_available_tests(
     *,
     session: SessionDep,

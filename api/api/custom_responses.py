@@ -32,3 +32,40 @@ class HTTPExceptionContent(BaseModel):
 
     code: int = Field(..., title="Status Code")
     detail: list | dict | str | None = Field(None, title="Exception Detail")
+
+
+class ValidationError(BaseModel):
+    """
+    Validation error detail for HTTP 422 responses.
+
+    Mirrors the FastAPI ValidationError model, but is required as error handling is done in a custom way.
+    """
+
+    loc: list[str | int] = Field(..., title="Location")
+    msg: str = Field(..., title="Message")
+    type: str = Field(..., title="Error Type")
+
+
+class HTTPValidationError(HTTPExceptionContent):
+    """
+    Validation error response body for HTTP 422 responses.
+
+    Mirrors the FastAPI HTTPValidationError model, but is required as error handling is done in a custom way.
+    """
+
+    detail: list[ValidationError]
+
+
+def build_common_http_exception_responses(status_codes: list[int]) -> dict[int, dict]:
+    """
+    Build common HTTP exception responses for a list of status codes to be used in FastAPI route definitions.
+
+    :param status_codes: List of status codes to build responses for.
+    :return: Dictionary with status codes as keys and HTTPExceptionBody as values.
+    """
+    responses = {
+        status_code: {"model": HTTPExceptionContent} for status_code in status_codes
+    }
+    if 422 in status_codes:
+        responses[422]["model"] = HTTPValidationError
+    return responses

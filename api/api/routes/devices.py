@@ -1,6 +1,7 @@
 from core.device.i_device_manager import IDeviceManager
 from fastapi import APIRouter, HTTPException
 
+from api.custom_responses import build_common_http_exception_responses
 from api.models import DeviceWithStatus
 from api.depends import SessionDep, DeviceManagerDep
 from api.services import device_service
@@ -9,9 +10,14 @@ from core.exceptions import i_device as core_device_exceptions
 router = APIRouter(prefix="/devices", tags=["devices"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    responses=build_common_http_exception_responses([500]),
+)
 async def list_devices(
-    *, db_session: SessionDep, device_manager: DeviceManagerDep
+    *,
+    db_session: SessionDep,
+    device_manager: DeviceManagerDep,
 ) -> list[DeviceWithStatus]:
     """
     List all devices.
@@ -21,7 +27,10 @@ async def list_devices(
     )
 
 
-@router.get("/{device_id}")
+@router.get(
+    "/{device_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def read_device(
     *, device_id: str, db_session: SessionDep, device_manager: DeviceManagerDep
 ) -> DeviceWithStatus:
@@ -36,7 +45,10 @@ async def read_device(
     return device
 
 
-@router.post("/{device_id}/pair")
+@router.post(
+    "/{device_id}/pair",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def pair_device(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Start pairing process for a device.
@@ -49,7 +61,10 @@ async def pair_device(*, device_id: str, device_manager: DeviceManagerDep):
         _handle_core_device_exceptions(e)
 
 
-@router.post("/{device_id}/unpair")
+@router.post(
+    "/{device_id}/unpair",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def unpair_device(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Unpair a device.
@@ -62,7 +77,10 @@ async def unpair_device(*, device_id: str, device_manager: DeviceManagerDep):
         _handle_core_device_exceptions(e)
 
 
-@router.post("/{device_id}/ddi/mount")
+@router.post(
+    "/{device_id}/ddi/mount",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def mount_ddi(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Mount a device DDI (Developer Disk Image).
@@ -76,7 +94,10 @@ async def mount_ddi(*, device_id: str, device_manager: DeviceManagerDep):
         _handle_core_device_exceptions(e)
 
 
-@router.post("/{device_id}/ddi/unmount")
+@router.post(
+    "/{device_id}/ddi/unmount",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def unmount_ddi(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Unmount a device DDI (Developer Disk Image).
@@ -89,7 +110,10 @@ async def unmount_ddi(*, device_id: str, device_manager: DeviceManagerDep):
         _handle_core_device_exceptions(e)
 
 
-@router.post("/{device_id}/developer-mode/enable")
+@router.post(
+    "/{device_id}/developer-mode/enable",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def enable_developer_mode(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Enable developer mode on a device.
@@ -102,7 +126,10 @@ async def enable_developer_mode(*, device_id: str, device_manager: DeviceManager
         _handle_core_device_exceptions(e)
 
 
-@router.post("/{device_id}/tunnel/connect")
+@router.post(
+    "/{device_id}/tunnel/connect",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def connect_tunnel(*, device_id: str, device_manager: DeviceManagerDep):
     """
     Establish a tunnel connection to a device.

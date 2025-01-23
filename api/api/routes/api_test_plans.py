@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session
 
+from api.custom_responses import build_common_http_exception_responses
 from api.models import (
     SessionTestPlanCreate,
     SessionTestPlanPublic,
@@ -19,7 +20,7 @@ from api.services import api_test_plan_service, project_service
 router = APIRouter(prefix="/test-plans", tags=["testPlans"])
 
 
-@router.get("/")
+@router.get("/", responses=build_common_http_exception_responses([500]))
 async def list_test_plans(*, session: SessionDep) -> list[SessionTestPlanPublic]:
     """
     List user created test plans.
@@ -27,7 +28,7 @@ async def list_test_plans(*, session: SessionDep) -> list[SessionTestPlanPublic]
     return api_test_plan_service.list_test_plans(session=session)
 
 
-@router.post("/")
+@router.post("/", responses=build_common_http_exception_responses([400, 422, 500]))
 async def create_test_plan(
     *, session: SessionDep, test_plan: SessionTestPlanCreate
 ) -> SessionTestPlanPublic:
@@ -50,7 +51,9 @@ async def create_test_plan(
     return api_test_plan_service.create_test_plan(session=session, plan=test_plan)
 
 
-@router.get("/{test_plan_id}")
+@router.get(
+    "/{test_plan_id}", responses=build_common_http_exception_responses([404, 422, 500])
+)
 async def read_test_plan(
     *, session: SessionDep, test_plan_id: uuid.UUID
 ) -> SessionTestPlanPublic:
@@ -60,7 +63,10 @@ async def read_test_plan(
     return _get_test_plan_or_raise(session=session, test_plan_id=test_plan_id)
 
 
-@router.patch("/{test_plan_id}")
+@router.patch(
+    "/{test_plan_id}",
+    responses=build_common_http_exception_responses([400, 404, 422, 500]),
+)
 async def update_test_plan(
     *, session: SessionDep, test_plan_id: uuid.UUID, plan: SessionTestPlanUpdate
 ) -> SessionTestPlanPublic:
@@ -88,7 +94,9 @@ async def update_test_plan(
     )
 
 
-@router.delete("/{test_plan_id}")
+@router.delete(
+    "/{test_plan_id}", responses=build_common_http_exception_responses([404, 422, 500])
+)
 async def delete_test_plan(*, session: SessionDep, test_plan_id: uuid.UUID) -> None:
     """
     Delete a test plan.
@@ -98,7 +106,10 @@ async def delete_test_plan(*, session: SessionDep, test_plan_id: uuid.UUID) -> N
     return api_test_plan_service.delete_test_plan(session=session, db_plan=db_plan)
 
 
-@router.post("/{test_plan_id}/steps")
+@router.post(
+    "/{test_plan_id}/steps",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def create_test_plan_step(
     *, session: SessionDep, test_plan_id: uuid.UUID, step: SessionTestPlanStepCreate
 ) -> SessionTestPlanStepPublic:
@@ -112,7 +123,10 @@ async def create_test_plan_step(
     )
 
 
-@router.patch("/{test_plan_id}/steps/{step_id}")
+@router.patch(
+    "/{test_plan_id}/steps/{step_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def update_test_plan_step(
     *,
     session: SessionDep,
@@ -132,7 +146,10 @@ async def update_test_plan_step(
     )
 
 
-@router.delete("/{test_plan_id}/steps/{step_id}")
+@router.delete(
+    "/{test_plan_id}/steps/{step_id}",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def delete_test_plan_step(
     *, session: SessionDep, test_plan_id: uuid.UUID, step_id: uuid.UUID
 ) -> None:
@@ -146,7 +163,10 @@ async def delete_test_plan_step(
     return api_test_plan_service.delete_test_plan_step(session=session, db_step=db_step)
 
 
-@router.post("/{test_plan_id}/steps/reorder")
+@router.post(
+    "/{test_plan_id}/steps/reorder",
+    responses=build_common_http_exception_responses([404, 422, 500]),
+)
 async def reorder_test_plan_steps(
     *, session: SessionDep, test_plan_id: uuid.UUID, step_ids: list[uuid.UUID]
 ) -> None:
