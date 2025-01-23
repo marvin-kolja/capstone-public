@@ -366,12 +366,13 @@ def test_start_build_invalid_request_data(client, new_db_project, random_device_
 
     assert r.status_code == 422
     assert r.json() == {
+        "code": 422,
         "detail": [
             {
                 "loc": ["configuration"],
                 "msg": "Invalid configuration",
             }
-        ]
+        ],
     }
 
 
@@ -399,7 +400,7 @@ def test_start_build_project_path_invalid(db, client, new_db_project):
     )
 
     assert r.status_code == 400
-    assert r.json() == {"detail": "Invalid project path"}
+    assert r.json() == {"code": 400, "detail": "Invalid project path"}
 
 
 def test_start_build_invalid_device(client, new_db_project):
@@ -421,7 +422,7 @@ def test_start_build_invalid_device(client, new_db_project):
     )
 
     assert r.status_code == 404
-    assert r.json() == {"detail": "Device not found"}
+    assert r.json() == {"code": 404, "detail": "Device not found"}
 
 
 def test_start_build_existing_build(db, client, new_db_project, real_device):

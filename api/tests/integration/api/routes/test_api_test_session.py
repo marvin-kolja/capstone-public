@@ -65,4 +65,4 @@ def test_read_test_session_not_found(client, new_db_fake_test_session):
     r = client.get("/test-sessions/00000000-0000-0000-0000-000000000000")
 
     assert r.status_code == 404
-    assert r.json() == {"detail": "Test session not found"}
+    assert r.json() == {"code": 404, "detail": "Test session not found"}

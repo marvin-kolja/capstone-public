@@ -22,7 +22,7 @@ def test_list_available_tests_no_build(client):
         )
 
         assert r.status_code == 404
-        assert r.json() == {"detail": "Build not found"}
+        assert r.json() == {"code": 404, "detail": "Build not found"}
 
 
 @pytest.mark.parametrize(
@@ -51,7 +51,7 @@ def test_list_available_tests_build_not_finished(client, status, xctestrun):
         )
 
         assert r.status_code == 400
-        assert r.json() == {"detail": "Build is not finished"}
+        assert r.json() == {"code": 400, "detail": "Build is not finished"}
 
 
 def test_list_available_tests_device_not_connected(client):
@@ -77,7 +77,7 @@ def test_list_available_tests_device_not_connected(client):
             )
 
             assert r.status_code == 400
-            assert r.json() == {"detail": "Device is not connected"}
+            assert r.json() == {"code": 400, "detail": "Device is not connected"}
 
 
 def test_list_available_tests_success(client):

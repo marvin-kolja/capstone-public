@@ -1,10 +1,15 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
+from fastapi.utils import is_body_allowed_for_status_code
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
 
 from api.config import settings
+from api.custom_responses import HTTPExceptionResponse
 from api.depends import async_job_runner
 from api.log_config import LOGGING_CONFIG
 from api.routes import devices, api_test_plans, projects, api_test_session
@@ -49,6 +54,25 @@ app = FastAPI(
     root_path="/",
     root_path_in_servers=False,
 )
+
+
+@app.exception_handler(500)
+async def internal_exception_handler(request: Request, exc: Exception):
+    return HTTPExceptionResponse(500, "Internal server error")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return HTTPExceptionResponse(422, exc.errors())
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    headers = getattr(exc, "headers", None)
+    if not is_body_allowed_for_status_code(exc.status_code):
+        return Response(status_code=exc.status_code, headers=headers)
+    return HTTPExceptionResponse(exc.status_code, exc.detail)
+
 
 app.include_router(api_router)
 
