@@ -1,0 +1,147 @@
+//
+//  APIClient.swift
+//  Client
+//
+//  Created by Marvin Willms on 22.01.25.
+//
+
+import Foundation
+import OpenAPIAsyncHTTPClient
+import AsyncHTTPClient
+import OpenAPIRuntime
+import Logging
+
+enum APIError: LocalizedError {
+    case clientRequestError(statusCode: Int, detail: String? = nil)
+    case serverError(statusCode: Int, detail: String? = nil)
+    case unknownStatus(statusCode: Int)
+    case deadServer
+    case timeout
+    case unexpected(Error)
+    
+    var failureReason: String? {
+        switch self {
+        case .clientRequestError(_, let detail):
+            "Request error with because '\(detail ?? "no info")'"
+        case .serverError(_, _):
+            "A server error occured"
+        case .unknownStatus(let statusCode):
+            "An unknown non-ok status code was returned '\(statusCode)'"
+        case .deadServer:
+            "The server is not reachable"
+        case .timeout:
+            "The connection to the server timed out"
+        case .unexpected:
+            "An unexpected error occured while making the request"
+        }
+    }
+    
+    var recoverySuggestion: String? {
+        switch self {
+        case .clientRequestError(_, _):
+            "Try fixing what you're sending to the server"
+        case .serverError(_, _):
+            "Check the server"
+        case .unknownStatus(_):
+            "Check the server"
+        case .deadServer:
+            "Make sure the server is running"
+        case .timeout:
+            "Make sure the server is running"
+        case .unexpected:
+            nil
+        }
+    }
+}
+
+class APIClient: APIClientProtocol {
+    private let client: Client
+    private let httpClient: HTTPClient
+    private let serverURL: URL
+    
+    init() throws {
+        let timeout = HTTPClient.Configuration.Timeout(connect: .seconds(1), read: .minutes(1))
+        self.httpClient = HTTPClient(eventLoopGroupProvider: .singleton,
+                                     configuration: HTTPClient.Configuration(timeout: timeout))
+        
+        self.serverURL = try Servers.Server2.url()
+        self.client = Client(
+            serverURL: serverURL,
+            transport: AsyncHTTPClientTransport(configuration: .init(client: httpClient, timeout: .minutes(1)))
+        )
+    }
+    
+    /// Generic API request handler that throws an `APIError.unknown` on any unknown errors that happen during
+    /// the request or response handling.
+    private func handleRequestError<T>(
+        _ apiCall: () async throws -> T
+    ) async throws -> T {
+        do {
+            return try await apiCall()
+        } catch let apiError as APIError {
+            throw AppError(type: apiError)
+        } catch let clientError as ClientError {
+            if let posixError = clientError.underlyingError as? HTTPClient.NWPOSIXError {
+                if posixError.errorCode.rawValue == ECONNREFUSED {
+                    throw AppError(type: APIError.deadServer)
+                }
+            }
+            
+            if let httpClientError = clientError.underlyingError as? HTTPClientError {
+                switch httpClientError {
+                case .deadlineExceeded, .connectTimeout, .readTimeout, .writeTimeout:
+                    throw AppError(type: APIError.timeout)
+                default:
+                    ()
+                }
+            }
+            throw AppError(type: APIError.unexpected(clientError))
+        } catch {
+            throw AppError(type: APIError.unexpected(error))
+        }
+    }
+    
+    func checkConnection() async -> Bool {
+        do {
+            let request = HTTPClientRequest(url: self.serverURL.absoluteString)
+            let _ = try await self.httpClient.execute(request, timeout: .seconds(1))
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    func listProjects() async throws -> [Components.Schemas.XcProjectPublic] {
+        try await handleRequestError {
+            let result = try await client.projectsListProjects()
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func addProject(data: Components.Schemas.XcProjectCreate) async throws -> Components.Schemas.XcProjectPublic {
+        try await handleRequestError {
+            let result = try await client.projectsAddProject(body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+}

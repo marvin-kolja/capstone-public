@@ -10,23 +10,56 @@ import SwiftData
 
 @main
 struct ClientApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+    @StateObject private var projectsStore: ProjectsStore
+    @StateObject private var appState: AppState
+    
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            var apiClient: APIClientProtocol
+            
+            if ProcessInfo.processInfo.environment["USE_API_MOCK_CLIENT"] == "TRUE" {
+                apiClient = MockAPIClient()
+            } else {
+                apiClient = try APIClient()
+            }
+            _projectsStore = StateObject(wrappedValue: ProjectsStore(apiClient: apiClient))
+            _appState = StateObject(wrappedValue: AppState(apiClient: apiClient))
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("Failed to intiialize API Client: \(error)")
         }
-    }()
-
+    }
+    
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        Window("Welcome to Capstone", id: "main") {
+            ProjectListView()
+                .environmentObject(projectsStore)
+                .environmentObject(appState)
+                .frame(minWidth: 800, maxWidth: 800, minHeight: 500, maxHeight: 500)
+                .onAppear(perform: {
+                    DispatchQueue.main.async {
+                        NSApplication.shared.windows.forEach { window in
+                            window.standardWindowButton(.zoomButton)?.isEnabled = false
+                            window.standardWindowButton(.miniaturizeButton)?.isEnabled = false
+                        }
+                    }
+                })
         }
-        .modelContainer(sharedModelContainer)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+        
+        WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
+            if let project = project {
+                ProjectView(project: project)
+                    .environmentObject(appState)
+                    .navigationTitle(project.name)
+                    .onAppear(perform: {
+                        NSWindow.allowsAutomaticWindowTabbing = false
+                    })
+            }
+        }
+        .defaultPosition(.center)
+        .commands {
+            CommandGroup(replacing: CommandGroupPlacement.newItem) { }
+        }
     }
 }
