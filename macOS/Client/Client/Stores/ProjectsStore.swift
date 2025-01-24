@@ -52,7 +52,7 @@ enum AddProjectError: LocalizedError {
 }
 
 @MainActor
-class ProjectsStore: ObservableObject {
+class ProjectsStore: APIClientContext {
     @Published var projects: [Components.Schemas.XcProjectPublic] = []
     
     @Published var errorLoadingProjects: AppError?
@@ -62,8 +62,8 @@ class ProjectsStore: ObservableObject {
     @Published var showAddingProjectError = false
     @Published var addingProject = false
     
-    init(apiClient: APIClientProtocol) {
-        self.apiClient = apiClient
+    override init(apiClient: APIClientProtocol) {
+        super.init(apiClient: apiClient)
     }
     
     
