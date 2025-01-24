@@ -27,7 +27,8 @@ async def health_check(db: SessionDep) -> HealthCheck:
         db.exec(select(text("1"))).first()
         db_status = "ok"
     except Exception:
-        logger.error("DB is unavailable", exc_info=True)
+        logger.debug("Unable to connect to DB", exc_info=True)
+        logger.warning("DB is unavailable")
 
     try:
         with get_tunnel_client(port=49151) as client:
@@ -36,7 +37,8 @@ async def health_check(db: SessionDep) -> HealthCheck:
             )  # Dummy request to check if the server is available
             tunnel_connect_status = "ok"
     except Exception:
-        logger.error("Tunnel connect socket server is unavailable", exc_info=True)
+        logger.debug("Unable to connect to tunnel connect socket server", exc_info=True)
+        logger.warning("Tunnel connect socket server is unavailable")
 
     status: ServerStatus = (
         "ok" if db_status == "ok" and tunnel_connect_status == "ok" else "unhealthy"
