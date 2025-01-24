@@ -24,6 +24,20 @@ from api.custom_db_types import PathType, CreatedAtField, UpdatedAtField
 
 
 ######################################
+#           Health Check             #
+######################################
+
+ServerStatus = Literal["ok", "unhealthy"]
+ResourceStatus = Literal["ok", "unavailable"]
+
+
+class HealthCheck(BaseModel):
+    status: ServerStatus
+    db: ResourceStatus
+    tunnel_connect: ResourceStatus
+
+
+######################################
 #              Device                #
 ######################################
 

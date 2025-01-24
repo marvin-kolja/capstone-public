@@ -12,7 +12,7 @@ from api.config import settings
 from api.custom_responses import HTTPExceptionResponse
 from api.depends import async_job_runner
 from api.log_config import LOGGING_CONFIG
-from api.routes import devices, api_test_plans, projects, api_test_session
+from api.routes import devices, api_test_plans, projects, api_test_session, health
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -20,6 +20,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 
 api_router = APIRouter()
+api_router.include_router(health.router)
 api_router.include_router(devices.router)
 api_router.include_router(projects.router)
 api_router.include_router(api_test_plans.router)
