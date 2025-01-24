@@ -7,26 +7,44 @@
 
 import SwiftUI
 
-struct ProjectView: View {
-    @EnvironmentObject var serverStatusStore: ServerStatusStore
+enum Selection: String, CaseIterable, Identifiable {
+    case general = "General"
+    case builds = "Builds"
+    case testPlans = "Test Plans"
+    case sessions = "Sessions"
     
+    var id: String { self.rawValue }
+    var title: String { self.rawValue }
+}
+
+struct ProjectView: View {
     var project: Components.Schemas.XcProjectPublic
     
+    @EnvironmentObject var serverStatusStore: ServerStatusStore
+    
+    @State private var visibility: NavigationSplitViewVisibility = .doubleColumn
+    @State private var selection: Selection = .general
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            keyValueRow(title: "Name:", value: project.name)
-            keyValueRow(title: "Path:", value: project.path)
-            
-            listRow(title: "Configurations:", items: project.configurations.map { $0.name })
-            listRow(title: "Targets:", items: project.targets.map { $0.name })
-            listRow(title: "Schemes:", items: project.schemes.map { $0.name })
-            
-            let testPlans = project.schemes.flatMap { scheme in
-                scheme.xcTestPlans.map { "\($0.name) (\(scheme.name))" }
+        NavigationSplitView(columnVisibility: $visibility) {
+            List(Selection.allCases, selection: $selection) { item in
+                Label(item.title, systemImage: icon(for: item))
+                    .tag(item)
             }
-            listRow(title: "Test Plans:", items: testPlans)
+            .listStyle(.sidebar)
+            .navigationTitle("Project")
+        } detail: {
+            switch selection {
+            case .general:
+                ProjectDetailView()
+            case .builds:
+                BuildsView()
+            case .testPlans:
+                TestPlansView()
+            case .sessions:
+                SessionsView()
+            }
         }
-        .padding()
         .toolbar {
             ToolbarItem(placement: .status) {
                 ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {
@@ -37,40 +55,17 @@ struct ProjectView: View {
         }
     }
     
-    private func keyValueRow(title: String, value: String) -> some View {
-        HStack(alignment: .top) {
-            Text(title)
-                .frame(width: 120, alignment: .trailing)
-                .font(.headline)
-                .lineLimit(1)
-            Text(value)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(1)
-        }
-    }
-    
-    private func listRow(title: String, items: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .top) {
-                Text(title)
-                    .frame(width: 120, alignment: .trailing)
-                    .font(.headline)
-                    .lineLimit(1)
-                VStack(alignment: .leading) {
-                    if items.isEmpty {
-                        Text("None")
-                    } else {
-                        ForEach(items, id: \.self) { item in
-                            Text(item)
-                                .lineLimit(1)
-                        }
-                    }
-                }
-            }
+    private func icon(for selection: Selection) -> String {
+        switch selection {
+        case .general: return "gearshape"
+        case .builds: return "hammer"
+        case .testPlans: return "doc.text.magnifyingglass"
+        case .sessions: return "clock.arrow.circlepath"
         }
     }
 }
 
 #Preview {
     ProjectView(project: Components.Schemas.XcProjectPublic.mock)
+        .environmentObject(ServerStatusStore(apiClient: MockAPIClient()))
 }
