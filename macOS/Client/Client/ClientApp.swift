@@ -51,6 +51,7 @@ struct ClientApp: App {
             if let project = project {
                 ProjectView(project: project)
                     .environmentObject(serverStatusStore)
+                    .frame(minWidth: 800, minHeight: 500)
                     .navigationTitle(project.name)
                     .onAppear(perform: {
                         NSWindow.allowsAutomaticWindowTabbing = false
