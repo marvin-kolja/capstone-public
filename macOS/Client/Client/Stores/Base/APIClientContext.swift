@@ -10,7 +10,7 @@ import Foundation
 /// A base class for all stores that use the apiClient.
 @MainActor
 class APIClientContext: ObservableObject {
-    private let apiClient: APIClientProtocol
+    internal let apiClient: APIClientProtocol
     
     init(apiClient: APIClientProtocol) {
         self.apiClient = apiClient
