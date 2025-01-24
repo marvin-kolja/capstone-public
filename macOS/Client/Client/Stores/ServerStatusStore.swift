@@ -34,21 +34,18 @@ enum ServerStatus {
 }
 
 /// Observable object that store the server health, error, and if it's currently checking the server health.
-@MainActor
-class ServerStatusStore: ObservableObject {
+class ServerStatusStore: APIClientContext {
     @Published var checkingHealth = false
     @Published var serverStatus: ServerStatus = .unknown
     @Published var dbStatus: ServerStatus = .unknown
     @Published var tunnelConnectStatus: ServerStatus = .unknown
     
-    private let apiClient: APIClientProtocol
-    
     /// Stores the subscription for succesfull api calls, otherwise it would be disposed directly
     private var cancellables = Set<AnyCancellable>()
     private var checkScheduled = false
     
-    init(apiClient: APIClientProtocol) {
-        self.apiClient = apiClient
+    override init(apiClient: APIClientProtocol) {        
+        super.init(apiClient: apiClient)
         
         Task {
             await self.checkHealth()

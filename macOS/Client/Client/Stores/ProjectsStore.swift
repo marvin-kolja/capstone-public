@@ -62,8 +62,6 @@ class ProjectsStore: ObservableObject {
     @Published var showAddingProjectError = false
     @Published var addingProject = false
     
-    private let apiClient: APIClientProtocol
-    
     init(apiClient: APIClientProtocol) {
         self.apiClient = apiClient
     }
