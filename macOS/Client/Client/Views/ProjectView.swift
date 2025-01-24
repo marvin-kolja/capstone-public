@@ -18,7 +18,7 @@ enum Selection: String, CaseIterable, Identifiable {
 }
 
 struct ProjectView: View {
-    var project: Components.Schemas.XcProjectPublic
+    @StateObject var projectStore: ProjectStore
     
     @EnvironmentObject var serverStatusStore: ServerStatusStore
     
@@ -34,16 +34,19 @@ struct ProjectView: View {
             .listStyle(.sidebar)
             .navigationTitle("Project")
         } detail: {
-            switch selection {
-            case .general:
-                ProjectDetailView()
-            case .builds:
-                BuildsView()
-            case .testPlans:
-                TestPlansView()
-            case .sessions:
-                SessionsView()
+            VStack {
+                switch selection {
+                case .general:
+                    ProjectDetailView()
+                case .builds:
+                    BuildsView()
+                case .testPlans:
+                    TestPlansView()
+                case .sessions:
+                    SessionsView()
+                }
             }
+            .environmentObject(projectStore)
         }
         .toolbar {
             ToolbarItem(placement: .status) {
@@ -66,6 +69,6 @@ struct ProjectView: View {
 }
 
 #Preview {
-    ProjectView(project: Components.Schemas.XcProjectPublic.mock)
+    ProjectView(projectStore: ProjectStore(project: Components.Schemas.XcProjectPublic.mock))
         .environmentObject(ServerStatusStore(apiClient: MockAPIClient()))
 }

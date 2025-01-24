@@ -49,7 +49,9 @@ struct ClientApp: App {
         
         WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
             if let project = project {
-                ProjectView(project: project)
+                let projectStore = ProjectStore(project: project)
+                
+                ProjectView(projectStore: projectStore)
                     .environmentObject(serverStatusStore)
                     .frame(minWidth: 800, minHeight: 500)
                     .navigationTitle(project.name)
