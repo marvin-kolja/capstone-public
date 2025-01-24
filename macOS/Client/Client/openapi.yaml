@@ -240,6 +240,32 @@ components:
       - detail
       title: HTTPValidationError
       type: object
+    HealthCheck:
+      properties:
+        db:
+          enum:
+          - ok
+          - unavailable
+          title: Db
+          type: string
+        status:
+          enum:
+          - ok
+          - unhealthy
+          title: Status
+          type: string
+        tunnel_connect:
+          enum:
+          - ok
+          - unavailable
+          title: Tunnel Connect
+          type: string
+      required:
+      - status
+      - db
+      - tunnel_connect
+      title: HealthCheck
+      type: object
     IDeviceStatus:
       properties:
         ddi_mounted:
@@ -1316,6 +1342,25 @@ paths:
       summary: Unpair Device
       tags:
       - devices
+  /health:
+    get:
+      description: 'Health check endpoint.
+
+
+        1. Checks if the DB connection is available.
+
+        2. Checks if the tunnel connect socket server is available.'
+      operationId: health-health_check
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+          description: Successful Response
+      summary: Health Check
+      tags:
+      - health
   /projects/:
     get:
       description: List all projects.
