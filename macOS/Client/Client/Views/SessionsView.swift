@@ -12,7 +12,7 @@ struct SessionsView: View {
         TwoColumnView(content: {
             List {
                 
-            }
+            }.nostyle()
         }, detail: {
             SessionDetailView()
         })

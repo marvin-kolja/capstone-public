@@ -12,7 +12,7 @@ struct BuildsView: View {
         TwoColumnView(content: {
             List {
                 
-            }
+            }.nostyle()
         }, detail: {
             BuildDetailView()
         })

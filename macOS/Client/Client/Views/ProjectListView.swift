@@ -53,9 +53,7 @@ struct ProjectListView: View {
                         openWindow(value: project)
                     }
                 }
-                .listStyle(.plain)
-                .background(Color.clear)
-                .scrollContentBackground(.hidden)
+                .nostyle()
             }
         }
         .padding()

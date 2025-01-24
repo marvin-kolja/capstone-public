@@ -12,7 +12,7 @@ struct TestPlansView: View {
         TwoColumnView(content: {
             List {
                 
-            }
+            }.nostyle()
         }, detail: {
             TestPlanDetailView()
         })
