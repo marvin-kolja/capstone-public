@@ -14,12 +14,18 @@ struct BuildsView: View {
     
     var body: some View {
         TwoColumnView(content: {
-            List(buildsStore.builds, id: \.id, selection: $selection) { build in
-                Text(build.id)
-                    .tag(build)
+            LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.builds.isEmpty, refresh: {
+                Task {
+                    await buildsStore.loadBuilds()
+                }
+            }) {
+                List(buildsStore.builds, id: \.id, selection: $selection) { build in
+                    Text(build.id)
+                        .tag(build)
+                }
+                .listStyle(.sidebar)
+                .scrollContentBackground(.hidden)
             }
-            .listStyle(.sidebar)
-            .scrollContentBackground(.hidden)
         }, detail: {
             if let build = selection {
                 BuildDetailView(build: build)
