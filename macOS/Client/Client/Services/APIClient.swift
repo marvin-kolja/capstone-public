@@ -157,4 +157,21 @@ class APIClient: APIClientProtocol {
             }
         }
     }
+    
+    func listBuilds(projectId: String) async throws -> [Components.Schemas.BuildPublic] {
+        try await handleRequestError {
+            let result = try await client.projectsListBuilds(.init(path: .init(projectId: projectId)))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
 }

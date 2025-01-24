@@ -12,19 +12,25 @@ enum Selection: String, CaseIterable, Identifiable {
     case builds = "Builds"
     case testPlans = "Test Plans"
     case sessions = "Sessions"
-    
+
     var id: String { self.rawValue }
     var title: String { self.rawValue }
 }
 
 struct ProjectView: View {
-    @StateObject var projectStore: ProjectStore
-    
     @EnvironmentObject var serverStatusStore: ServerStatusStore
-    
+
+    @StateObject private var projectStore: ProjectStore
+    @StateObject private var buildsStore: BuildsStore
+
     @State private var visibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var selection: Selection = .general
-    
+
+    init(project: Components.Schemas.XcProjectPublic, apiClient: APIClientProtocol) {
+        _projectStore = StateObject(wrappedValue: ProjectStore(project: project))
+        _buildsStore = StateObject(wrappedValue: BuildsStore(projectId: project.id, apiClient: apiClient))
+    }
+
     var body: some View {
         NavigationSplitView(columnVisibility: $visibility) {
             List(Selection.allCases, selection: $selection) { item in
@@ -47,6 +53,7 @@ struct ProjectView: View {
                 }
             }
             .environmentObject(projectStore)
+            .environmentObject(buildsStore)
         }
         .toolbar {
             ToolbarItem(placement: .status) {
@@ -57,7 +64,7 @@ struct ProjectView: View {
             }
         }
     }
-    
+
     private func icon(for selection: Selection) -> String {
         switch selection {
         case .general: return "gearshape"
@@ -69,6 +76,6 @@ struct ProjectView: View {
 }
 
 #Preview {
-    ProjectView(projectStore: ProjectStore(project: Components.Schemas.XcProjectPublic.mock))
-        .environmentObject(ServerStatusStore(apiClient: MockAPIClient()))
+    ProjectView(project: Components.Schemas.XcProjectPublic.mock, apiClient: MockAPIClient())
+    .environmentObject(ServerStatusStore(apiClient: MockAPIClient()))
 }

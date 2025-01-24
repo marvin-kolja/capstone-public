@@ -8,17 +8,29 @@
 import SwiftUI
 
 struct BuildsView: View {
+    @EnvironmentObject var buildsStore: BuildsStore
+    
+    @State private var selection: Components.Schemas.BuildPublic?
+    
     var body: some View {
         TwoColumnView(content: {
-            List {
-                
-            }.nostyle()
+            List(buildsStore.builds, id: \.id, selection: $selection) { build in
+                Text(build.id)
+                    .tag(build)
+            }
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
         }, detail: {
-            BuildDetailView()
-        })
+            if let build = selection {
+                BuildDetailView(build: build)
+            } else {
+                EmptyView()
+            }
+        }).task { await buildsStore.loadBuilds() }
     }
 }
 
 #Preview {
     BuildsView()
+        .environmentObject(BuildsStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()))
 }

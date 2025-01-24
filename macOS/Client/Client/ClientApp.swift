@@ -13,15 +13,17 @@ struct ClientApp: App {
     @StateObject private var projectsStore: ProjectsStore
     @StateObject private var serverStatusStore: ServerStatusStore
     
+    private var apiClient: APIClientProtocol
+    
     init() {
         do {
-            var apiClient: APIClientProtocol
-            
+            let apiClient: APIClientProtocol
             if ProcessInfo.processInfo.environment["USE_API_MOCK_CLIENT"] == "TRUE" {
                 apiClient = MockAPIClient()
             } else {
                 apiClient = try APIClient()
             }
+            self.apiClient = apiClient
             _projectsStore = StateObject(wrappedValue: ProjectsStore(apiClient: apiClient))
             _serverStatusStore = StateObject(wrappedValue: ServerStatusStore(apiClient: apiClient))
         } catch {
@@ -49,9 +51,7 @@ struct ClientApp: App {
         
         WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
             if let project = project {
-                let projectStore = ProjectStore(project: project)
-                
-                ProjectView(projectStore: projectStore)
+                ProjectView(project: project, apiClient: apiClient)
                     .environmentObject(serverStatusStore)
                     .frame(minWidth: 800, minHeight: 500)
                     .navigationTitle(project.name)

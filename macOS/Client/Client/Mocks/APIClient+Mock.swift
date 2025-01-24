@@ -26,4 +26,9 @@ class MockAPIClient: APIClientProtocol {
         try? await simulateWork()
         return Components.Schemas.XcProjectPublic.mock
     }
+    
+    func listBuilds(projectId: String) async throws -> [Components.Schemas.BuildPublic] {
+        try? await simulateWork()
+        return [Components.Schemas.BuildPublic.mock]
+    }
 }

@@ -8,11 +8,13 @@
 import SwiftUI
 
 struct BuildDetailView: View {
+    var build: Components.Schemas.BuildPublic
+    
     var body: some View {
         Text("Detailed Build View")
     }
 }
 
 #Preview {
-    BuildDetailView()
+    BuildDetailView(build: Components.Schemas.BuildPublic.mock)
 }
