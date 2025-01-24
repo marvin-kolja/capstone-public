@@ -10,6 +10,7 @@ import OpenAPIAsyncHTTPClient
 import AsyncHTTPClient
 import OpenAPIRuntime
 import Logging
+import Combine
 
 enum APIError: LocalizedError {
     case clientRequestError(statusCode: Int, detail: String? = nil)
@@ -59,6 +60,8 @@ class APIClient: APIClientProtocol {
     private let httpClient: HTTPClient
     private let serverURL: URL
     
+    let apiCallSuccessSubject = PassthroughSubject<Bool,Never>()
+    
     init() throws {
         let timeout = HTTPClient.Configuration.Timeout(connect: .seconds(1), read: .minutes(1))
         self.httpClient = HTTPClient(eventLoopGroupProvider: .singleton,
@@ -77,27 +80,34 @@ class APIClient: APIClientProtocol {
         _ apiCall: () async throws -> T
     ) async throws -> T {
         do {
-            return try await apiCall()
-        } catch let apiError as APIError {
-            throw AppError(type: apiError)
-        } catch let clientError as ClientError {
-            if let posixError = clientError.underlyingError as? HTTPClient.NWPOSIXError {
-                if posixError.errorCode.rawValue == ECONNREFUSED {
-                    throw AppError(type: APIError.deadServer)
+            do {
+                let data = try await apiCall()
+                apiCallSuccessSubject.send(true)
+                return data
+            } catch let apiError as APIError {
+                throw AppError(type: apiError)
+            } catch let clientError as ClientError {
+                if let posixError = clientError.underlyingError as? HTTPClient.NWPOSIXError {
+                    if posixError.errorCode.rawValue == ECONNREFUSED {
+                        throw AppError(type: APIError.deadServer)
+                    }
                 }
-            }
-            
-            if let httpClientError = clientError.underlyingError as? HTTPClientError {
-                switch httpClientError {
-                case .deadlineExceeded, .connectTimeout, .readTimeout, .writeTimeout:
-                    throw AppError(type: APIError.timeout)
-                default:
-                    ()
+                
+                if let httpClientError = clientError.underlyingError as? HTTPClientError {
+                    switch httpClientError {
+                    case .deadlineExceeded, .connectTimeout, .readTimeout, .writeTimeout:
+                        throw AppError(type: APIError.timeout)
+                    default:
+                        ()
+                    }
                 }
+                throw AppError(type: APIError.unexpected(clientError))
+            } catch {
+                throw AppError(type: APIError.unexpected(error))
             }
-            throw AppError(type: APIError.unexpected(clientError))
         } catch {
-            throw AppError(type: APIError.unexpected(error))
+            apiCallSuccessSubject.send(false)
+            throw error
         }
     }
     

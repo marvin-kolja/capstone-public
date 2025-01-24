@@ -42,7 +42,6 @@ struct ClientApp: App {
                             window.standardWindowButton(.miniaturizeButton)?.isEnabled = false
                         }
                     }
-                    serverStatusStore.startMonitoring(interval: 10)
                 })
         }
         .windowResizability(.contentSize)
@@ -55,7 +54,6 @@ struct ClientApp: App {
                     .navigationTitle(project.name)
                     .onAppear(perform: {
                         NSWindow.allowsAutomaticWindowTabbing = false
-                        serverStatusStore.startMonitoring(interval: 10)
                     })
             }
         }

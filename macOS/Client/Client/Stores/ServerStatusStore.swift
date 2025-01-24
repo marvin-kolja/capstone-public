@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 enum ServerHealthCheckError: LocalizedError {
     case unexpected
@@ -41,14 +42,51 @@ class ServerStatusStore: ObservableObject {
     @Published var tunnelConnectStatus: ServerStatus = .unknown
     
     private let apiClient: APIClientProtocol
-    private var timer: Timer?
+    
+    /// Stores the subscription for succesfull api calls, otherwise it would be disposed directly
+    private var cancellables = Set<AnyCancellable>()
+    private var checkScheduled = false
     
     init(apiClient: APIClientProtocol) {
         self.apiClient = apiClient
+        
+        Task {
+            await self.checkHealth()
+        }
+        
+        if let apiClient = apiClient as? APIClient {
+            apiClient.apiCallSuccessSubject
+                .sink { [weak self] success in
+                    logger.debug("Got new apiCallSuccessSubject event, sucess: \(success)")
+                    
+                    guard let self = self else { return }
+                    
+                    switch self.serverStatus {
+                    case .healthy:
+                        if !success {
+                            // If current status is healthy, but request failed, check immediately
+                            Task {
+                                await self.checkHealth()
+                            }
+                        }
+                    default:
+                        if success {
+                            // If current status is not healthy, but request succesful, check immediately
+                            Task {
+                                await self.checkHealth()
+                            }
+                        }
+                        // Always schedule a check when server status is not healthy
+                        self.tryScheduleNextCheck(inSeconds: 10)
+                    }
+                }
+                .store(in: &cancellables)
+        }
     }
     
     func checkHealth() async {
         guard !checkingHealth else {
+            logger.debug("Already checking server health")
             return
         }
         
@@ -57,6 +95,7 @@ class ServerStatusStore: ObservableObject {
         defer { checkingHealth = false }
         
         do {
+            logger.debug("Checking server health")
             let serverHealth = try await apiClient.healthCheck()
             
             switch serverHealth.status {
@@ -78,37 +117,33 @@ class ServerStatusStore: ObservableObject {
                 dbStatus = .unhealty
             }
         } catch let appError as AppError {
+            logger.debug("AppError checking server health \(appError.type)")
             serverStatus = .down(error: appError)
             tunnelConnectStatus = .unknown
             dbStatus = .unknown
         } catch {
+            logger.debug("Unexpected error checking server health \(error)")
             serverStatus = .down(error: AppError(type: ServerHealthCheckError.unexpected))
             tunnelConnectStatus = .unknown
             dbStatus = .unknown
         }
     }
     
-    /// This will also monitor the server health every `monitoringInterval` seconds.
-    ///
-    /// If already monitoring this will just return.
-    func startMonitoring(interval: Double) {
-        guard timer == nil else {
+    /// This will schedule a new check in the given `inSeconds` seconds when no check is scheduled already
+    private func tryScheduleNextCheck(inSeconds: Double) {
+        guard !checkScheduled else {
+            logger.debug("Sever health check already scheduled")
             return
         }
         
-        Task {
-            await self.checkHealth()
-        }
+        checkScheduled = true
         
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-              Task {
-                  await self?.checkHealth()
-              }
+        logger.debug("Schedule next check")
+        DispatchQueue.main.asyncAfter(deadline: .now() + inSeconds) { [weak self] in
+            self?.checkScheduled = false
+            Task {
+                await self?.checkHealth()
+            }
         }
-    }
-    
-    deinit {
-        timer?.invalidate()
-        timer = nil
     }
 }
