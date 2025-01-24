@@ -26,7 +26,7 @@ struct ProjectListView: View {
     @Environment(\.refresh) private var refresh
     
     @EnvironmentObject var projectsStore: ProjectsStore
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var serverStatusStore: ServerStatusStore
     
     @State private var showFileImporter = false
     
@@ -71,12 +71,10 @@ struct ProjectListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .status) {
-                ServerStatusButton(isConnected: appState.isConnectedToServer, checkingConnection: appState.checkingConnection, onCheckConnection: {
-                    Task {
-                        await appState.checkConnection()
-                    }
+                ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {
+                    ServerStatusDetailView()
                 }
-                ).accessibilityIdentifier("connect-status")
+                .accessibilityIdentifier("server-status")
             }
             ToolbarItem(placement: .automatic) {
                 LoadingButton(isLoading: projectsStore.loadingProjects, action: {

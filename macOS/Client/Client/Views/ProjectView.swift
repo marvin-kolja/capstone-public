@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ProjectView: View {
+    @EnvironmentObject var serverStatusStore: ServerStatusStore
+    
     var project: Components.Schemas.XcProjectPublic
     
     var body: some View {
@@ -25,6 +27,14 @@ struct ProjectView: View {
             listRow(title: "Test Plans:", items: testPlans)
         }
         .padding()
+        .toolbar {
+            ToolbarItem(placement: .status) {
+                ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {
+                    ServerStatusDetailView()
+                }
+                .accessibilityIdentifier("server-status")
+            }
+        }
     }
     
     private func keyValueRow(title: String, value: String) -> some View {

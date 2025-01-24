@@ -6,7 +6,7 @@
 //
 
 protocol APIClientProtocol {
-    func checkConnection() async -> Bool
+    func healthCheck() async throws -> Components.Schemas.HealthCheck
     func listProjects() async throws -> [Components.Schemas.XcProjectPublic]
     func addProject(data: Components.Schemas.XcProjectCreate) async throws -> Components.Schemas.XcProjectPublic
 }

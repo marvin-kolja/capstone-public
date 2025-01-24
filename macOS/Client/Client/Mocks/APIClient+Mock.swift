@@ -12,9 +12,9 @@ class MockAPIClient: APIClientProtocol {
         try await Task.sleep(nanoseconds: 1 * NSEC_PER_SEC)
     }
     
-    func checkConnection() async -> Bool {
+    func healthCheck() async throws -> Components.Schemas.HealthCheck {
         try? await simulateWork()
-        return true
+        return Components.Schemas.HealthCheck.mock
     }
     
     func listProjects() async throws -> [Components.Schemas.XcProjectPublic] {

@@ -101,13 +101,16 @@ class APIClient: APIClientProtocol {
         }
     }
     
-    func checkConnection() async -> Bool {
-        do {
-            let request = HTTPClientRequest(url: self.serverURL.absoluteString)
-            let _ = try await self.httpClient.execute(request, timeout: .seconds(1))
-            return true
-        } catch {
-            return false
+    func healthCheck() async throws -> Components.Schemas.HealthCheck {
+        try await handleRequestError {
+            let result = try await client.healthHealthCheck()
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .undocumented(let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
         }
     }
     

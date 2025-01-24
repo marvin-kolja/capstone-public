@@ -11,7 +11,7 @@ import SwiftData
 @main
 struct ClientApp: App {
     @StateObject private var projectsStore: ProjectsStore
-    @StateObject private var appState: AppState
+    @StateObject private var serverStatusStore: ServerStatusStore
     
     init() {
         do {
@@ -23,7 +23,7 @@ struct ClientApp: App {
                 apiClient = try APIClient()
             }
             _projectsStore = StateObject(wrappedValue: ProjectsStore(apiClient: apiClient))
-            _appState = StateObject(wrappedValue: AppState(apiClient: apiClient))
+            _serverStatusStore = StateObject(wrappedValue: ServerStatusStore(apiClient: apiClient))
         } catch {
             fatalError("Failed to intiialize API Client: \(error)")
         }
@@ -33,7 +33,7 @@ struct ClientApp: App {
         Window("Welcome to Capstone", id: "main") {
             ProjectListView()
                 .environmentObject(projectsStore)
-                .environmentObject(appState)
+                .environmentObject(serverStatusStore)
                 .frame(minWidth: 800, maxWidth: 800, minHeight: 500, maxHeight: 500)
                 .onAppear(perform: {
                     DispatchQueue.main.async {
@@ -42,6 +42,7 @@ struct ClientApp: App {
                             window.standardWindowButton(.miniaturizeButton)?.isEnabled = false
                         }
                     }
+                    serverStatusStore.startMonitoring(interval: 10)
                 })
         }
         .windowResizability(.contentSize)
@@ -50,10 +51,11 @@ struct ClientApp: App {
         WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
             if let project = project {
                 ProjectView(project: project)
-                    .environmentObject(appState)
+                    .environmentObject(serverStatusStore)
                     .navigationTitle(project.name)
                     .onAppear(perform: {
                         NSWindow.allowsAutomaticWindowTabbing = false
+                        serverStatusStore.startMonitoring(interval: 10)
                     })
             }
         }

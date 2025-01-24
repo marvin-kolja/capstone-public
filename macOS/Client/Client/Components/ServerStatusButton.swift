@@ -7,25 +7,23 @@
 
 import SwiftUI
 
-struct ServerStatusButton: View {
-    var isConnected: Bool
-    var checkingConnection: Bool
-    var onCheckConnection: () -> Void
+struct ServerStatusButton<Content: View>: View {
+    var isLoading: Bool
+    var serverStatus: ServerStatus
     
-    @State private var showPopover: Bool = false
+    @ViewBuilder var popoverContent: () -> Content
+    @State var showPopover = false
     
     var body: some View {
-        LoadingButton(isLoading: checkingConnection, action: { showPopover.toggle() }) {
-            ServerStatusBadge(isConnected: isConnected)
+        LoadingButton(isLoading: isLoading, action: { showPopover.toggle() }) {
+            ServerStatusBadge(status: serverStatus)
         }
-        .popover(isPresented: $showPopover) {
-            ServerStatusDetailView(isConnected: isConnected, checkingConnection: checkingConnection, onCheckConnection: onCheckConnection)
-        }
+        .popover(isPresented: $showPopover, content: popoverContent)
     }
 }
 
 #Preview {
-    ServerStatusButton(
-        isConnected: true, checkingConnection: false, onCheckConnection: {}
-    )
+    ServerStatusButton(isLoading: false, serverStatus: .healthy) {
+        Text("Popover")
+    }
 }
