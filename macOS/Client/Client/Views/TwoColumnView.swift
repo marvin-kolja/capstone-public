@@ -34,7 +34,7 @@ struct TwoColumnView<Content: View, Detail: View>: View {
                     Spacer()
                 }
                 .frame(minWidth: 200)
-            }.disabled(true)
+            }
         }
     }
 }
