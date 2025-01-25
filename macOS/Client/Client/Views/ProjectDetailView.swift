@@ -24,7 +24,7 @@ struct ProjectDetailView: View {
                 GridRow {
                     Text("Path")
                         .bold()
-                    Text(projectStore.project.path)
+                    LocalFileLinkButton(path: projectStore.project.path)
                 }
                 GridRow {
                     Text("Configuration")
