@@ -322,7 +322,7 @@ def test_create_test_plan_step_invalid_test_cases(client, new_test_plan):
     )
 
     assert r.status_code == 422
-    assert r.json()["detail"] == "Invalid test case path"
+    assert r.json()["detail"][0]["msg"] == "Invalid test case path"
 
 
 def test_create_test_plan_step_no_test_plan(client):
@@ -392,7 +392,7 @@ def test_update_test_plan_step_invalid_test_cases(
     )
 
     assert r.status_code == 422
-    assert r.json()["detail"] == "Invalid test case path"
+    assert r.json()["detail"][0]["msg"] == "Invalid test case path"
 
 
 def test_update_test_plan_step_not_found(new_test_plan, client):
@@ -505,7 +505,7 @@ def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, client):
     )
 
     assert r.status_code == 422
-    assert r.json()["detail"] == "Step ids contain duplicates"
+    assert r.json()["detail"][0]["msg"] == "Step ids contain duplicates"
 
 
 def test_reorder_test_plan_steps_not_found(client):
@@ -537,4 +537,4 @@ def test_reorder_test_plan_steps_id_mismatch(new_test_plan, new_test_plan_step, 
     )
 
     assert r.status_code == 422
-    assert r.json()["detail"] == "Step ids mismatch"
+    assert r.json()["detail"][0]["msg"] == "Step ids mismatch"

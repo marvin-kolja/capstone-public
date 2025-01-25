@@ -18,7 +18,11 @@ class HTTPExceptionResponse(JSONResponse):
         super().__init__(
             status_code=status_code,
             content=jsonable_encoder(
-                HTTPExceptionContent(code=status_code, detail=detail),
+                (
+                    HTTPValidationError(code=status_code, detail=detail)
+                    if status_code == 422
+                    else HTTPExceptionContent(code=status_code, detail=detail)
+                ),
             ),
             headers=headers,
             media_type="application/json",

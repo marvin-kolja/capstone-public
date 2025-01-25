@@ -214,19 +214,27 @@ async def test_sync_db_project():
             "scheme",
             "test_plan",
             "invalid_configuration",
-            {"loc": ["configuration"], "msg": "Invalid configuration"},
+            {
+                "loc": ["body", "configuration"],
+                "msg": "Invalid configuration",
+                "type": "value_error",
+            },
         ),
         (
             "scheme",
             "invalid_test_plan",
             "configuration",
-            {"loc": ["test_plan"], "msg": "Invalid test plan"},
+            {
+                "loc": ["body", "test_plan"],
+                "msg": "Invalid test plan",
+                "type": "value_error",
+            },
         ),
         (
             "invalid_scheme",
             "test_plan",
             "configuration",
-            {"loc": ["scheme"], "msg": "Invalid scheme"},
+            {"loc": ["body", "scheme"], "msg": "Invalid scheme", "type": "value_error"},
         ),
     ],
 )

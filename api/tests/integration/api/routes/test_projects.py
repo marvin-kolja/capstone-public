@@ -369,8 +369,9 @@ def test_start_build_invalid_request_data(client, new_db_project, random_device_
         "code": 422,
         "detail": [
             {
-                "loc": ["configuration"],
+                "loc": ["body", "configuration"],
                 "msg": "Invalid configuration",
+                "type": "value_error",
             }
         ],
     }

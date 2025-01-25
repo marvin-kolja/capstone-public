@@ -132,14 +132,26 @@ def validate_build_request(
     """
     if build_request.scheme not in [scheme.name for scheme in db_project.schemes]:
         raise RequestValidationError(
-            errors=[{"loc": ["scheme"], "msg": "Invalid scheme"}]
+            errors=[
+                {
+                    "loc": ["body", "scheme"],
+                    "msg": "Invalid scheme",
+                    "type": "value_error",
+                }
+            ]
         )
 
     if build_request.configuration not in [
         configuration.name for configuration in db_project.configurations
     ]:
         raise RequestValidationError(
-            errors=[{"loc": ["configuration"], "msg": "Invalid configuration"}]
+            errors=[
+                {
+                    "loc": ["body", "configuration"],
+                    "msg": "Invalid configuration",
+                    "type": "value_error",
+                }
+            ]
         )
 
     scheme = next(
@@ -150,7 +162,13 @@ def validate_build_request(
         xc_test_plan.name for xc_test_plan in scheme.xc_test_plans
     ]:
         raise RequestValidationError(
-            errors=[{"loc": ["test_plan"], "msg": "Invalid test plan"}]
+            errors=[
+                {
+                    "loc": ["body", "test_plan"],
+                    "msg": "Invalid test plan",
+                    "type": "value_error",
+                }
+            ]
         )
 
 

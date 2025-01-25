@@ -115,7 +115,15 @@ def reorder_test_plan_steps(
     """
     if len(step_ids) != len(set(step_ids)):
         logger.error(f"Step ids contain duplicates: {step_ids}")
-        raise RequestValidationError("Step ids contain duplicates")
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ["body", "step_ids"],
+                    "msg": "Step ids contain duplicates",
+                    "type": "value_error",
+                }
+            ]
+        )
 
     existing_step_ids = [step.id for step in db_plan.steps]
 
@@ -123,7 +131,15 @@ def reorder_test_plan_steps(
         logger.error(
             f"Tried to reorder steps using {step_ids} but existing steps are {existing_step_ids}"
         )
-        raise RequestValidationError("Step ids mismatch")
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ["body", "step_ids"],
+                    "msg": "Step ids mismatch",
+                    "type": "value_error",
+                }
+            ]
+        )
 
     # Assign temporary order to all steps to avoid unique constraint violation
     for db_step in db_plan.steps:
@@ -163,4 +179,12 @@ def _validate_test_cases(test_cases: list[str]):
             [core_plan.StepTestCase(xctest_id=test_case) for test_case in test_cases]
         )
     except ValueError as e:
-        raise RequestValidationError("Invalid test case path") from e
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ["body", "test_cases"],
+                    "msg": "Invalid test case path",
+                    "type": "value_error",
+                }
+            ]
+        ) from e
