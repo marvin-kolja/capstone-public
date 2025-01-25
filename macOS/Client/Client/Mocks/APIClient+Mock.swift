@@ -32,6 +32,35 @@ class MockAPIClient: APIClientProtocol {
         return [Components.Schemas.BuildPublic.mock]
     }
     
+    func startBuild(projectId: String, data: Components.Schemas.StartBuildRequest) async throws -> Components.Schemas.BuildPublic {
+        try? await simulateWork()
+        var build_not_running = Components.Schemas.BuildPublic.mock
+        build_not_running.status = .pending
+        return build_not_running
+    }
+    
+    func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, any Error> {
+        try? await simulateWork()
+        return AsyncThrowingStream { continuation in
+            Task {
+                try? await simulateWork()
+                
+                var build_running = Components.Schemas.BuildPublic.mock
+                build_running.status = .running
+                continuation.yield(build_running)
+                
+                try? await simulateWork()
+                
+                var build_success = Components.Schemas.BuildPublic.mock
+                build_success.status = .success
+                // TODO: add xctestrun data
+                continuation.yield(build_success)
+                
+                continuation.finish()
+            }
+        }
+    }
+    
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
         try? await simulateWork()
         return [Components.Schemas.DeviceWithStatus.mock]

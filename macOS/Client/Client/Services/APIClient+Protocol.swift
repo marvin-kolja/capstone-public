@@ -11,6 +11,8 @@ protocol APIClientProtocol {
     func addProject(data: Components.Schemas.XcProjectCreate) async throws -> Components.Schemas.XcProjectPublic
     
     func listBuilds(projectId: String) async throws -> [Components.Schemas.BuildPublic]
+    func startBuild(projectId: String, data: Components.Schemas.StartBuildRequest) async throws -> Components.Schemas.BuildPublic
+    func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, Error>
     
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus]
 }

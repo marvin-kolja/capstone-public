@@ -175,6 +175,69 @@ class APIClient: APIClientProtocol {
         }
     }
     
+    func startBuild(projectId: String, data: Components.Schemas.StartBuildRequest) async throws -> Components.Schemas.BuildPublic {
+        try await handleRequestError {
+            let result = try await client.projectsStartBuild(.init(path: .init(projectId: projectId), body: .json(data)))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+            
+    func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, Error> {
+        try await handleRequestError {
+            let result = try await client.projectsStreamBuildUpdates(.init(path: .init(projectId: projectId, buildId: buildId)))
+            
+            switch result {
+            case .ok(let okResponse):
+                let stream = try okResponse.body.textEventStream.asDecodedServerSentEventsWithJSONData(
+                    of: Components.Schemas.BuildPublic.self
+                )
+                return AsyncThrowingStream { continuation in
+                    let task = Task {
+                        do {
+                            logger.debug("Listening for build updates")
+                            for try await build in stream {
+                                logger.debug("Got new build \(build.data?.id ?? "is nil")")
+                                if let build = build.data {
+                                    continuation.yield(build)
+                                }
+                            }
+                            continuation.finish()
+                        } catch {
+                            continuation.finish(throwing: error)
+                        }
+                    }
+                    
+                    continuation.onTermination = { _ in
+                        task.cancel()
+                    }
+                }
+                
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
         try await handleRequestError {
             let result = try await client.devicesListDevices()
