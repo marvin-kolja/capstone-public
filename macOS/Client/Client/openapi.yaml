@@ -1686,19 +1686,19 @@ paths:
           description: Successful Response
         '404':
           content:
-            text/event-stream:
+            application/json:
               schema:
                 $ref: '#/components/schemas/HTTPExceptionContent'
           description: Not Found
         '422':
           content:
-            text/event-stream:
+            application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Unprocessable Content
         '500':
           content:
-            text/event-stream:
+            application/json:
               schema:
                 $ref: '#/components/schemas/HTTPExceptionContent'
           description: Internal Server Error
@@ -2288,8 +2288,9 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema: {}
+            text/event-stream:
+              schema:
+                type: string
           description: Successful Response
         '400':
           content:
