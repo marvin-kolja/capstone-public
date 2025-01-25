@@ -483,7 +483,9 @@ async def listen_to_execution_step_updates(
             if update.session_id != test_session_id:
                 continue  # Skip updates for other test sessions
 
-            yield ExecutionStepPublic.model_validate(update).model_dump_json() + "\n\n"
+            yield "data: " + ExecutionStepPublic.model_validate(
+                update
+            ).model_dump_json() + "\n\n"
 
 
 def process_trace_results_job_id(*, test_session_id: uuid.UUID) -> str:

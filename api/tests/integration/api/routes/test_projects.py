@@ -479,7 +479,9 @@ async def test_stream_build_updates_not_found(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_stream_build_updates(db, async_client: AsyncClient, new_db_fake_build):
+async def test_stream_build_updates(
+    db, async_client: AsyncClient, new_db_fake_build, new_db_fake_xctestrun
+):
     """
     GIVEN: A matching project and build in the database
 
@@ -495,6 +497,7 @@ async def test_stream_build_updates(db, async_client: AsyncClient, new_db_fake_b
     async def simulate_update():
         await asyncio.sleep(0.1)
         new_db_fake_build.status = "success"
+        new_db_fake_build.xctestrun = new_db_fake_xctestrun
         db.add(new_db_fake_build)
         db.commit()
 
@@ -513,8 +516,10 @@ async def test_stream_build_updates(db, async_client: AsyncClient, new_db_fake_b
 
     for index, line in enumerate(lines):
         if index == 0:
-            assert BuildPublic.model_validate_json(line).status == "pending"
+            json_string = line.split("data: ")[1]
+            assert BuildPublic.model_validate_json(json_string).status == "pending"
         elif index == 1:
-            assert BuildPublic.model_validate_json(line).status == "success"
+            json_string = line.split("data: ")[1]
+            assert BuildPublic.model_validate_json(json_string).status == "success"
         else:
             assert line == ""

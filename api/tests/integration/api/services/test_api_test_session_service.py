@@ -205,9 +205,10 @@ async def test_listen_to_execution_step_updates(
     ):
         update_count += 1
 
-        # event is a json string and ends with two newlines
+        # event is a json string and ends with two newlines and starts with "data: "
         assert event.endswith("\n\n")
-        json_string = event[:-2]
+        assert event.startswith("data: "), event
+        json_string = event[:-2].split("data: ")[1]
         assert (
             ExecutionStepPublic.model_validate_json(json_string).id
             == new_db_fake_execution_step.id

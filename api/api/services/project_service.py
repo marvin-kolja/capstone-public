@@ -362,20 +362,28 @@ async def listen_to_build_updates(
     )
 
     async for update in listener.listen():
-        if update is None:
-            if await request.is_disconnected():
-                logger.debug(f"Request disconnected, stopping listener")
+        with Session(engine) as session:
+            if update is None:
+                if await request.is_disconnected():
+                    logger.debug(f"Request disconnected, stopping listener")
+                    listener.stop()
+                continue
+
+            if update.id != db_build.id:
+                continue  # Skip updates for other builds
+
+            build = read_build(
+                session=session, build_id=update.id, project_id=update.project_id
+            )
+            session.refresh(build)  # Refresh the build to get the latest data
+
+            yield "data: " + BuildPublic.model_validate(
+                build
+            ).model_dump_json() + "\n\n"
+
+            if update.status == "success" or update.status == "failure":
+                logger.debug(f"Build '{update.id}' finished, stopping listener")
                 listener.stop()
-            continue
-
-        if update.id != db_build.id:
-            continue  # Skip updates for other builds
-
-        yield BuildPublic.model_validate(update).model_dump_json() + "\n\n"
-
-        if update.status == "success" or update.status == "failure":
-            logger.debug(f"Build '{update.id}' finished, stopping listener")
-            listener.stop()
 
 
 async def list_available_tests(*, db_build: Build) -> list[str]:

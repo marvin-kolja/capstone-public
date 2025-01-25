@@ -191,6 +191,7 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
             scheme="Another Scheme",
             configuration="Another Configuration",
             test_plan="Another Test Plan",
+            xctestrun=None,
         )
         db.add(another_build)
         db.commit()
@@ -216,9 +217,10 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
     ):
         update_count += 1
 
-        # event is a json string and ends with two newlines
+        # event is a json string and ends with two newlines and starts with "data: "
         assert event.endswith("\n\n")
-        json_string = event[:-2]
+        assert event.startswith("data: ")
+        json_string = event[:-2].split("data: ")[1]
         assert BuildPublic.model_validate_json(json_string).id == new_db_fake_build.id
 
     await task
