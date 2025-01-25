@@ -44,8 +44,7 @@ struct BuildDetailView: View {
                             return
                         }
                         let url = URL(fileURLWithPath: path)
-                        let parentDir = url.deletingLastPathComponent()
-                        NSWorkspace.shared.open(parentDir)
+                        url.showInFinder()
                     }) {
                         Text(xctestrunPath ?? "-")
                             .lineLimit(1)
