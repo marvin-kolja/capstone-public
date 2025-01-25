@@ -36,6 +36,9 @@ class BuildsStore: ProjectContext {
     @Published var loadingBuilds = false
     @Published var errorLoadingBuilds: AppError?
     
+    @Published var addingBuild = false
+    @Published var errorAddingBuild: AppError?
+    
     func loadBuilds() async {
         guard !loadingBuilds else {
             return
@@ -59,6 +62,28 @@ class BuildsStore: ProjectContext {
             errorLoadingBuilds = appError
         } catch {
             errorLoadingBuilds = AppError(type: LoadBuildsError.unexpected)
+        }
+    }
+    
+    func addBuild(data: Components.Schemas.StartBuildRequest) async {
+        guard !addingBuild else {
+            return
+        }
+        
+        addingBuild = true
+        defer { addingBuild = false}
+        
+        do {
+            let build = try await BuildStore.startBuild(
+                projectId: projectId,
+                data: data,
+                apiClient: apiClient
+            )
+            createBuildStores(builds: [build])
+            
+            let buildStore = buildStores.first { $0.build.id == build.id }
+        } catch {
+            errorAddingBuild = (error as! AppError)
         }
     }
     

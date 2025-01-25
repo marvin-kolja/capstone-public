@@ -36,9 +36,18 @@ struct BuildsView: View {
             if let buildStore = selectedBuild {
                 BuildDetailView(buildStore: buildStore)
             } else {
-                EmptyView()
+                Button("Add Build", action: { isAddingItem = true })
             }
-        }).task { await buildsStore.loadBuilds() }
+        })
+        .task { await buildsStore.loadBuilds() }
+        .toolbar {
+            Button(action: { isAddingItem = true }) {
+                Image(systemName: "plus")
+            }
+        }
+        .sheet(isPresented: $isAddingItem) {
+            AddBuildView()
+        }
     }
 }
 
