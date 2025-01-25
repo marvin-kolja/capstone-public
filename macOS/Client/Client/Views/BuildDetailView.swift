@@ -86,7 +86,8 @@ struct BuildDetailView: View {
             Spacer()
         }
         .padding()
-        .task { await buildStore.streamUpdates() }
+        .onAppear { Task { await buildStore.streamUpdates() } }
+        .id(buildStore.build.id)
     }
 }
 
