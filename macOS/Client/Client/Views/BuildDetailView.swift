@@ -39,20 +39,8 @@ struct BuildDetailView: View {
                     Text("Xctestrun Path")
                         .bold()
                     let xctestrunPath = xctestrun?.path
-                    Button(action: {
-                        guard let path = xctestrunPath else {
-                            return
-                        }
-                        let url = URL(fileURLWithPath: path)
-                        url.showInFinder()
-                    }) {
-                        Text(xctestrunPath ?? "-")
-                            .lineLimit(1)
-                            .truncationMode(.head)
-                    }
-                    .buttonStyle(.link)
-                    .disabled(xctestrunPath == nil)
-
+                    LocalFileLinkButton(path: xctestrunPath)
+                        .disabled(xctestrunPath == nil)
                 }
                 GridRow {
                     Text("Test Configurations")
