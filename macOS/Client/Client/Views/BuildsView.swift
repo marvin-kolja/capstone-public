@@ -10,25 +10,28 @@ import SwiftUI
 struct BuildsView: View {
     @EnvironmentObject var buildsStore: BuildsStore
     
-    @State private var selection: Components.Schemas.BuildPublic?
-    
     var body: some View {
         TwoColumnView(content: {
-            LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.builds.isEmpty, refresh: {
+            LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.buildStores.isEmpty, refresh: {
                 Task {
                     await buildsStore.loadBuilds()
                 }
             }) {
-                List(buildsStore.builds, id: \.id, selection: $selection) { build in
-                    Text(build.id)
-                        .tag(build)
+                ZStack {
+                    List(buildsStore.buildStores, id: \.build.id, selection: $buildsStore.selectedBuild) { buildStore in
+                        Text(buildStore.build.id)
+                            .tag(buildStore)
+                    }
+                    .listStyle(.sidebar)
+                    .scrollContentBackground(.hidden)
+                    if (buildsStore.buildStores.isEmpty) {
+                        Text("No Builds")
+                    }
                 }
-                .listStyle(.sidebar)
-                .scrollContentBackground(.hidden)
             }
         }, detail: {
-            if let build = selection {
-                BuildDetailView(build: build)
+            if let buildStore = buildsStore.selectedBuild {
+                BuildDetailView(build: buildStore.build)
             } else {
                 EmptyView()
             }

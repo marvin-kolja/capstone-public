@@ -31,7 +31,9 @@ enum LoadBuildsError: LocalizedError {
 }
 
 class BuildsStore: ProjectContext {
-    @Published var builds: [Components.Schemas.BuildPublic] = []
+    @Published var buildStores: [BuildStore] = []
+    
+    @Published var selectedBuild: BuildStore?
     
     @Published var loadingBuilds = false
     @Published var errorLoadingBuilds: AppError?
@@ -45,7 +47,8 @@ class BuildsStore: ProjectContext {
         defer { loadingBuilds = false }
         
         do {
-            builds = try await apiClient.listBuilds(projectId: projectId)
+            let builds = try await apiClient.listBuilds(projectId: projectId)
+            createBuildStores(builds: builds)
         } catch let appError as AppError {
             if let apiError = appError.type as? APIError {
                 switch apiError {
@@ -58,6 +61,16 @@ class BuildsStore: ProjectContext {
             errorLoadingBuilds = appError
         } catch {
             errorLoadingBuilds = AppError(type: LoadBuildsError.unexpected)
+        }
+    }
+    
+    private func createBuildStores(builds: [Components.Schemas.BuildPublic]) {
+        for build in builds {
+            if let existing = buildStores.first(where: { $0.build.id == build.id }) {
+                existing.build = build
+            } else {
+                buildStores.append(BuildStore(projectId: projectId, apiClient: apiClient, build: build))
+            }
         }
     }
 }
