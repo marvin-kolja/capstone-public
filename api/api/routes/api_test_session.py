@@ -136,11 +136,12 @@ async def cancel_test_session(
 
 @router.get(
     "/{test_session_id}/execution-step-stream",
+    response_class=SSEStreamingResponse,
     responses=build_common_http_exception_responses([400, 404, 422, 500]),
 )
 async def stream_execution_step_updates(
     *, session: SessionDep, test_session_id: uuid.UUID, request: Request
-) -> SSEStreamingResponse:
+) -> StreamingResponse:
     """
     Stream updates of the execution steps of a test session. Can return any execution step when it is updated.
     """

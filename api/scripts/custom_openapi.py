@@ -78,7 +78,29 @@ def transform_anyof(schema):
     return schema
 
 
+def remove_text_event_stream_from_json_response(schema):
+    """
+    Removes the 'text/event-stream' content type from responses that contain 'application/json' and 'text/event-stream'.
+    """
+    paths = schema["paths"]
+
+    for path in paths.values():
+        for method in path.values():
+            for response in method["responses"].values():
+                if (
+                    "application/json" in response["content"]
+                    and "text/event-stream" in response["content"]
+                ):
+                    response["content"].pop("text/event-stream")
+
+    return schema
+
+
 if __name__ == "__main__":
     openapi_schema = app.openapi()
 
-    print(yaml.dump(transform_anyof(openapi_schema)))
+    modified_schema = remove_text_event_stream_from_json_response(
+        transform_anyof(openapi_schema)
+    )
+
+    print(yaml.dump(modified_schema))

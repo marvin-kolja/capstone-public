@@ -64,8 +64,19 @@ def build_common_http_exception_responses(status_codes: list[int]) -> dict[int, 
     :return: Dictionary with status codes as keys and HTTPExceptionBody as values.
     """
     responses = {
-        status_code: {"model": HTTPExceptionContent} for status_code in status_codes
+        status_code: {
+            "model": HTTPExceptionContent,
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/HTTPExceptionContent"},
+                }
+            },
+        }
+        for status_code in status_codes
     }
     if 422 in status_codes:
         responses[422]["model"] = HTTPValidationError
+        responses[422]["content"]["application/json"]["schema"] = {
+            "$ref": "#/components/schemas/HTTPValidationError",
+        }
     return responses
