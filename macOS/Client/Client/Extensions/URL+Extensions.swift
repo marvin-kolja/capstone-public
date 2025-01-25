@@ -9,14 +9,10 @@ import Foundation
 import SwiftUI
 
 extension URL {
-    /// Open the url path if it's a directory or file on the systems.
+    /// Open the path and select the folder or file
     ///
-    /// If it's a file it will open the parent dir and select the file.
+    /// If the path does not exist it will do nothing
     func showInFinder() {
-        if self.hasDirectoryPath {
-            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: self.path)
-        } else {
-            NSWorkspace.shared.activateFileViewerSelecting([self])
-        }
+        NSWorkspace.shared.activateFileViewerSelecting([self])
     }
 }
