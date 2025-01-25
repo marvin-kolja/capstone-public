@@ -80,8 +80,6 @@ class BuildsStore: ProjectContext {
                 apiClient: apiClient
             )
             createBuildStores(builds: [build])
-            
-            let buildStore = buildStores.first { $0.build.id == build.id }
         } catch {
             errorAddingBuild = (error as! AppError)
         }
