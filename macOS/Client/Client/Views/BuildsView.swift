@@ -31,7 +31,7 @@ struct BuildsView: View {
             }
         }, detail: {
             if let buildStore = buildsStore.selectedBuild {
-                BuildDetailView(build: buildStore.build)
+                BuildDetailView(buildStore: buildStore)
             } else {
                 EmptyView()
             }
