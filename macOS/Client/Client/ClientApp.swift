@@ -12,6 +12,7 @@ import SwiftData
 struct ClientApp: App {
     @StateObject private var projectsStore: ProjectsStore
     @StateObject private var serverStatusStore: ServerStatusStore
+    @StateObject private var devicesStore: DevicesStore
     
     private var apiClient: APIClientProtocol
     
@@ -26,6 +27,7 @@ struct ClientApp: App {
             self.apiClient = apiClient
             _projectsStore = StateObject(wrappedValue: ProjectsStore(apiClient: apiClient))
             _serverStatusStore = StateObject(wrappedValue: ServerStatusStore(apiClient: apiClient))
+            _devicesStore = StateObject(wrappedValue: DevicesStore(apiClient: apiClient))
         } catch {
             fatalError("Failed to intiialize API Client: \(error)")
         }
@@ -53,6 +55,7 @@ struct ClientApp: App {
             if let project = project {
                 ProjectView(project: project, apiClient: apiClient)
                     .environmentObject(serverStatusStore)
+                    .environmentObject(devicesStore)
                     .frame(minWidth: 800, minHeight: 500)
                     .navigationTitle(project.name)
                     .onAppear(perform: {

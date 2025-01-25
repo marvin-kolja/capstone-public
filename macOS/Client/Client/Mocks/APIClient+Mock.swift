@@ -31,4 +31,9 @@ class MockAPIClient: APIClientProtocol {
         try? await simulateWork()
         return [Components.Schemas.BuildPublic.mock]
     }
+    
+    func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
+        try? await simulateWork()
+        return [Components.Schemas.DeviceWithStatus.mock]
+    }
 }

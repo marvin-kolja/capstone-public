@@ -19,6 +19,7 @@ enum Selection: String, CaseIterable, Identifiable {
 
 struct ProjectView: View {
     @EnvironmentObject var serverStatusStore: ServerStatusStore
+    @EnvironmentObject private var devicesStore: DevicesStore
 
     @StateObject private var projectStore: ProjectStore
     @StateObject private var buildsStore: BuildsStore
@@ -55,6 +56,7 @@ struct ProjectView: View {
             .environmentObject(projectStore)
             .environmentObject(buildsStore)
         }
+        .task { await devicesStore.loadDevices() }
         .toolbar {
             ToolbarItem(placement: .status) {
                 ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {

@@ -174,4 +174,19 @@ class APIClient: APIClientProtocol {
             }
         }
     }
+    
+    func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
+        try await handleRequestError {
+            let result = try await client.devicesListDevices()
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
 }
