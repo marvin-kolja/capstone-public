@@ -9,7 +9,10 @@ import SwiftUI
 
 struct BuildsView: View {
     @EnvironmentObject var buildsStore: BuildsStore
-    
+
+    @State private var isAddingItem: Bool = false
+    @State private var selectedBuild: BuildStore?
+
     var body: some View {
         TwoColumnView(content: {
             LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.buildStores.isEmpty, refresh: {
@@ -18,7 +21,7 @@ struct BuildsView: View {
                 }
             }) {
                 ZStack {
-                    List(buildsStore.buildStores, id: \.build.id, selection: $buildsStore.selectedBuild) { buildStore in
+                    List(buildsStore.buildStores, id: \.build.id, selection: $selectedBuild) { buildStore in
                         Text(buildStore.build.id)
                             .tag(buildStore)
                     }
@@ -30,7 +33,7 @@ struct BuildsView: View {
                 }
             }
         }, detail: {
-            if let buildStore = buildsStore.selectedBuild {
+            if let buildStore = selectedBuild {
                 BuildDetailView(buildStore: buildStore)
             } else {
                 EmptyView()

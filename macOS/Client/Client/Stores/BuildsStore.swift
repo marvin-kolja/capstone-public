@@ -33,8 +33,6 @@ enum LoadBuildsError: LocalizedError {
 class BuildsStore: ProjectContext {
     @Published var buildStores: [BuildStore] = []
     
-    @Published var selectedBuild: BuildStore?
-    
     @Published var loadingBuilds = false
     @Published var errorLoadingBuilds: AppError?
     
