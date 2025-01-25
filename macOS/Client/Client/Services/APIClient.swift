@@ -210,9 +210,11 @@ class APIClient: APIClientProtocol {
                         do {
                             logger.debug("Listening for build updates")
                             for try await build in stream {
-                                logger.debug("Got new build \(build.data?.id ?? "is nil")")
                                 if let build = build.data {
+                                    logger.debug("Got new build: \(build.id)")
                                     continuation.yield(build)
+                                } else {
+                                    logger.debug("Got nil build")
                                 }
                             }
                             continuation.finish()
