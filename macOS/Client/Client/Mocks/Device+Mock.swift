@@ -12,7 +12,7 @@ extension Components.Schemas.IDeviceStatus {
 extension Components.Schemas.DeviceWithStatus {
     static let mock = Components.Schemas.DeviceWithStatus(
         buildVersion: "21F90",
-        connected: false,
+        connected: true,
         deviceClass: "iPhone",
         deviceName: "iPhone",
         id: "00000000-0000000000000000",
