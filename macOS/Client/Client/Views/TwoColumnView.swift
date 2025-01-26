@@ -23,7 +23,7 @@ struct TwoColumnView<Content: View, Detail: View>: View {
                     }
                     Spacer()
                 }
-                .frame(minWidth: 200, maxWidth: 200)
+                .frame(minWidth: 200, maxWidth: 400)
                 VStack{
                     Spacer()
                     HStack{
