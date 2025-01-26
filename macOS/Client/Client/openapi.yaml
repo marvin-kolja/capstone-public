@@ -130,11 +130,7 @@ components:
           title: Plan Step Order
           type: integer
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
-          type: string
+          $ref: '#/components/schemas/RecordingStartStrategy'
         reinstall_app:
           title: Reinstall App
           type: boolean
@@ -313,6 +309,24 @@ components:
       - console_text
       title: ProcessStdoutErr
       type: object
+    RecordingStartStrategy:
+      enum:
+      - launch
+      - attach
+      title: RecordingStartStrategy
+      type: string
+    RecordingStrategy:
+      enum:
+      - per_step
+      - per_test
+      title: RecordingStrategy
+      type: string
+    RepetitionStrategy:
+      enum:
+      - entire_suite
+      - per_step
+      title: RepetitionStrategy
+      type: string
     SessionTestPlanCreate:
       properties:
         end_on_failure:
@@ -334,22 +348,16 @@ components:
           title: Project Id
           type: string
         recording_start_strategy:
+          $ref: '#/components/schemas/RecordingStartStrategy'
           default: launch
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
           type:
-          - string
+          - object
           - 'null'
         recording_strategy:
+          $ref: '#/components/schemas/RecordingStrategy'
           default: per_test
-          enum:
-          - per_step
-          - per_test
-          title: Recording Strategy
           type:
-          - string
+          - object
           - 'null'
         reinstall_app:
           default: false
@@ -358,11 +366,7 @@ components:
           - boolean
           - 'null'
         repetition_strategy:
-          enum:
-          - entire_suite
-          - per_step
-          title: Repetition Strategy
-          type: string
+          $ref: '#/components/schemas/RepetitionStrategy'
         repetitions:
           minimum: 1.0
           title: Repetitions
@@ -401,26 +405,14 @@ components:
           title: Project Id
           type: string
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
-          type: string
+          $ref: '#/components/schemas/RecordingStartStrategy'
         recording_strategy:
-          enum:
-          - per_step
-          - per_test
-          title: Recording Strategy
-          type: string
+          $ref: '#/components/schemas/RecordingStrategy'
         reinstall_app:
           title: Reinstall App
           type: boolean
         repetition_strategy:
-          enum:
-          - entire_suite
-          - per_step
-          title: Repetition Strategy
-          type: string
+          $ref: '#/components/schemas/RepetitionStrategy'
         repetitions:
           minimum: 1.0
           title: Repetitions
@@ -461,12 +453,9 @@ components:
           title: Name
           type: string
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
+          $ref: '#/components/schemas/RecordingStartStrategy'
           type:
-          - string
+          - object
           - 'null'
         reinstall_app:
           title: Reinstall App
@@ -511,12 +500,9 @@ components:
           title: Order
           type: integer
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
+          $ref: '#/components/schemas/RecordingStartStrategy'
           type:
-          - string
+          - object
           - 'null'
         reinstall_app:
           title: Reinstall App
@@ -558,12 +544,9 @@ components:
           - string
           - 'null'
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
+          $ref: '#/components/schemas/RecordingStartStrategy'
           type:
-          - string
+          - object
           - 'null'
         reinstall_app:
           title: Reinstall App
@@ -606,20 +589,14 @@ components:
           - string
           - 'null'
         recording_start_strategy:
-          enum:
-          - launch
-          - attach
-          title: Recording Start Strategy
+          $ref: '#/components/schemas/RecordingStartStrategy'
           type:
-          - string
+          - object
           - 'null'
         recording_strategy:
-          enum:
-          - per_step
-          - per_test
-          title: Recording Strategy
+          $ref: '#/components/schemas/RecordingStrategy'
           type:
-          - string
+          - object
           - 'null'
         reinstall_app:
           title: Reinstall App
@@ -627,12 +604,9 @@ components:
           - boolean
           - 'null'
         repetition_strategy:
-          enum:
-          - entire_suite
-          - per_step
-          title: Repetition Strategy
+          $ref: '#/components/schemas/RepetitionStrategy'
           type:
-          - string
+          - object
           - 'null'
         repetitions:
           title: Repetitions
