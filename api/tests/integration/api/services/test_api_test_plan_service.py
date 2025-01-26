@@ -14,6 +14,7 @@ from api.models import (
     SessionTestPlanUpdate,
     SessionTestPlanStepCreate,
     SessionTestPlanStepUpdate,
+    RepetitionStrategy,
 )
 
 # noinspection PyProtectedMember
@@ -79,7 +80,7 @@ def test_create_test_plan(db, new_db_project):
         name="test plan",
         xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
         repetitions=1,
-        repetition_strategy="entire_suite",
+        repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu],
         project_id=new_db_project.id,
     )

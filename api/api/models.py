@@ -1,6 +1,7 @@
 import pathlib
 import uuid
 import datetime
+from enum import StrEnum
 from typing import Literal, Optional, Annotated, Any
 
 from core.device.i_device import IDeviceStatus
@@ -72,9 +73,55 @@ class DeviceWithStatus(DeviceBase):
 ######################################
 
 
-RepetitionStrategy = Literal["entire_suite", "per_step"]
-RecordingStrategy = Literal["per_step", "per_test"]
-RecordingStartStrategy = Literal["launch", "attach"]
+class RepetitionStrategy(StrEnum):
+    entire_suite = "entire_suite"
+    per_step = "per_step"
+
+    @classmethod
+    def from_string(cls, value: str) -> "RepetitionStrategy":
+        if value == "entire_suite":
+            return RepetitionStrategy.entire_suite
+        elif value == "per_step":
+            return RepetitionStrategy.per_step
+        else:
+            raise ValueError(f"Invalid value for RepetitionStrategy: {value}")
+
+    def to_literal(self) -> Literal["entire_suite", "per_step"]:
+        return str(self.value)
+
+
+class RecordingStrategy(StrEnum):
+    per_step = "per_step"
+    per_test = "per_test"
+
+    @classmethod
+    def from_string(cls, value: str) -> "RecordingStrategy":
+        if value == "per_step":
+            return RecordingStrategy.per_step
+        elif value == "per_test":
+            return RecordingStrategy.per_test
+        else:
+            raise ValueError(f"Invalid value for RecordingStrategy: {value}")
+
+    def to_literal(self) -> Literal["per_step", "per_test"]:
+        return str(self.value)
+
+
+class RecordingStartStrategy(StrEnum):
+    launch = "launch"
+    attach = "attach"
+
+    @classmethod
+    def from_string(cls, value: str) -> "RecordingStartStrategy":
+        if value == "launch":
+            return RecordingStartStrategy.launch
+        elif value == "attach":
+            return RecordingStartStrategy.attach
+        else:
+            raise ValueError(f"Invalid value for RecordingStartStrategy: {value}")
+
+    def to_literal(self) -> Literal["launch", "attach"]:
+        return str(self.value)
 
 
 class SessionTestPlanStepBase(SQLModel):
@@ -83,7 +130,7 @@ class SessionTestPlanStepBase(SQLModel):
     test_cases: list[str] = SQLField(min_length=1, sa_column=Column(JSON))
     metrics: list[Metric] | None = SQLField(sa_column=Column(JSON), default=None)
     recording_start_strategy: RecordingStartStrategy | None = SQLField(
-        sa_type=String, default=None
+        sa_column=Column(Enum, nullable=True), default=None
     )
     reinstall_app: bool | None = SQLField(default=None)
 
@@ -124,13 +171,16 @@ class SessionTestPlanBase(SQLModel):
     xc_test_plan_name: str
     end_on_failure: bool | None = SQLField(default=False)
     repetitions: int = SQLField(ge=1)
-    repetition_strategy: RepetitionStrategy = SQLField(sa_type=String)
+    repetition_strategy: RepetitionStrategy = SQLField(
+        sa_column=Column(Enum(RepetitionStrategy), nullable=False)
+    )
     metrics: list[Metric] = SQLField(sa_column=Column(JSON))
     recording_strategy: RecordingStrategy | None = SQLField(
-        sa_type=String, default="per_test"
+        sa_column=Column(Enum(RecordingStrategy)), default=RecordingStrategy.per_test
     )
     recording_start_strategy: RecordingStartStrategy | None = SQLField(
-        sa_type=String, default="launch"
+        sa_column=Column(Enum(RecordingStartStrategy)),
+        default=RecordingStartStrategy.launch,
     )
     reinstall_app: bool | None = SQLField(default=False)
 
@@ -414,7 +464,9 @@ class ExecutionStepBase(SQLModel):
     plan_repetition: int
     plan_step_order: int
     step_repetition: int
-    recording_start_strategy: RecordingStartStrategy = SQLField(sa_type=String)
+    recording_start_strategy: RecordingStartStrategy = SQLField(
+        sa_column=Column(Enum(RecordingStartStrategy), nullable=False)
+    )
     reinstall_app: bool
     metrics: list[Metric] = SQLField(sa_column=Column(JSON))
     test_cases: list[str] = SQLField(min_length=1, sa_column=Column(JSON))

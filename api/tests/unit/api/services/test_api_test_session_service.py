@@ -15,6 +15,9 @@ from api.models import (
     SessionTestPlanStepPublic,
     ExecutionStep,
     TraceResult,
+    RecordingStartStrategy,
+    RepetitionStrategy,
+    RecordingStrategy,
 )
 
 # noinspection PyProtectedMember
@@ -44,7 +47,7 @@ def fake_public_test_plan_step():
         id=uuid.uuid4(),
         name="TestStep1",
         order=0,
-        recording_start_strategy="launch",
+        recording_start_strategy=RecordingStartStrategy.launch,
         reinstall_app=False,
         metrics=[Metric.cpu],
         repetitions=1,
@@ -59,15 +62,15 @@ def fake_public_test_plan(fake_public_test_plan_step):
         id=uuid.uuid4(),
         project_id=uuid.uuid4(),
         name="SampleTestPlan",
-        recording_start_strategy="launch",
+        recording_start_strategy=RecordingStartStrategy.launch,
         reinstall_app=False,
         end_on_failure=True,
         repetitions=2,
-        repetition_strategy="entire_suite",
+        repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu, Metric.memory],
         steps=[fake_public_test_plan_step],
         xc_test_plan_name="SampleTestPlan",
-        recording_strategy="per_step",
+        recording_strategy=RecordingStrategy.per_step,
     )
 
 

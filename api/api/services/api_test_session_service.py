@@ -36,6 +36,7 @@ from api.models import (
     CoreAnimationDB,
     TraceResultDataBase,
     TraceResult,
+    RecordingStartStrategy,
 )
 from api.services.orm_update_listener import ModelUpdateListener
 
@@ -153,7 +154,9 @@ def construct_db_execution_step_model(
     """
 
     return ExecutionStep(
-        recording_start_strategy=core_execution_step.recording_start_strategy,
+        recording_start_strategy=RecordingStartStrategy.from_string(
+            core_execution_step.recording_start_strategy
+        ),
         step_repetition=core_execution_step.step_repetition,
         plan_step_order=core_execution_step.plan_step_order,
         metrics=core_execution_step.metrics,
@@ -400,11 +403,11 @@ def _parse_api_test_plan_to_core_test_plan(
     """
     return core_plan.SessionTestPlan(
         name=public_plan.name,
-        recording_start_strategy=public_plan.recording_start_strategy,
+        recording_start_strategy=public_plan.recording_start_strategy.to_literal(),
         reinstall_app=public_plan.reinstall_app,
         end_on_failure=public_plan.end_on_failure,
         repetitions=public_plan.repetitions,
-        repetition_strategy=public_plan.repetition_strategy,
+        repetition_strategy=public_plan.repetition_strategy.to_literal(),
         metrics=public_plan.metrics,
         xctestrun_config=core_plan.XctestrunConfig(
             path=xctestrun_path,
@@ -414,7 +417,7 @@ def _parse_api_test_plan_to_core_test_plan(
             core_plan.PlanStep(
                 name=step.name,
                 order=step.order,
-                recording_start_strategy=step.recording_start_strategy,
+                recording_start_strategy=step.recording_start_strategy.to_literal(),
                 reinstall_app=step.reinstall_app,
                 metrics=step.metrics,
                 repetitions=step.repetitions,
