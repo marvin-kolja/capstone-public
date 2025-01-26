@@ -65,4 +65,34 @@ class MockAPIClient: APIClientProtocol {
         try? await simulateWork()
         return [Components.Schemas.DeviceWithStatus.mock]
     }
+    
+    func listTestPlans() async throws -> [Components.Schemas.SessionTestPlanPublic] {
+        try? await simulateWork()
+        return [Components.Schemas.SessionTestPlanPublic.mock]
+    }
+    
+    func createTestPlan(data: Components.Schemas.SessionTestPlanCreate) async throws -> Components.Schemas.SessionTestPlanPublic {
+        try? await simulateWork()
+        return Components.Schemas.SessionTestPlanPublic.mock
+    }
+    
+    func updateTestPlan(testPlanId: String, data: Components.Schemas.SessionTestPlanUpdate) async throws -> Components.Schemas.SessionTestPlanPublic {
+        try? await simulateWork()
+        return Components.Schemas.SessionTestPlanPublic.mock
+    }
+    
+    func createTestPlanStep(testPlanId: String, data: Components.Schemas.SessionTestPlanStepCreate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
+        try? await simulateWork()
+        return Components.Schemas.SessionTestPlanStepPublic.mock
+    }
+    
+    func updateTestPlanStep(testPlanId: String, stepId: String, data: Components.Schemas.SessionTestPlanStepUpdate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
+        try? await simulateWork()
+        return Components.Schemas.SessionTestPlanStepPublic.mock
+    }
+    
+    func reorderTestPlanSteps(testPlanId: String, ids: [String]) async throws {
+        try? await simulateWork()
+        return
+    }
 }

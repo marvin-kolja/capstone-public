@@ -195,7 +195,7 @@ class APIClient: APIClientProtocol {
             }
         }
     }
-            
+    
     func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, Error> {
         try await handleRequestError {
             let result = try await client.projectsStreamBuildUpdates(.init(path: .init(projectId: projectId, buildId: buildId)))
@@ -249,6 +249,118 @@ class APIClient: APIClientProtocol {
                 return try okResponse.body.json
             case .internalServerError:
                 throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func listTestPlans() async throws -> [Components.Schemas.SessionTestPlanPublic] {
+        try await handleRequestError {
+            let result = try await client.testPlansListTestPlans()
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func createTestPlan(data: Components.Schemas.SessionTestPlanCreate) async throws -> Components.Schemas.SessionTestPlanPublic {
+        try await handleRequestError {
+            let result = try await client.testPlansCreateTestPlan(body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .badRequest(let response):
+                throw APIError.serverError(statusCode: 400, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func updateTestPlan(testPlanId: String, data: Components.Schemas.SessionTestPlanUpdate) async throws -> Components.Schemas.SessionTestPlanPublic {
+        try await handleRequestError {
+            let result = try await client.testPlansUpdateTestPlan(path: .init(testPlanId: testPlanId), body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .badRequest(let response):
+                throw APIError.serverError(statusCode: 400, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func createTestPlanStep(testPlanId: String, data: Components.Schemas.SessionTestPlanStepCreate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
+        try await handleRequestError {
+            let result = try await client.testPlansCreateTestPlanStep(path: .init(testPlanId: testPlanId), body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func updateTestPlanStep(testPlanId: String, stepId: String, data: Components.Schemas.SessionTestPlanStepUpdate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
+        try await handleRequestError {
+            let result = try await client.testPlansUpdateTestPlanStep(path: .init(testPlanId: testPlanId, stepId: stepId), body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func reorderTestPlanSteps(testPlanId: String, ids: [String]) async throws {
+        try await handleRequestError {
+            let result = try await client.testPlansReorderTestPlanSteps(path: .init(testPlanId: testPlanId), body: .json(ids))
+            
+            switch result {
+            case .ok(let okResponse):
+                return // API returns just a status code and empty JSON
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
             case .undocumented(statusCode: let statusCode, _):
                 throw APIError.unknownStatus(statusCode: statusCode)
             }
