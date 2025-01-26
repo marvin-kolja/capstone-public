@@ -461,8 +461,33 @@ async def test_parse_xcresult_to_xc_test_result_model_exception():
         assert result is None
 
 
+@pytest.mark.parametrize(
+    "repetition_strategy",
+    [
+        RepetitionStrategy.entire_suite,
+        RepetitionStrategy.per_step,
+    ],
+)
+@pytest.mark.parametrize(
+    "recording_strategy",
+    [
+        RecordingStrategy.per_step,
+        RecordingStrategy.per_test,
+    ],
+)
+@pytest.mark.parametrize(
+    "recording_start_strategy",
+    [
+        RecordingStartStrategy.launch,
+        RecordingStartStrategy.attach,
+    ],
+)
 def test_parse_api_test_plan_to_core_test_plan(
-    fake_public_test_plan, fake_public_test_plan_step
+    fake_public_test_plan,
+    fake_public_test_plan_step,
+    repetition_strategy,
+    recording_strategy,
+    recording_start_strategy,
 ):
     """
     GIVEN: A fake public test plan
@@ -473,6 +498,11 @@ def test_parse_api_test_plan_to_core_test_plan(
     """
     xctestrun_path = "/path/to/xctestrun"
     test_configuration = "Debug"
+
+    fake_public_test_plan.repetition_strategy = repetition_strategy
+    fake_public_test_plan.recording_strategy = recording_strategy
+    fake_public_test_plan.recording_start_strategy = recording_start_strategy
+    fake_public_test_plan_step.recording_start_strategy = recording_start_strategy
 
     core_test_plan = _parse_api_test_plan_to_core_test_plan(
         public_plan=fake_public_test_plan,
@@ -486,6 +516,7 @@ def test_parse_api_test_plan_to_core_test_plan(
         core_test_plan.recording_start_strategy
         == fake_public_test_plan.recording_start_strategy
     )
+    assert core_test_plan.recording_strategy == fake_public_test_plan.recording_strategy
     assert core_test_plan.reinstall_app == fake_public_test_plan.reinstall_app
     assert core_test_plan.end_on_failure == fake_public_test_plan.end_on_failure
     assert core_test_plan.repetitions == fake_public_test_plan.repetitions
