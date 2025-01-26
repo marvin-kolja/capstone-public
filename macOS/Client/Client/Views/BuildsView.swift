@@ -22,7 +22,7 @@ struct BuildsView: View {
             }) {
                 ZStack {
                     List(buildsStore.buildStores, id: \.build.id, selection: $selectedBuild) { buildStore in
-                        Text(buildStore.build.id)
+                        Text(buildStore.build.userFriendlyName)
                             .tag(buildStore)
                     }
                     .listStyle(.sidebar)
