@@ -404,6 +404,7 @@ def _parse_api_test_plan_to_core_test_plan(
     return core_plan.SessionTestPlan(
         name=public_plan.name,
         recording_start_strategy=public_plan.recording_start_strategy.to_literal(),
+        recording_strategy=public_plan.recording_strategy.to_literal(),
         reinstall_app=public_plan.reinstall_app,
         end_on_failure=public_plan.end_on_failure,
         repetitions=public_plan.repetitions,
