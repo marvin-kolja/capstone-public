@@ -25,10 +25,10 @@ extension Components.Schemas.SessionTestPlanPublic {
         metrics: [Components.Schemas.Metric.cpu],
         name: "Mock Test Plan",
         projectId: Components.Schemas.XcProjectPublic.mock.id,
-        recordingStartStrategy: RecordingStartStrategyPayload.launch,
-        recordingStrategy: RecordingStrategyPayload.perTest,
+        recordingStartStrategy: Components.Schemas.RecordingStartStrategy.launch,
+        recordingStrategy: Components.Schemas.RecordingStrategy.perTest,
         reinstallApp: false,
-        repetitionStrategy: RepetitionStrategyPayload.entireSuite,
+        repetitionStrategy: Components.Schemas.RepetitionStrategy.entireSuite,
         repetitions: 1,
         steps: [Components.Schemas.SessionTestPlanStepPublic.mock],
         xcTestPlanName: Components.Schemas.BuildPublic.mock.testPlan
