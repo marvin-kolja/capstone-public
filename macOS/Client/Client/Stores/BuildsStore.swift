@@ -39,6 +39,10 @@ class BuildsStore: ProjectContext {
     @Published var addingBuild = false
     @Published var errorAddingBuild: AppError?
     
+    var uniqueXcTestPlans: [String] {
+        Array(Set(buildStores.map { $0.build.testPlan }))
+    }
+    
     func loadBuilds() async {
         guard !loadingBuilds else {
             return
