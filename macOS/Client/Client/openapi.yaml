@@ -336,6 +336,10 @@ components:
       type: string
     SessionTestPlanCreate:
       properties:
+        build_id:
+          format: uuid
+          title: Build Id
+          type: string
         end_on_failure:
           default: false
           title: End On Failure
@@ -378,20 +382,21 @@ components:
           minimum: 1.0
           title: Repetitions
           type: integer
-        xc_test_plan_name:
-          title: Xc Test Plan Name
-          type: string
       required:
       - name
-      - xc_test_plan_name
       - repetitions
       - repetition_strategy
       - metrics
       - project_id
+      - build_id
       title: SessionTestPlanCreate
       type: object
     SessionTestPlanPublic:
       properties:
+        build_id:
+          format: uuid
+          title: Build Id
+          type: string
         end_on_failure:
           title: End On Failure
           type: boolean
@@ -429,12 +434,8 @@ components:
             $ref: '#/components/schemas/SessionTestPlanStepPublic'
           title: Steps
           type: array
-        xc_test_plan_name:
-          title: Xc Test Plan Name
-          type: string
       required:
       - name
-      - xc_test_plan_name
       - end_on_failure
       - repetitions
       - repetition_strategy
@@ -445,6 +446,7 @@ components:
       - id
       - steps
       - project_id
+      - build_id
       title: SessionTestPlanPublic
       type: object
     SessionTestPlanStepCreate:
@@ -620,11 +622,6 @@ components:
           type:
           - integer
           - 'null'
-        xc_test_plan_name:
-          title: Xc Test Plan Name
-          type:
-          - string
-          - 'null'
       title: SessionTestPlanUpdate
       type: object
     StartBuildRequest:
@@ -711,10 +708,6 @@ components:
       type: string
     TestSessionCreate:
       properties:
-        build_id:
-          format: uuid
-          title: Build Id
-          type: string
         plan_id:
           format: uuid
           title: Plan Id
@@ -724,7 +717,6 @@ components:
           type: string
       required:
       - plan_id
-      - build_id
       - xc_test_configuration_name
       title: TestSessionCreate
       type: object
