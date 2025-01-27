@@ -475,6 +475,36 @@ def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db, client):
     assert step is None
 
 
+def test_delete_test_plan_step_order(new_test_plan, new_test_plan_step, db, client):
+    """
+    GIVEN: A test plan and two steps in the db
+
+    WHEN: DELETEing the `/test-plans/{id}/steps/{id}` endpoint for the first step
+
+    THEN: The step should be deleted from the DB
+    AND: The order of the remaining step should be updated
+    """
+    new_test_plan_step_2 = SessionTestPlanStep(
+        name="test step 2",
+        test_plan_id=new_test_plan.id,
+        order=1,
+        test_cases=["test/case/path"],
+    )
+    db.add(new_test_plan_step_2)
+    db.commit()
+
+    r = client.delete(f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}")
+
+    assert r.status_code == 200
+
+    steps = db.exec(select(SessionTestPlanStep)).all()
+
+    assert len(steps) == 1
+
+    assert steps[0].id == new_test_plan_step_2.id
+    assert steps[0].order == 0
+
+
 def test_delete_test_plan_step_not_found(new_test_plan, client):
     """
     GIVEN: A test plan, but no step in the db
