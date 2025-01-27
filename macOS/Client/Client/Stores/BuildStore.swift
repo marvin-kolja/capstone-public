@@ -76,6 +76,24 @@ enum StartBuildError: LocalizedError {
     }
 }
 
+enum ListAvailableTestsError: LocalizedError {
+    case unexpected
+    
+    var failureReason: String? {
+        switch self {
+        case .unexpected:
+            return "We were unable to list the available tests."
+        }
+    }
+    
+    var recoverySuggestion: String? {
+        switch self {
+        case .unexpected:
+            return "Make sure the build is okay and the device is fully ready."
+        }
+    }
+}
+
 class BuildStore: ProjectContext {
     @Published var builds: [Components.Schemas.BuildPublic] = []
     
@@ -90,6 +108,9 @@ class BuildStore: ProjectContext {
     
     @Published var streamingBuildsUpdates: [String:Bool] = [:]
     @Published var errorStreamingBuildsUpdates: [String:AppError] = [:]
+    
+    @Published var buildsListingAvailableTests: [String:Bool] = [:]
+    @Published var errorsListingAvailableTests: [String:AppError] = [:]
     
     var uniqueXcTestPlans: [String] {
         Array(Set(builds.map { $0.testPlan }))
@@ -210,6 +231,33 @@ class BuildStore: ProjectContext {
         }
     }
     
+    func loadAvailableTests(buildId: String) async {
+        guard !isListingAvailableTests(buildId) else {
+            return
+        }
+        
+        buildsListingAvailableTests[buildId] = true
+        defer { buildsListingAvailableTests[buildId] = false }
+        
+        do {
+            let xcTestCases = try await apiClient.listAvailableTests(projectId: projectId, buildId: buildId)
+            let indexOfBuild = builds.firstIndex(where: { $0.id == buildId })
+            builds[indexOfBuild!].xcTestCases = xcTestCases
+        } catch let appError as AppError {
+            if let apiError = appError.type as? APIError {
+                switch apiError {
+                case .clientRequestError:
+                    errorsListingAvailableTests[buildId] = AppError(type: ListAvailableTestsError.unexpected)
+                default:
+                    ()
+                }
+            }
+            errorsListingAvailableTests[buildId] = appError
+        } catch {
+            errorsListingAvailableTests[buildId] =  AppError(type: ListAvailableTestsError.unexpected)
+        }
+    }
+    
     func getBuildById(buildId: String) -> Components.Schemas.BuildPublic? {
         return builds.first { $0.id == buildId }
     }
@@ -220,5 +268,13 @@ class BuildStore: ProjectContext {
         } else {
             builds.append(build)
         }
+    }
+    
+    func isListingAvailableTests(_ buildId: String) -> Bool {
+        return buildsListingAvailableTests[buildId] ?? false
+    }
+    
+    func errorListingAvailableTests(_ buildId: String) -> AppError? {
+        return errorsListingAvailableTests[buildId]
     }
 }
