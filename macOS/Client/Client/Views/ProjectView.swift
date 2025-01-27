@@ -23,6 +23,7 @@ struct ProjectView: View {
 
     @StateObject private var buildsStore: BuildStore
     @StateObject private var currentProjectStore: CurrentProjectStore
+    @StateObject private var testPlanStore: TestPlanStore
 
     @State private var visibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var selection: Selection = .general
@@ -30,6 +31,7 @@ struct ProjectView: View {
     init(project: Components.Schemas.XcProjectPublic, apiClient: APIClientProtocol) {
         _currentProjectStore = StateObject(wrappedValue: CurrentProjectStore(project: project))
         _buildsStore = StateObject(wrappedValue: BuildStore(projectId: project.id, apiClient: apiClient))
+        _testPlanStore = StateObject(wrappedValue: TestPlanStore(projectId: project.id, apiClient: apiClient))
     }
 
     var body: some View {
@@ -55,6 +57,7 @@ struct ProjectView: View {
             }
             .environmentObject(currentProjectStore)
             .environmentObject(buildsStore)
+            .environmentObject(testPlanStore)
         }
         .task { await devicesStore.loadDevices() }
         .toolbar {
