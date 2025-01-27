@@ -60,8 +60,8 @@ struct ProjectContentView: View {
                     ManageDevicesButton()
                         .padding(0)
                 }
-                .padding(.bottom, 4)
-                .padding(.horizontal, 4)
+                .padding(.bottom, 8)
+                .padding(.horizontal, 8)
             }
             .environmentObject(currentProjectStore)
             .environmentObject(buildsStore)
