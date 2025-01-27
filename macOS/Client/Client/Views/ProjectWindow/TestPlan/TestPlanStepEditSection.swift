@@ -1,5 +1,5 @@
 //
-//  TestPlanStepFormSection.swift
+//  TestPlanStepEditSection.swift
 //  Client
 //
 //  Created by Marvin Willms on 27.01.25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct TestPlanStepFormSection: View {
+struct TestPlanStepEditSection: View {
     @EnvironmentObject var stepStore: TestPlanStepStore
     
     let step: Components.Schemas.SessionTestPlanStepPublic
@@ -94,7 +94,7 @@ struct TestPlanStepFormSection: View {
     let testPlanId = Components.Schemas.SessionTestPlanPublic.mock.id
     let testPlanData = TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
     
-    TestPlanStepFormSection(step: Components.Schemas.SessionTestPlanStepPublic.mock, testPlanData: testPlanData)
+    TestPlanStepEditSection(step: Components.Schemas.SessionTestPlanStepPublic.mock, testPlanData: testPlanData)
         .environmentObject(TestPlanStepStore(
             projectId: projectId,
             testPlanId: testPlanId,

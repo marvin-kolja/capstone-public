@@ -35,7 +35,7 @@ struct ClientApp: App {
     
     var body: some Scene {
         Window("Welcome to Capstone", id: "main") {
-            ProjectListView()
+            WelcomeContentView()
                 .environmentObject(projectStore)
                 .environmentObject(serverStatusStore)
                 .frame(minWidth: 800, maxWidth: 800, minHeight: 500, maxHeight: 500)
@@ -53,7 +53,7 @@ struct ClientApp: App {
         
         WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
             if let project = project {
-                ProjectView(project: project, apiClient: apiClient)
+                ProjectContentView(project: project, apiClient: apiClient)
                     .environmentObject(serverStatusStore)
                     .environmentObject(deviceStore)
                     .frame(minWidth: 800, minHeight: 500)

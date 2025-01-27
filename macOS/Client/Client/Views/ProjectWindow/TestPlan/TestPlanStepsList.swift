@@ -1,5 +1,5 @@
 //
-//  TestPlanStepsFormList.swift
+//  TestPlanStepsList.swift
 //  Client
 //
 //  Created by Marvin Willms on 26.01.25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct TestPlanStepsFormList: View {
+struct TestPlanStepsList: View {
     @EnvironmentObject var testPlanStepStore: TestPlanStepStore
 
     var testPlanData: TestPlanFormData
@@ -16,7 +16,7 @@ struct TestPlanStepsFormList: View {
     var body: some View {
         List {
             ForEach(testPlanStepStore.steps, id: \.id) { step in
-                TestPlanStepFormSection(step: step, testPlanData: testPlanData)
+                TestPlanStepEditSection(step: step, testPlanData: testPlanData)
                 
                 Divider()
             }
@@ -63,7 +63,7 @@ struct TestPlanStepsFormList: View {
 }
 
 #Preview {
-    TestPlanStepsFormList(
+    TestPlanStepsList(
         testPlanData: TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock),
         availableXcTestCases: ["Mock Xc Test Case"]
     ).environmentObject(

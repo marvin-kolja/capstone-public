@@ -63,7 +63,7 @@ struct TestPlanDetailView: View {
                         }.padding(.bottom, 4)
                     }
                 case .steps:
-                    TestPlanStepsFormList(
+                    TestPlanStepsList(
                         testPlanData: testPlanData,
                         availableXcTestCases: availableXcTestCases
                     )

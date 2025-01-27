@@ -1,5 +1,5 @@
 //
-//  ProjectListView.swift
+//  WelcomeContentView.swift
 //  Client
 //
 //  Created by Marvin Willms on 22.01.25.
@@ -21,7 +21,7 @@ struct ErrorText: View {
 }
 
 
-struct ProjectListView: View {
+struct WelcomeContentView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.refresh) private var refresh
     
@@ -112,5 +112,5 @@ struct ProjectListView: View {
 }
 
 #Preview {
-    ProjectListView().environmentObject(ProjectStore(apiClient: MockAPIClient()))
+    WelcomeContentView().environmentObject(ProjectStore(apiClient: MockAPIClient()))
 }
