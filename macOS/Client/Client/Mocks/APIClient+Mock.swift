@@ -81,6 +81,12 @@ class MockAPIClient: APIClientProtocol {
         return Components.Schemas.SessionTestPlanPublic.mock
     }
     
+    func deleteTestPlan(testPlanId: String) async throws {
+        try? await simulateWork()
+        // TODO: Use some sort in-memory storage to simulate deletion.
+        return
+    }
+    
     func createTestPlanStep(testPlanId: String, data: Components.Schemas.SessionTestPlanStepCreate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
         try? await simulateWork()
         return Components.Schemas.SessionTestPlanStepPublic.mock
@@ -89,6 +95,12 @@ class MockAPIClient: APIClientProtocol {
     func updateTestPlanStep(testPlanId: String, stepId: String, data: Components.Schemas.SessionTestPlanStepUpdate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
         try? await simulateWork()
         return Components.Schemas.SessionTestPlanStepPublic.mock
+    }
+    
+    func deleteTestPlanStep(testPlanId: String, stepid: String) async throws {
+        try? await simulateWork()
+        // TODO: Use some sort in-memory storage to simulate deletion.
+        return
     }
     
     func reorderTestPlanSteps(testPlanId: String, ids: [String]) async throws {

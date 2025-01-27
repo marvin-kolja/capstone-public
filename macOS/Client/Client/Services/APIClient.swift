@@ -312,6 +312,25 @@ class APIClient: APIClientProtocol {
         }
     }
     
+    func deleteTestPlan(testPlanId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.testPlansDeleteTestPlan(path: .init(testPlanId: testPlanId))
+            
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
     func createTestPlanStep(testPlanId: String, data: Components.Schemas.SessionTestPlanStepCreate) async throws -> Components.Schemas.SessionTestPlanStepPublic {
         try await handleRequestError {
             let result = try await client.testPlansCreateTestPlanStep(path: .init(testPlanId: testPlanId), body: .json(data))
@@ -338,6 +357,25 @@ class APIClient: APIClientProtocol {
             switch result {
             case .ok(let okResponse):
                 return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(let response):
+                throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func deleteTestPlanStep(testPlanId: String, stepId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.testPlansDeleteTestPlanStep(path: .init(testPlanId: testPlanId, stepId: stepId))
+            
+            switch result {
+            case .ok:
+                return
             case .internalServerError:
                 throw APIError.serverError(statusCode: 500)
             case .notFound:
