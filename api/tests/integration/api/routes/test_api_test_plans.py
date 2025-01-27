@@ -497,7 +497,11 @@ def test_delete_test_plan_step_order(new_test_plan, new_test_plan_step, db, clie
 
     assert r.status_code == 200
 
-    steps = db.exec(select(SessionTestPlanStep)).all()
+    steps = db.exec(
+        select(SessionTestPlanStep).where(
+            SessionTestPlanStep.test_plan_id == new_test_plan.id
+        )
+    ).all()
 
     assert len(steps) == 1
 
