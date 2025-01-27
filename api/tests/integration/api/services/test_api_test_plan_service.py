@@ -67,7 +67,7 @@ def test_read_test_plan(new_test_plan, db):
     assert read_test_plan(session=db, test_plan_id=new_test_plan.id) == new_test_plan
 
 
-def test_create_test_plan(db, new_db_project):
+def test_create_test_plan(db, new_db_project, new_db_fake_build):
     """
     GIVEN: A test plan
 
@@ -78,7 +78,7 @@ def test_create_test_plan(db, new_db_project):
     """
     test_plan = SessionTestPlanCreate(
         name="test plan",
-        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
+        build_id=new_db_fake_build.id,
         repetitions=1,
         repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu],
@@ -94,7 +94,7 @@ def test_create_test_plan(db, new_db_project):
     assert created_plan == SessionTestPlanPublic.model_validate(db_plan)
 
     assert created_plan.name == test_plan.name
-    assert created_plan.xc_test_plan_name == test_plan.xc_test_plan_name
+    assert created_plan.build_id == test_plan.build_id
     assert created_plan.project_id == test_plan.project_id
     assert created_plan.repetitions == test_plan.repetitions
     assert created_plan.repetition_strategy == test_plan.repetition_strategy

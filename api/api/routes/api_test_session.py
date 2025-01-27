@@ -214,29 +214,22 @@ def _validate_test_session_input(
 
     :return: The build, plan and device
     """
-    db_build = project_service.read_build(
-        session=session, build_id=session_create.build_id
-    )
-    if db_build is None:
-        raise HTTPException(status_code=400, detail="Invalid build id")
-
     db_plan = api_test_plan_service.read_test_plan(
         session=session, test_plan_id=session_create.plan_id
     )
     if db_plan is None:
         raise HTTPException(status_code=400, detail="Invalid plan id")
 
+    db_build = project_service.read_build(session=session, build_id=db_plan.build_id)
+    if db_build is None:
+        raise HTTPException(status_code=500)
+
     if db_plan.project_id != db_build.project_id:
-        # We're not validating if the test plan is part of the project. There could be the situation where there the
-        # test plan and build that was created before the test plan was removed from the project. This would still
-        # allow the user to run the tests with the existing build artefacts.
+        # We're not validating if the test plan of the build is part of the project. There could be the situation where
+        # there the test plan and build that was created before the test plan was removed from the project. This would
+        # still allow the user to run the tests with the existing build artefacts.
         raise HTTPException(
             status_code=400, detail="Plan and build must belong to the same project"
-        )
-
-    if db_plan.xc_test_plan_name != db_build.test_plan:
-        raise HTTPException(
-            status_code=400, detail="Plan and build must belong to the same test plan"
         )
 
     if db_build.status != "success":

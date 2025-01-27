@@ -44,12 +44,10 @@ async def create_test_plan(
     if project is None:
         raise HTTPException(status_code=400, detail="Invalid project id")
 
-    if not project_service.project_has_xc_test_plan(
-        session=session,
-        project_id=project.id,
-        xc_test_plan=test_plan.xc_test_plan_name,
-    ):
-        raise HTTPException(status_code=400, detail="Invalid test plan")
+    build = project_service.read_build(session=session, build_id=test_plan.build_id)
+
+    if build is None or build.project_id != project.id:
+        raise HTTPException(status_code=400, detail="Invalid build id")
 
     return api_test_plan_service.create_test_plan(session=session, plan=test_plan)
 
@@ -83,14 +81,6 @@ async def update_test_plan(
     )
     if project is None:
         raise HTTPException(status_code=500)
-
-    if plan.xc_test_plan_name is not None:
-        if not project_service.project_has_xc_test_plan(
-            session=session,
-            project_id=project.id,
-            xc_test_plan=plan.xc_test_plan_name,
-        ):
-            raise HTTPException(status_code=400, detail="Invalid test plan")
 
     return api_test_plan_service.update_test_plan(
         session=session, db_plan=db_plan, plan=plan

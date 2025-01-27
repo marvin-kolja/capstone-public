@@ -114,7 +114,7 @@ def test_read_test_plan_not_found(client):
     assert r.status_code == 404
 
 
-def test_create_test_plan(client, db, new_db_project):
+def test_create_test_plan(client, db, new_db_project, new_db_fake_build):
     """
     GIVEN: A test plan creation model
 
@@ -125,7 +125,7 @@ def test_create_test_plan(client, db, new_db_project):
     """
     test_plan = SessionTestPlanCreate(
         name="test plan",
-        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
+        build_id=new_db_fake_build.id,
         repetitions=1,
         repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu],
@@ -145,14 +145,14 @@ def test_create_test_plan(client, db, new_db_project):
     assert created_plan == SessionTestPlanPublic.model_validate(db_plan)
 
     assert created_plan.name == test_plan.name
-    assert created_plan.xc_test_plan_name == test_plan.xc_test_plan_name
+    assert created_plan.build_id == test_plan.build_id
     assert created_plan.project_id == test_plan.project_id == test_plan.project_id
     assert created_plan.repetitions == test_plan.repetitions
     assert created_plan.repetition_strategy == test_plan.repetition_strategy
     assert created_plan.metrics == test_plan.metrics
 
 
-def test_create_test_plan_invalid_project(client, db):
+def test_create_test_plan_invalid_project(client, db, new_db_fake_build):
     """
     GIVEN: A test plan creation model with an invalid project id
 
@@ -164,7 +164,7 @@ def test_create_test_plan_invalid_project(client, db):
         "/test-plans/",
         json=SessionTestPlanCreate(
             name="test plan",
-            xc_test_plan_name="test plan",
+            build_id=new_db_fake_build.id,
             repetitions=1,
             repetition_strategy=RepetitionStrategy.entire_suite,
             metrics=[Metric.cpu],
@@ -175,9 +175,9 @@ def test_create_test_plan_invalid_project(client, db):
     assert r.status_code == 400
 
 
-def test_create_test_plan_invalid_xc_test_plan(client, db, new_db_project):
+def test_create_test_plan_invalid_build(client, db, new_db_project):
     """
-    GIVEN: A test plan creation model with an invalid xc test plan name
+    GIVEN: A test plan creation model with an invalid build id
 
     WHEN: POSTing to the `/test-plans/` endpoint
 
@@ -187,7 +187,7 @@ def test_create_test_plan_invalid_xc_test_plan(client, db, new_db_project):
         "/test-plans/",
         json=SessionTestPlanCreate(
             name="test plan",
-            xc_test_plan_name="invalid test plan",
+            build_id=uuid.uuid4(),
             repetitions=1,
             repetition_strategy=RepetitionStrategy.entire_suite,
             metrics=[Metric.cpu],
@@ -248,24 +248,6 @@ def test_update_test_plan_not_found(client):
     )
 
     assert r.status_code == 404
-
-
-def test_update_test_plan_invalid_xc_test_plan(client, new_test_plan):
-    """
-    GIVEN: A test plan in the database
-
-    WHEN: PATCHing `/test-plans/{id}` endpoint with an invalid xc test plan name
-
-    THEN: The response should be a 400
-    """
-    r = client.patch(
-        f"/test-plans/{new_test_plan.id}",
-        json=SessionTestPlanUpdate(xc_test_plan_name="invalid test plan").model_dump(
-            exclude_unset=True
-        ),
-    )
-
-    assert r.status_code == 400
 
 
 def test_delete_test_plan(new_test_plan, new_test_plan_step, db, client):

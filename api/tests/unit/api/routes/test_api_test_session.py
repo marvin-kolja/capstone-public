@@ -443,9 +443,8 @@ def mock_read_test_plan(fake_db_plan):
 
 
 @pytest.fixture
-def test_session_create(fake_db_build, fake_db_plan):
+def test_session_create(fake_db_plan):
     return TestSessionCreate(
-        build_id=fake_db_build.id,
         plan_id=fake_db_plan.id,
         xc_test_configuration_name="fake_test_config",
     )
@@ -463,8 +462,7 @@ def test_validate_test_session_input_db_build_not_found(
             session_create=test_session_create,
         )
 
-    assert e.value.status_code == 400
-    assert e.value.detail == "Invalid build id"
+    assert e.value.status_code == 500
 
 
 def test_validate_test_session_input_db_plan_not_found(
@@ -499,10 +497,10 @@ def test_validate_test_session_input_build_and_plan_not_same_project(
     assert e.value.detail == "Plan and build must belong to the same project"
 
 
-def test_validate_test_session_input_build_and_plan_not_same_test_plan(
+def test_validate_test_session_input_build_is_part_of_project(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_plan
 ):
-    fake_db_plan.xc_test_plan_name = "different_plan_name"
+    mock_read_build.return_value.project_id = uuid.uuid4()
 
     with pytest.raises(HTTPException) as e:
         _validate_test_session_input(
@@ -512,7 +510,7 @@ def test_validate_test_session_input_build_and_plan_not_same_test_plan(
         )
 
     assert e.value.status_code == 400
-    assert e.value.detail == "Plan and build must belong to the same test plan"
+    assert e.value.detail == "Plan and build must belong to the same project"
 
 
 def test_validate_test_session_input_build_not_completed(

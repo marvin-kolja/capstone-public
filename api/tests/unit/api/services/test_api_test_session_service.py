@@ -69,7 +69,7 @@ def fake_public_test_plan(fake_public_test_plan_step):
         repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu, Metric.memory],
         steps=[fake_public_test_plan_step],
-        xc_test_plan_name="SampleTestPlan",
+        build_id=uuid.uuid4(),
         recording_strategy=RecordingStrategy.per_step,
     )
 

@@ -24,10 +24,10 @@ from api.models import (
 
 
 @pytest.fixture(scope="function")
-def new_test_plan(db, new_db_project):
+def new_test_plan(db, new_db_project, new_db_fake_build):
     test_plan = SessionTestPlan(
         name="test plan",
-        xc_test_plan_name=new_db_project.schemes[0].xc_test_plans[0].name,
+        build_id=new_db_fake_build.id,
         repetitions=1,
         repetition_strategy=RepetitionStrategy.entire_suite,
         metrics=[Metric.cpu],
