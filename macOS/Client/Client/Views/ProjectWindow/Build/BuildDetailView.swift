@@ -9,6 +9,8 @@ import SwiftUI
 
 struct BuildDetailView: View {
     @EnvironmentObject var buildStore: BuildStore
+    @EnvironmentObject var deviceStore: DeviceStore
+
     let build: Components.Schemas.BuildPublic
 
     var body: some View {
@@ -51,7 +53,7 @@ struct BuildDetailView: View {
                 GridRow {
                     Text("Device")
                         .bold()
-                    Text(build.deviceId)
+                    Text(deviceStore.getDeviceById(deviceId: build.deviceId)?.deviceName ?? build.deviceId)
                 }
                 GridRow {
                     Text("Configuration")
@@ -68,13 +70,50 @@ struct BuildDetailView: View {
                         .bold()
                     Text(build.testPlan)
                 }
+                Divider()
+                GridRow(alignment: .top) {
+                    HStack {
+                        Text("Test Cases")
+                            .bold()
+                        LoadingButton(isLoading: buildStore.isListingAvailableTests(build.id)) {
+                            Task {
+                                await buildStore.loadAvailableTests(buildId: build.id)
+                            }
+                        } label: {
+                            Text("Load")
+                        }.disabled(loadTestCasesIsDisabled)
+                    }
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(build.xcTestCases ?? [], id: \.self) { xcTestCase in
+                                Text(xcTestCase)
+                            }
+                        }
+                    }
+                }
             }
             Divider()
             Spacer()
         }
         .padding()
-        .onAppear { Task { await buildStore.streamUpdates(buildId: build.id) } }
+        .onAppear {
+            Task { await buildStore.streamUpdates(buildId: build.id) }
+            Task { await deviceStore.loadDevices() }
+        }
         .id(build.id)
+    }
+
+    var deviceUsedInBuild: Components.Schemas.DeviceWithStatus? {
+        return deviceStore.getDeviceById(deviceId: build.deviceId)
+    }
+
+    var loadTestCasesIsDisabled: Bool {
+        guard let device = deviceUsedInBuild else {
+            return true
+        }
+        return build.status != .success ||
+        build.xctestrun == nil ||
+        !device.isDeviceReadyForBuilds
     }
 }
 
