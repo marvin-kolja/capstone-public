@@ -341,6 +341,10 @@ class BuildBase(SQLModel):
     device_id: str
     status: BuildStatus = SQLField(sa_type=String, default="pending")
 
+    xc_test_cases: list[str] | None = SQLField(
+        sa_column=Column(JSON, nullable=True), default=None
+    )
+
 
 class Build(BuildBase, table=True):
     __tablename__ = "build"
