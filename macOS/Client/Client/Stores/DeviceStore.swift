@@ -1,5 +1,5 @@
 //
-//  DevicesStore.swift
+//  DeviceStore.swift
 //  Client
 //
 //  Created by Marvin Willms on 24.01.25.
@@ -11,7 +11,7 @@ enum LoadDevicesError: LocalizedError {
     case unknown
 }
 
-class DevicesStore: APIClientContext {
+class DeviceStore: APIClientContext {
     @Published var devices: [Components.Schemas.DeviceWithStatus] = []
     @Published var loadingDevices = false
     @Published var loadingDevicesError: AppError?
@@ -31,5 +31,9 @@ class DevicesStore: APIClientContext {
         } catch {
             loadingDevicesError = AppError(type: LoadDevicesError.unknown)
         }
+    }
+    
+    func getDeviceById(deviceId: String) -> Components.Schemas.DeviceWithStatus? {
+        return devices.first(where: { $0.id == deviceId })
     }
 }

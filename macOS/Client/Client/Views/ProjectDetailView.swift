@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct ProjectDetailView: View {
-    @EnvironmentObject var projectStore: ProjectStore
+    @EnvironmentObject var currentProjectStore: CurrentProjectStore
+    
+    var project: Components.Schemas.XcProjectPublic { currentProjectStore.project }
     
     var body: some View {
         VStack(alignment: .center) {
@@ -19,31 +21,31 @@ struct ProjectDetailView: View {
                 GridRow {
                     Text("Name")
                         .bold()
-                    Text(projectStore.project.name)
+                    Text(project.name)
                 }
                 GridRow {
                     Text("Path")
                         .bold()
-                    LocalFileLinkButton(path: projectStore.project.path)
+                    LocalFileLinkButton(path: project.path)
                 }
                 GridRow {
                     Text("Configuration")
                         .bold()
-                    Text(projectStore.project.configurations.map { resource in
+                    Text(project.configurations.map { resource in
                         resource.name
                     }.joined(separator: ", "))
                 }
                 GridRow {
                     Text("Targets")
                         .bold()
-                    Text(projectStore.project.targets.map { resource in
+                    Text(project.targets.map { resource in
                         resource.name
                     }.joined(separator: ", "))
                 }
                 GridRow {
                     Text("Schemes")
                         .bold()
-                    Text(projectStore.project.schemes.map { resource in
+                    Text(project.schemes.map { resource in
                         resource.name
                     }.joined(separator: ", "))
                 }
@@ -55,5 +57,5 @@ struct ProjectDetailView: View {
 
 #Preview {
     ProjectDetailView()
-        .environmentObject(ProjectStore(project: Components.Schemas.XcProjectPublic.mock))
+        .environmentObject(CurrentProjectStore(project: Components.Schemas.XcProjectPublic.mock))
 }

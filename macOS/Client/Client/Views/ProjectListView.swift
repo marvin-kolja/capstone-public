@@ -25,20 +25,20 @@ struct ProjectListView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.refresh) private var refresh
     
-    @EnvironmentObject var projectsStore: ProjectsStore
+    @EnvironmentObject var projectStore: ProjectStore
     @EnvironmentObject var serverStatusStore: ServerStatusStore
     
     @State private var showFileImporter = false
     
     var body: some View {
         VStack {
-            if projectsStore.projects.isEmpty {
-                if projectsStore.loadingProjects {
+            if projectStore.projects.isEmpty {
+                if projectStore.loadingProjects {
                     ProgressView()
                         .controlSize(.small)
                         .accessibilityIdentifier("projects-list-progress-view")
                 }
-                if let error = projectsStore.errorLoadingProjects {
+                if let error = projectStore.errorLoadingProjects {
                     ErrorText(error: error)
                         .accessibilityIdentifier("projects-list-loading-error")
                 } else {
@@ -46,7 +46,7 @@ struct ProjectListView: View {
                         .accessibilityIdentifier("projects-list-no-projects")
                 }
             } else {
-                List(projectsStore.projects, id: \.id) { project in
+                List(projectStore.projects, id: \.id) { project in
                     HStack {
                         ProjectListEntry(project: project)
                     }.onTapGesture {
@@ -59,7 +59,7 @@ struct ProjectListView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .navigationTitle("Xcode Projects").accessibilityIdentifier("xcode-projects-list")
-        .task { await projectsStore.loadProjects() }
+        .task { await projectStore.loadProjects() }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.xcodeproj],
@@ -75,9 +75,9 @@ struct ProjectListView: View {
                 .accessibilityIdentifier("server-status")
             }
             ToolbarItem(placement: .automatic) {
-                LoadingButton(isLoading: projectsStore.loadingProjects, action: {
+                LoadingButton(isLoading: projectStore.loadingProjects, action: {
                     Task {
-                        await projectsStore.loadProjects()
+                        await projectStore.loadProjects()
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
@@ -85,7 +85,7 @@ struct ProjectListView: View {
                 .accessibilityIdentifier("refresh-projects")
             }
             ToolbarItem(placement: .automatic) {
-                LoadingButton(isLoading: projectsStore.addingProject, action: {
+                LoadingButton(isLoading: projectStore.addingProject, action: {
                     showFileImporter = true
                 }) {
                     Image(systemName: "folder.badge.plus")
@@ -93,7 +93,7 @@ struct ProjectListView: View {
                 .accessibilityIdentifier("add-project")
             }
         }
-        .alert(isPresented: $projectsStore.showAddingProjectError, withError: projectsStore.errorAddingProject)
+        .alert(isPresented: $projectStore.showAddingProjectError, withError: projectStore.errorAddingProject)
     }
     
     func handleFileResult(_ result: Result<[URL], any Error>) {
@@ -101,7 +101,7 @@ struct ProjectListView: View {
         case .success(let urls):
             if let unwrappedURL: URL = urls.first {
                 Task {
-                    await projectsStore.addProject(url: unwrappedURL)
+                    await projectStore.addProject(url: unwrappedURL)
                 }
             }
         case .failure(let error):
@@ -112,5 +112,5 @@ struct ProjectListView: View {
 }
 
 #Preview {
-    ProjectListView().environmentObject(ProjectsStore(apiClient: MockAPIClient()))
+    ProjectListView().environmentObject(ProjectStore(apiClient: MockAPIClient()))
 }

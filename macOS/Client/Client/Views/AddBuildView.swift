@@ -10,12 +10,12 @@ import SwiftUI
 struct AddBuildView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @EnvironmentObject var buildsStore: BuildsStore
-    @EnvironmentObject var devicesStore: DevicesStore
-    @EnvironmentObject var projectStore: ProjectStore
+    @EnvironmentObject var buildStore: BuildStore
+    @EnvironmentObject var deviceStore: DeviceStore
+    @EnvironmentObject var currentProjectStore: CurrentProjectStore
     
     @State var configuration: Components.Schemas.XcProjectConfigurationPublic?
-    @State var device: Components.Schemas.DeviceWithStatus?
+    @State var deviceId: String?
     @State var scheme: Components.Schemas.XcProjectSchemePublic?
     @State var testPlan: Components.Schemas.XcProjectTestPlanPublic?
     
@@ -24,14 +24,14 @@ struct AddBuildView: View {
             Text("Start a new build")
                 .font(.title2)
             Picker("Configuration", selection: $configuration) {
-                ForEach(projectStore.project.configurations, id: \.self) { config in
+                ForEach(currentProjectStore.project.configurations, id: \.self) { config in
                     Text(config.name)
                         .tag(config)
                 }
                 Divider().tag(Components.Schemas.XcProjectConfigurationPublic?(nil))
             }
             Picker("Scheme", selection: $scheme) {
-                ForEach(projectStore.project.schemes, id: \.self) { scheme in
+                ForEach(currentProjectStore.project.schemes, id: \.self) { scheme in
                     Text(scheme.name)
                         .tag(scheme)
                 }
@@ -46,20 +46,20 @@ struct AddBuildView: View {
             }.disabled(scheme == nil)
             
             HStack {
-                LoadingButton(isLoading: devicesStore.loadingDevices, action: {
-                    Task { await devicesStore.loadDevices() }
+                LoadingButton(isLoading: deviceStore.loadingDevices, action: {
+                    Task { await deviceStore.loadDevices() }
                 }) {
                     Image(systemName: "arrow.clockwise")
                 }
-                Picker("Devices", selection: $device) {
-                    ForEach(devicesStore.devices, id: \.id) { device in
+                Picker("Devices", selection: $deviceId) {
+                    ForEach(deviceStore.devices, id: \.id) { device in
                         Text("\(device.deviceName) (\(device.udid))")
-                            .tag(device)
+                            .tag(device.id)
                     }
-                    Divider().tag(Components.Schemas.DeviceWithStatus?(nil))
+                    Divider().tag(String?(nil))
                 }
             }
-            if let device = self.device, !(device.connected ?? false) {
+            if deviceId != nil && !isDeviceConnected {
                 Text("Device is not connected")
                     .bold()
                     .foregroundStyle(.orange)
@@ -68,16 +68,16 @@ struct AddBuildView: View {
             HStack {
                 Button("Cancel") {
                     dismiss()
-                }.disabled(buildsStore.addingBuild)
+                }.disabled(buildStore.addingBuild)
                 Spacer()
-                LoadingButton(isLoading: buildsStore.addingBuild, action: {
+                LoadingButton(isLoading: buildStore.addingBuild, action: {
                     Task {
                         defer { dismiss() }
                         
-                        await buildsStore.addBuild(
+                        await buildStore.addBuild(
                             data: .init(
                                 configuration: configuration!.name,
-                                deviceId: device!.id,
+                                deviceId: deviceId!,
                                 scheme: scheme!.name,
                                 testPlan: testPlan!.name
                             )
@@ -85,21 +85,31 @@ struct AddBuildView: View {
                     }
                 }) {
                     Text("Start Build")
-                }.disabled(
-                    configuration == nil ||
-                    scheme == nil ||
-                    testPlan == nil ||
-                    device == nil || !(device?.connected ?? false)
-                )
+                }.disabled(startButtonDisabled)
             }
         }
         .padding(20)
+    }
+    
+    var startButtonDisabled: Bool {
+        return configuration == nil ||
+        scheme == nil ||
+        testPlan == nil ||
+        !isDeviceConnected
+    }
+    
+    var isDeviceConnected: Bool {
+        guard let deviceId = deviceId, let device = deviceStore.getDeviceById(deviceId: deviceId) else {
+            return false
+        }
+        
+        return device.connected ?? false
     }
 }
 
 #Preview {
     AddBuildView()
-        .environmentObject(BuildsStore(projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
-        .environmentObject(DevicesStore(apiClient: MockAPIClient()))
-        .environmentObject(ProjectStore(project: Components.Schemas.XcProjectPublic.mock))
+        .environmentObject(BuildStore(projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
+        .environmentObject(DeviceStore(apiClient: MockAPIClient()))
+        .environmentObject(CurrentProjectStore(project: Components.Schemas.XcProjectPublic.mock))
 }

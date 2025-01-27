@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct BuildDetailView: View {
-    @EnvironmentObject var buildsStore: BuildsStore
-    @ObservedObject var buildStore: BuildStore
+    @EnvironmentObject var buildStore: BuildStore
+    let build: Components.Schemas.BuildPublic
 
     var body: some View {
         VStack(alignment: .center) {
@@ -18,13 +18,13 @@ struct BuildDetailView: View {
                     .font(.title3)
                 Button("Clean & Build") {
                     Task {
-                        await buildStore.startBuild()
-                        await buildStore.streamUpdates()
+                        await buildStore.startBuild(buildId: build.id)
+                        await buildStore.streamUpdates(buildId: build.id)
                     }
                 }.disabled(
-                    buildStore.streamingUpdates ||
-                    buildStore.build.status == .pending ||
-                    buildStore.build.status == .running
+                    (buildStore.streamingBuildsUpdates[build.id] ?? false) ||
+                    build.status == .pending ||
+                    build.status == .running
                 )
             }
             Divider()
@@ -32,9 +32,9 @@ struct BuildDetailView: View {
                 GridRow {
                     Text("Status")
                         .bold()
-                    Text(buildStore.build.status?.rawValue ?? "unknown")
+                    Text(build.status?.rawValue ?? "unknown")
                 }
-                let xctestrun = buildStore.build.xctestrun
+                let xctestrun = build.xctestrun
                 GridRow {
                     Text("Xctestrun Path")
                         .bold()
@@ -51,33 +51,34 @@ struct BuildDetailView: View {
                 GridRow {
                     Text("Device")
                         .bold()
-                    Text(buildStore.build.deviceId)
+                    Text(build.deviceId)
                 }
                 GridRow {
                     Text("Configuration")
                         .bold()
-                    Text(buildStore.build.configuration)
+                    Text(build.configuration)
                 }
                 GridRow {
                     Text("Scheme")
                         .bold()
-                    Text(buildStore.build.scheme)
+                    Text(build.scheme)
                 }
                 GridRow {
                     Text("Test Plan")
                         .bold()
-                    Text(buildStore.build.testPlan)
+                    Text(build.testPlan)
                 }
             }
             Divider()
             Spacer()
         }
         .padding()
-        .onAppear { Task { await buildStore.streamUpdates() } }
-        .id(buildStore.build.id)
+        .onAppear { Task { await buildStore.streamUpdates(buildId: build.id) } }
+        .id(build.id)
     }
 }
 
 #Preview {
-    BuildDetailView(buildStore: BuildStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient(), build: Components.Schemas.BuildPublic.mock))
+    BuildDetailView(build: Components.Schemas.BuildPublic.mock)
+        .environmentObject(BuildStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()))
 }

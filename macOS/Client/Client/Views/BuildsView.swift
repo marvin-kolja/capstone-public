@@ -8,33 +8,33 @@
 import SwiftUI
 
 struct BuildsView: View {
-    @EnvironmentObject var buildsStore: BuildsStore
+    @EnvironmentObject var buildsStore: BuildStore
 
     @State private var isAddingItem: Bool = false
-    @State private var selectedBuild: BuildStore?
+    @State private var selectedBuildId: String?
 
     var body: some View {
         TwoColumnView(content: {
-            LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.buildStores.isEmpty, refresh: {
+            LoadingView(isLoading: buildsStore.loadingBuilds, hasData: !buildsStore.builds.isEmpty, refresh: {
                 Task {
                     await buildsStore.loadBuilds()
                 }
             }) {
                 ZStack {
-                    List(buildsStore.buildStores, id: \.build.id, selection: $selectedBuild) { buildStore in
-                        Text(buildStore.build.userFriendlyName)
-                            .tag(buildStore)
+                    List(buildsStore.builds, id: \.id, selection: $selectedBuildId) { build in
+                        Text(build.userFriendlyName)
+                            .tag(build.id)
                     }
                     .listStyle(.sidebar)
                     .scrollContentBackground(.hidden)
-                    if (buildsStore.buildStores.isEmpty) {
+                    if (buildsStore.builds.isEmpty) {
                         Text("No Builds")
                     }
                 }
             }
         }, detail: {
-            if let buildStore = selectedBuild {
-                BuildDetailView(buildStore: buildStore)
+            if let buildId = selectedBuildId, let build = buildsStore.getBuildById(buildId: buildId) {
+                BuildDetailView(build: build)
             } else {
                 Button("Add Build", action: { isAddingItem = true })
             }
@@ -53,5 +53,5 @@ struct BuildsView: View {
 
 #Preview {
     BuildsView()
-        .environmentObject(BuildsStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()))
+        .environmentObject(BuildStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()))
 }

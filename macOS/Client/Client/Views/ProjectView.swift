@@ -19,17 +19,17 @@ enum Selection: String, CaseIterable, Identifiable {
 
 struct ProjectView: View {
     @EnvironmentObject var serverStatusStore: ServerStatusStore
-    @EnvironmentObject private var devicesStore: DevicesStore
+    @EnvironmentObject private var devicesStore: DeviceStore
 
-    @StateObject private var projectStore: ProjectStore
-    @StateObject private var buildsStore: BuildsStore
+    @StateObject private var buildsStore: BuildStore
+    @StateObject private var currentProjectStore: CurrentProjectStore
 
     @State private var visibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var selection: Selection = .general
 
     init(project: Components.Schemas.XcProjectPublic, apiClient: APIClientProtocol) {
-        _projectStore = StateObject(wrappedValue: ProjectStore(project: project))
-        _buildsStore = StateObject(wrappedValue: BuildsStore(projectId: project.id, apiClient: apiClient))
+        _currentProjectStore = StateObject(wrappedValue: CurrentProjectStore(project: project))
+        _buildsStore = StateObject(wrappedValue: BuildStore(projectId: project.id, apiClient: apiClient))
     }
 
     var body: some View {
@@ -53,7 +53,7 @@ struct ProjectView: View {
                     SessionsView()
                 }
             }
-            .environmentObject(projectStore)
+            .environmentObject(currentProjectStore)
             .environmentObject(buildsStore)
         }
         .task { await devicesStore.loadDevices() }

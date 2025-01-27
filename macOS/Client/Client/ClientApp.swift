@@ -10,9 +10,9 @@ import SwiftData
 
 @main
 struct ClientApp: App {
-    @StateObject private var projectsStore: ProjectsStore
+    @StateObject private var projectStore: ProjectStore
     @StateObject private var serverStatusStore: ServerStatusStore
-    @StateObject private var devicesStore: DevicesStore
+    @StateObject private var deviceStore: DeviceStore
     
     private var apiClient: APIClientProtocol
     
@@ -25,9 +25,9 @@ struct ClientApp: App {
                 apiClient = try APIClient()
             }
             self.apiClient = apiClient
-            _projectsStore = StateObject(wrappedValue: ProjectsStore(apiClient: apiClient))
+            _projectStore = StateObject(wrappedValue: ProjectStore(apiClient: apiClient))
             _serverStatusStore = StateObject(wrappedValue: ServerStatusStore(apiClient: apiClient))
-            _devicesStore = StateObject(wrappedValue: DevicesStore(apiClient: apiClient))
+            _deviceStore = StateObject(wrappedValue: DeviceStore(apiClient: apiClient))
         } catch {
             fatalError("Failed to intiialize API Client: \(error)")
         }
@@ -36,7 +36,7 @@ struct ClientApp: App {
     var body: some Scene {
         Window("Welcome to Capstone", id: "main") {
             ProjectListView()
-                .environmentObject(projectsStore)
+                .environmentObject(projectStore)
                 .environmentObject(serverStatusStore)
                 .frame(minWidth: 800, maxWidth: 800, minHeight: 500, maxHeight: 500)
                 .onAppear(perform: {
@@ -55,7 +55,7 @@ struct ClientApp: App {
             if let project = project {
                 ProjectView(project: project, apiClient: apiClient)
                     .environmentObject(serverStatusStore)
-                    .environmentObject(devicesStore)
+                    .environmentObject(deviceStore)
                     .frame(minWidth: 800, minHeight: 500)
                     .navigationTitle(project.name)
                     .onAppear(perform: {

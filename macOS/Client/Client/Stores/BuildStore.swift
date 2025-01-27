@@ -2,10 +2,33 @@
 //  BuildStore.swift
 //  Client
 //
-//  Created by Marvin Willms on 25.01.25.
+//  Created by Marvin Willms on 24.01.25.
 //
 
 import Foundation
+
+enum LoadBuildsError: LocalizedError {
+    case unexpected
+    case invalidProjectId(projectId: String)
+    
+    var failureReason: String? {
+        switch self {
+        case .unexpected:
+            return "We were unable to load the builds."
+        case .invalidProjectId:
+            return "The given project id is invalid."
+        }
+    }
+    
+    var recoverySuggestion: String? {
+        switch self {
+        case .unexpected:
+            return nil
+        case .invalidProjectId:
+            return "Make sure the project id is valid"
+        }
+    }
+}
 
 enum StreamBuildUpdatesError: LocalizedError {
     case unexpected
@@ -54,63 +77,118 @@ enum StartBuildError: LocalizedError {
 }
 
 class BuildStore: ProjectContext {
-    @Published var build: Components.Schemas.BuildPublic
+    @Published var builds: [Components.Schemas.BuildPublic] = []
     
-    @Published var startingBuild = false
-    @Published var errorStartingBuild: AppError?
+    @Published var loadingBuilds = false
+    @Published var errorLoadingBuilds: AppError?
     
-    @Published var streamingUpdates = false
-    @Published var errorStreamingUpdates: AppError?
+    @Published var addingBuild = false
+    @Published var errorAddingBuild: AppError?
     
-    init(projectId: String, apiClient: APIClientProtocol, build: Components.Schemas.BuildPublic) {
-        _build = Published(initialValue: build)
-        super.init(projectId: projectId, apiClient: apiClient)
+    @Published var startingBuilds: [String:Bool] = [:]
+    @Published var errorStartingBuilds: [String:AppError] = [:]
+    
+    @Published var streamingBuildsUpdates: [String:Bool] = [:]
+    @Published var errorStreamingBuildsUpdates: [String:AppError] = [:]
+    
+    var uniqueXcTestPlans: [String] {
+        Array(Set(builds.map { $0.testPlan }))
     }
     
-    func streamUpdates() async {
-        guard !streamingUpdates else {
+    func loadBuilds() async {
+        guard !loadingBuilds else {
             return
         }
         
-        streamingUpdates = true
-        defer { streamingUpdates = false }
+        loadingBuilds = true
+        defer { loadingBuilds = false }
         
         do {
-            let stream = try await apiClient.streamBuildUpdates(projectId: projectId, buildId: build.id)
-            for try await newBuild in stream {
-                build = newBuild
+            let builds = try await apiClient.listBuilds(projectId: projectId)
+            for build in builds {
+                setBuild(build: build)
             }
         } catch let appError as AppError {
             if let apiError = appError.type as? APIError {
                 switch apiError {
                 case .clientRequestError:
-                    errorStreamingUpdates = AppError(type: StreamBuildUpdatesError.invalidProjectId(projectId: projectId))
+                    errorLoadingBuilds = AppError(type: LoadBuildsError.invalidProjectId(projectId: projectId))
                 default:
                     ()
                 }
             }
-            errorStreamingUpdates = appError
+            errorLoadingBuilds = appError
         } catch {
-            errorStreamingUpdates = AppError(type: StreamBuildUpdatesError.unexpected)
+            errorLoadingBuilds = AppError(type: LoadBuildsError.unexpected)
         }
     }
     
-    func startBuild() async {
-        guard !startingBuild else {
+    func addBuild(data: Components.Schemas.StartBuildRequest) async {
+        guard !addingBuild else {
             return
         }
         
-        startingBuild = true
-        defer { startingBuild = false }
+        addingBuild = true
+        defer { addingBuild = false}
         
         do {
+            let build = try await BuildStore.startBuild(
+                projectId: projectId,
+                data: data,
+                apiClient: apiClient
+            )
+            setBuild(build: build)
+        } catch {
+            errorAddingBuild = (error as! AppError)
+        }
+    }
+    
+    func streamUpdates(buildId: String) async {
+        guard !(streamingBuildsUpdates[buildId] ?? false) else {
+            return
+        }
+        
+        streamingBuildsUpdates[buildId] = true
+        defer { streamingBuildsUpdates[buildId] = false }
+        
+        do {
+            let stream = try await apiClient.streamBuildUpdates(projectId: projectId, buildId: buildId)
+            for try await newBuild in stream {
+                setBuild(build: newBuild)
+            }
+        } catch let appError as AppError {
+            if let apiError = appError.type as? APIError {
+                switch apiError {
+                case .clientRequestError:
+                    errorStreamingBuildsUpdates[buildId] = AppError(type: StreamBuildUpdatesError.invalidProjectId(projectId: projectId))
+                default:
+                    ()
+                }
+            }
+            errorStreamingBuildsUpdates[buildId] = appError
+        } catch {
+            errorStreamingBuildsUpdates[buildId] = AppError(type: StreamBuildUpdatesError.unexpected)
+        }
+    }
+    
+    func startBuild(buildId: String) async {
+        guard !(startingBuilds[buildId] ?? false) else {
+            return
+        }
+        
+        startingBuilds[buildId] = true
+        defer { startingBuilds[buildId] = false }
+        
+        do {
+            let build = builds.first {$0.id == buildId }!
             let requestData = Components.Schemas.StartBuildRequest(configuration: build.configuration, deviceId: build.deviceId, scheme: build.scheme, testPlan: build.testPlan)
-            build = try await BuildStore.startBuild(projectId: projectId, data: requestData, apiClient: apiClient)
+            let newBuild = try await BuildStore.startBuild(projectId: projectId, data: requestData, apiClient: apiClient)
+            setBuild(build: newBuild)
         } catch {
             guard error is AppError else {
                 fatalError("Expected AppError")
             }
-            errorStartingBuild = AppError(type: StartBuildError.unexpected)
+            errorStartingBuilds[buildId] = AppError(type: StartBuildError.unexpected)
         }
     }
     
@@ -131,15 +209,16 @@ class BuildStore: ProjectContext {
             throw AppError(type: StartBuildError.unexpected)
         }
     }
-}
-
-extension BuildStore: Hashable {
-    static func == (lhs: BuildStore, rhs: BuildStore) -> Bool {
-        lhs.build == rhs.build
+    
+    func getBuildById(buildId: String) -> Components.Schemas.BuildPublic? {
+        return builds.first { $0.id == buildId }
     }
     
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(build)
+    func setBuild(build: Components.Schemas.BuildPublic) {
+        if let existingBuildIndex = builds.firstIndex(where: { $0.id == build.id }) {
+            builds[existingBuildIndex] = build
+        } else {
+            builds.append(build)
+        }
     }
 }
-
