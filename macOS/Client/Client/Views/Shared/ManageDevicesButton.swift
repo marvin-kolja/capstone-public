@@ -14,7 +14,7 @@ struct ManageDevicesButton: View {
         Button() {
             isManaging = true
         } label: {
-            Label("Manage Devices", systemImage: "device")
+            Label("Manage Devices", systemImage: "iphone")
         }
         .sheet(isPresented: $isManaging) {
             DevicesView()
