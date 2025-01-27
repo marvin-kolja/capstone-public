@@ -253,4 +253,10 @@ async def list_available_tests(
     if device is None or not device.connected:
         raise HTTPException(status_code=400, detail="Device is not connected")
 
-    return await project_service.list_available_tests(db_build=db_build)
+    xc_test_cases = await project_service.list_available_tests(db_build=db_build)
+
+    db_build.xc_test_cases = xc_test_cases
+    session.add(db_build)
+    session.commit()
+
+    return xc_test_cases

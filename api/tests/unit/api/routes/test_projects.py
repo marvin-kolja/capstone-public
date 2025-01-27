@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 import pytest
 
@@ -80,7 +80,7 @@ def test_list_available_tests_device_not_connected(client):
             assert r.json() == {"code": 400, "detail": "Device is not connected"}
 
 
-def test_list_available_tests_success(client):
+def test_list_available_tests_success(client, mock_db_session_dependencies):
     """
     GIVEN: A client
 
@@ -90,9 +90,13 @@ def test_list_available_tests_success(client):
     AND: It should return the enabled/available tests returned from the service
     """
     with patch("api.services.project_service.read_build") as mock_read_build:
-        mock_read_build.return_value = MagicMock(
+        db_build_mock = MagicMock(
             spec=Build, status="success", xctestrun=MagicMock(spec=Xctestrun)
         )
+        xc_test_cases_mock = PropertyMock()
+        type(db_build_mock).xc_test_cases = xc_test_cases_mock
+
+        mock_read_build.return_value = db_build_mock
 
         with patch(
             "api.services.device_service.get_device_by_id"
@@ -110,3 +114,8 @@ def test_list_available_tests_success(client):
 
                 assert r.status_code == 200
                 assert r.json() == ["test1", "test2"]
+
+                xc_test_cases_mock.assert_called_once_with(["test1", "test2"])
+
+                assert mock_db_session_dependencies.add.call_count == 1
+                assert mock_db_session_dependencies.commit.call_count == 1
