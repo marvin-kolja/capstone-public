@@ -103,6 +103,18 @@ def update_test_plan_step(
 
 def delete_test_plan_step(*, session: Session, db_step: SessionTestPlanStep):
     session.delete(db_step)
+
+    # Reorder the remaining steps to fill the gap left by the deleted step
+    remaining_steps = session.exec(
+        select(SessionTestPlanStep).where(
+            SessionTestPlanStep.test_plan_id == db_step.test_plan_id
+        )
+    ).all()
+
+    for i, step in enumerate(remaining_steps):
+        step.order = i
+        session.add(step)
+
     session.commit()
     return
 
