@@ -1723,6 +1723,16 @@ paths:
     get:
       description: List user created test plans.
       operationId: testPlans-list_test_plans
+      parameters:
+      - in: query
+        name: project_id
+        required: false
+        schema:
+          format: uuid
+          title: Project Id
+          type:
+          - string
+          - 'null'
       responses:
         '200':
           content:
@@ -1733,6 +1743,12 @@ paths:
                 title: Response Testplans-List Test Plans
                 type: array
           description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Unprocessable Content
         '500':
           content:
             application/json:
@@ -2105,6 +2121,16 @@ paths:
     get:
       description: List all test sessions.
       operationId: testSession-list_test_sessions
+      parameters:
+      - in: query
+        name: project_id
+        required: false
+        schema:
+          format: uuid
+          title: Project Id
+          type:
+          - string
+          - 'null'
       responses:
         '200':
           content:
@@ -2115,6 +2141,12 @@ paths:
                 title: Response Testsession-List Test Sessions
                 type: array
           description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Unprocessable Content
         '500':
           content:
             application/json:
