@@ -85,8 +85,10 @@ class APIClient: APIClientProtocol {
                 apiCallSuccessSubject.send(true)
                 return data
             } catch let apiError as APIError {
+                logger.debug("[API] APIError: \(apiError)")
                 throw AppError(type: apiError)
             } catch let clientError as ClientError {
+                logger.debug("[API] ClientError: \(clientError)")
                 if let posixError = clientError.underlyingError as? HTTPClient.NWPOSIXError {
                     if posixError.errorCode.rawValue == ECONNREFUSED {
                         throw AppError(type: APIError.deadServer)
@@ -103,6 +105,7 @@ class APIClient: APIClientProtocol {
                 }
                 throw AppError(type: APIError.unexpected(clientError))
             } catch {
+                logger.debug("[API] Error: \(error)")
                 throw AppError(type: APIError.unexpected(error))
             }
         } catch {
