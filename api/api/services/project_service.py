@@ -244,8 +244,10 @@ def start_build(
     """
     Reset build status and xctestrun path and start the build job.
     """
-    # Set the build status to pending and clear the xctestrun path
     db_build.status = "pending"
+    # Clear the test cases as they could change after a new builds
+    db_build.xc_test_cases = None
+    # Clear the xctestrun path as the new build will generate a new one
     if db_build.xctestrun:
         session.delete(db_build.xctestrun)
     session.commit()

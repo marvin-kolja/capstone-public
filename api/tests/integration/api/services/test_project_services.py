@@ -126,6 +126,7 @@ def test_start_build(
     # fake build values in order to see if tested function changes them
     new_db_fake_build.status = "failed"
     new_db_fake_build.xctestrun = new_db_fake_xctestrun
+    new_db_fake_build.xc_test_cases = ["Some/Test/case"]
     db.add(new_db_fake_build)
     db.commit()
 
@@ -160,6 +161,7 @@ def test_start_build(
 
         assert new_db_fake_build.status == "pending"
         assert new_db_fake_build.xctestrun is None
+        assert new_db_fake_build.xc_test_cases is None
 
 
 @pytest.mark.parametrize(
