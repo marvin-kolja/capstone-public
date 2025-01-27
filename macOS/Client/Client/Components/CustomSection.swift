@@ -9,16 +9,16 @@ import SwiftUI
 
 struct CustomSection<Label: View, Content: View>: View {
 
-    @ViewBuilder var content: () -> Content
-    @ViewBuilder var label: () -> Label
+    @ViewBuilder var content: (Bool) -> Content
+    @ViewBuilder var label: (Bool) -> Label
 
     @State private var isExpanded = true
 
     var body: some View {
         Section(isExpanded: $isExpanded) {
-            content()
+            content(isExpanded)
         } header: {
-            label()
+            label(isExpanded)
             .contentShape(Rectangle())
             .onTapGesture {
                 isExpanded.toggle()
@@ -28,9 +28,9 @@ struct CustomSection<Label: View, Content: View>: View {
 }
 
 #Preview {
-    CustomSection {
+    CustomSection { isExpanded in
         Text("Some Content")
-    } label: {
+    } label: { isExpanded in
         HStack {
             Text("Some Title")
                 .font(.title3)
