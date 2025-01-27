@@ -22,6 +22,6 @@ protocol APIClientProtocol {
     func deleteTestPlan(testPlanId: String) async throws -> Void
     func createTestPlanStep(testPlanId: String, data: Components.Schemas.SessionTestPlanStepCreate) async throws -> Components.Schemas.SessionTestPlanStepPublic
     func updateTestPlanStep(testPlanId: String, stepId: String, data: Components.Schemas.SessionTestPlanStepUpdate) async throws -> Components.Schemas.SessionTestPlanStepPublic
-    func deleteTestPlanStep(testPlanId: String, stepid: String) async throws -> Void
+    func deleteTestPlanStep(testPlanId: String, stepId: String) async throws -> Void
     func reorderTestPlanSteps(testPlanId: String, ids: [String]) async throws
 }

@@ -97,7 +97,7 @@ class MockAPIClient: APIClientProtocol {
         return Components.Schemas.SessionTestPlanStepPublic.mock
     }
     
-    func deleteTestPlanStep(testPlanId: String, stepid: String) async throws {
+    func deleteTestPlanStep(testPlanId: String, stepId: String) async throws {
         try? await simulateWork()
         // TODO: Use some sort in-memory storage to simulate deletion.
         return
