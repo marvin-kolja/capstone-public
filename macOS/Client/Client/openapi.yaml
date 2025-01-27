@@ -31,6 +31,13 @@ components:
         test_plan:
           title: Test Plan
           type: string
+        xc_test_cases:
+          items:
+            type: string
+          title: Xc Test Cases
+          type:
+          - array
+          - 'null'
         xctestrun:
           $ref: '#/components/schemas/XctestrunPublic'
           type:
