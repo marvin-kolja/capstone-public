@@ -111,6 +111,14 @@ def delete_test_plan_step(*, session: Session, db_step: SessionTestPlanStep):
         )
     ).all()
 
+    # Assign temporary order to all remaining steps to avoid unique constraint violation
+    for i, step in enumerate(remaining_steps):
+        step.order = i + len(remaining_steps) + 1
+        session.add(step)
+
+    session.flush()  # Flush to separate the temporary order update from the actual order
+
+    # Update the order of the remaining steps based on the new order
     for i, step in enumerate(remaining_steps):
         step.order = i
         session.add(step)
