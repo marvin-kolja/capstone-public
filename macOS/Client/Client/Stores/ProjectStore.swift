@@ -101,7 +101,7 @@ class ProjectStore: APIClientContext {
         }
         
         do {
-            let newProject = try await apiClient.addProject(data: .init(path: "/Users/marvinwillms/GITHUB_PKG_TOKEN.txt"))
+            let newProject = try await apiClient.addProject(data: .init(path: url.path(percentEncoded: false)))
             projects.insert(newProject, at: 0)
         } catch let appError as AppError {
             if let apiError = appError.type as? APIError {
