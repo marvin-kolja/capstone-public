@@ -21,8 +21,14 @@ from api.services.helpers import update_db_model
 logger = logging.getLogger(__name__)
 
 
-def list_test_plans(*, session: Session) -> list[SessionTestPlanPublic]:
-    plans = session.exec(select(SessionTestPlan)).all()
+def list_test_plans(
+    *, session: Session, project_id: Optional[uuid.UUID] = None
+) -> list[SessionTestPlanPublic]:
+    statement = select(SessionTestPlan)
+    if project_id:
+        statement = statement.where(SessionTestPlan.project_id == project_id)
+
+    plans = session.exec(statement).all()
     return [SessionTestPlanPublic.model_validate(plan) for plan in plans]
 
 

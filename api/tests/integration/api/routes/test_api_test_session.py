@@ -32,6 +32,44 @@ def test_list_test_sessions(
     assert found, "Test session not found in the response"
 
 
+def test_list_test_sessions_filter_by_project(
+    client, new_db_fake_test_session, new_db_fake_execution_step, new_db_project
+):
+    """
+    GIVEN: a test session in the database with an execution step
+
+    WHEN: GETing the `/test-sessions/` endpoint with a project_id query parameter that
+
+    THEN: it should return a list of test sessions related to the project
+    """
+    r = client.get(f"/test-sessions/?project_id={new_db_project.id}")
+
+    assert r.status_code == 200
+
+    data = r.json()
+
+    assert len(data) == 1
+
+    public_test_session = TestSessionPublic.model_validate(data[0])
+
+    assert public_test_session.build_snapshot.project_id == new_db_project.id
+
+
+def test_list_test_sessions_invalid_query(client):
+    """
+    GIVEN: No test sessions in the database
+
+    WHEN: GETing the `/test-sessions/` endpoint with an invalid project_id query parameter
+
+    THEN: it should return a 422
+    """
+    r = client.get("/test-sessions/?project_id=1")
+
+    assert r.status_code == 422
+    assert r.json()["code"] == 422
+    assert r.json()["detail"][0]["loc"] == ["query", "project_id"]
+
+
 def test_read_test_session(
     client, new_db_fake_test_session, new_db_fake_execution_step
 ):

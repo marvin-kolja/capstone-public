@@ -43,15 +43,25 @@ from api.services.orm_update_listener import ModelUpdateListener
 logger = logging.getLogger(__name__)
 
 
-def list_test_sessions(*, session: Session) -> list[TestSession]:
+def list_test_sessions(
+    *, session: Session, project_id: Optional[uuid.UUID] = None
+) -> list[TestSession]:
     """
     List all test sessions in the database.
     """
-    return list(
+    sessions = list(
         session.exec(
             select(TestSession).options(selectinload(TestSession.execution_steps))
         ).all()
     )
+    if project_id:
+        # NOTE: This is rather inefficient, as it loads all test sessions and then filters them in Python.
+        # However, as sessions can have all its references deleted, it is not possible to filter them in the query.
+        return [
+            s for s in sessions if s.build_snapshot["project_id"] == str(project_id)
+        ]
+
+    return sessions
 
 
 def read_test_session(

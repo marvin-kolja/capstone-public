@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session
@@ -20,12 +21,14 @@ from api.services import api_test_plan_service, project_service
 router = APIRouter(prefix="/test-plans", tags=["testPlans"])
 
 
-@router.get("/", responses=build_common_http_exception_responses([500]))
-async def list_test_plans(*, session: SessionDep) -> list[SessionTestPlanPublic]:
+@router.get("/", responses=build_common_http_exception_responses([422, 500]))
+async def list_test_plans(
+    *, session: SessionDep, project_id: Optional[uuid.UUID] = None
+) -> list[SessionTestPlanPublic]:
     """
     List user created test plans.
     """
-    return api_test_plan_service.list_test_plans(session=session)
+    return api_test_plan_service.list_test_plans(session=session, project_id=project_id)
 
 
 @router.post("/", responses=build_common_http_exception_responses([400, 422, 500]))

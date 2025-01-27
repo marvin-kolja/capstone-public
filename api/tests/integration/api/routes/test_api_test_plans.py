@@ -44,6 +44,46 @@ def test_list_test_plans(new_test_plan, new_test_plan_step, client):
     assert found
 
 
+def test_list_test_plans_filter_by_project(
+    new_test_plan, new_test_plan_step, new_db_project, client
+):
+    """
+    GIVEN: A test plan in the database
+
+    WHEN: GETing the `/test-plans/` endpoint with a project_id query parameter
+
+    THEN: The response should contain a list of test plans with the test plan from the database
+    """
+    r = client.get(f"/test-plans/?project_id={new_db_project.id}")
+
+    assert r.status_code == 200
+
+    data = r.json()
+
+    assert len(data) == 1
+
+    plan = SessionTestPlanPublic.model_validate(data[0])
+
+    assert plan.project_id == new_db_project.id
+
+
+def test_list_test_plans_invalid_query(client):
+    """
+    GIVEN: No test plans in the database
+
+    WHEN: GETing the `/test-plans/` endpoint with an invalid project_id query parameter
+
+    THEN: The response should be a 400
+    """
+    r = client.get("/test-plans/?project_id=1")
+
+    assert r.status_code == 422
+
+    data = r.json()
+    assert data["code"] == 422
+    assert data["detail"][0]["loc"] == ["query", "project_id"]
+
+
 def test_read_test_plan(new_test_plan, client):
     """
     GIVEN: A test plan in the database

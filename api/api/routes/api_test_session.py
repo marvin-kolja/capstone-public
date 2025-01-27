@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 
 from core.device.i_device_manager import IDeviceManager
 from fastapi import APIRouter, HTTPException, Request
@@ -29,13 +30,17 @@ router = APIRouter(prefix="/test-sessions", tags=["testSession"])
 
 @router.get(
     "/",
-    responses=build_common_http_exception_responses([500]),
+    responses=build_common_http_exception_responses([422, 500]),
 )
-async def list_test_sessions(*, session: SessionDep) -> list[TestSessionPublic]:
+async def list_test_sessions(
+    *, session: SessionDep, project_id: Optional[uuid.UUID] = None
+) -> list[TestSessionPublic]:
     """
     List all test sessions.
     """
-    return api_test_session_service.list_test_sessions(session=session)
+    return api_test_session_service.list_test_sessions(
+        session=session, project_id=project_id
+    )
 
 
 @router.post(
