@@ -66,6 +66,26 @@ class MockAPIClient: APIClientProtocol {
         return [Components.Schemas.DeviceWithStatus.mock]
     }
     
+    func pairDevice(deviceId: String) async throws {
+        try? await simulateWork()
+        // TODO: Alter some in memory state
+    }
+    
+    func mountDdi(deviceId: String) async throws {
+        try? await simulateWork()
+        // TODO: Alter some in memory state
+    }
+    
+    func enableDeveloperMode(deviceId: String) async throws {
+        try? await simulateWork()
+        // TODO: Alter some in memory state
+    }
+    
+    func connectTunnel(deviceId: String) async throws {
+        try? await simulateWork()
+        // TODO: Alter some in memory state
+    }
+    
     func listTestPlans() async throws -> [Components.Schemas.SessionTestPlanPublic] {
         try? await simulateWork()
         return [Components.Schemas.SessionTestPlanPublic.mock]

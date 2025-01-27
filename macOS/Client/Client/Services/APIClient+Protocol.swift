@@ -15,6 +15,10 @@ protocol APIClientProtocol {
     func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, Error>
     
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus]
+    func pairDevice(deviceId: String) async throws
+    func mountDdi(deviceId: String) async throws
+    func enableDeveloperMode(deviceId: String) async throws
+    func connectTunnel(deviceId: String) async throws
     
     func listTestPlans() async throws -> [Components.Schemas.SessionTestPlanPublic]
     func createTestPlan(data: Components.Schemas.SessionTestPlanCreate) async throws -> Components.Schemas.SessionTestPlanPublic

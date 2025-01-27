@@ -255,6 +255,86 @@ class APIClient: APIClientProtocol {
         }
     }
     
+    func pairDevice(deviceId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.devicesPairDevice(.init(path: .init(deviceId: deviceId)))
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest:
+                throw APIError.clientRequestError(statusCode: 400)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(_):
+                throw APIError.clientRequestError(statusCode: 422)
+            }
+        }
+    }
+    
+    func mountDdi(deviceId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.devicesMountDdi(.init(path: .init(deviceId: deviceId)))
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest:
+                throw APIError.clientRequestError(statusCode: 400)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(_):
+                throw APIError.clientRequestError(statusCode: 422)
+            }
+        }
+    }
+    
+    func enableDeveloperMode(deviceId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.devicesEnableDeveloperMode(.init(path: .init(deviceId: deviceId)))
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest:
+                throw APIError.clientRequestError(statusCode: 400)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(_):
+                throw APIError.clientRequestError(statusCode: 422)
+            }
+        }
+    }
+    
+    func connectTunnel(deviceId: String) async throws -> Void {
+        try await handleRequestError {
+            let result = try await client.devicesConnectTunnel(.init(path: .init(deviceId: deviceId)))
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest:
+                throw APIError.clientRequestError(statusCode: 400)
+            case .notFound:
+                throw APIError.clientRequestError(statusCode: 404)
+            case .unprocessableContent(_):
+                throw APIError.clientRequestError(statusCode: 422)
+            }
+        }
+    }
+    
     func listTestPlans() async throws -> [Components.Schemas.SessionTestPlanPublic] {
         try await handleRequestError {
             let result = try await client.testPlansListTestPlans()
