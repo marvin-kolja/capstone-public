@@ -130,7 +130,7 @@ class SessionTestPlanStepBase(SQLModel):
     test_cases: list[str] = SQLField(min_length=1, sa_column=Column(JSON))
     metrics: list[Metric] | None = SQLField(sa_column=Column(JSON), default=None)
     recording_start_strategy: RecordingStartStrategy | None = SQLField(
-        sa_column=Column(Enum, nullable=True), default=None
+        sa_column=Column(Enum(RecordingStartStrategy), nullable=True), default=None
     )
     reinstall_app: bool | None = SQLField(default=None)
 
