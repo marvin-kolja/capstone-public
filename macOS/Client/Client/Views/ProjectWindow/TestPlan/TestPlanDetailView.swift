@@ -71,7 +71,6 @@ struct TestPlanDetailView: View {
     }
     
     var availableXcTestCases: [String] {
-        print(buildsStore.getBuildById(buildId: testPlan.buildId))
         return buildsStore.getBuildById(buildId: testPlan.buildId)?.xcTestCases ?? []
     }
 }
