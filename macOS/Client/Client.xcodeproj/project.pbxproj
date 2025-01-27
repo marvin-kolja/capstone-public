@@ -34,7 +34,36 @@
 		CE75DFB22CD0E3B200CAB26A /* ClientUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClientUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CE4706BA2D47E64E0030302D /* Exceptions for "Scripts" folder in "Client" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				apple_device_types.txt,
+			);
+			target = CE75DF942CD0E3B000CAB26A /* Client */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		CE4706BB2D47E64E0030302D /* Exceptions for "Scripts" folder in "Compile Sources" phase from "Client" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = CE75DF912CD0E3B000CAB26A /* Sources */;
+			membershipExceptions = (
+				apple_device_types.txt,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		CE4706B22D47E5640030302D /* Scripts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CE4706BA2D47E64E0030302D /* Exceptions for "Scripts" folder in "Client" target */,
+				CE4706BB2D47E64E0030302D /* Exceptions for "Scripts" folder in "Compile Sources" phase from "Client" target */,
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
 		CE75DF972CD0E3B000CAB26A /* Client */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Client;
@@ -82,6 +111,7 @@
 		CE75DF8C2CD0E3B000CAB26A = {
 			isa = PBXGroup;
 			children = (
+				CE4706B22D47E5640030302D /* Scripts */,
 				CE75DF972CD0E3B000CAB26A /* Client */,
 				CE75DFAB2CD0E3B200CAB26A /* ClientTests */,
 				CE75DFB52CD0E3B200CAB26A /* ClientUITests */,
@@ -116,6 +146,7 @@
 				CE3516C82D404E71007D7B03 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				CE4706B22D47E5640030302D /* Scripts */,
 				CE75DF972CD0E3B000CAB26A /* Client */,
 			);
 			name = Client;
