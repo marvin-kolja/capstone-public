@@ -26,6 +26,7 @@ struct DevicesView: View {
                         Text(device.deviceName)
                             .tag(device.id)
                     }
+                    Divider().tag(String?(nil))
                 }
             }
 
