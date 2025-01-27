@@ -264,6 +264,8 @@ class APIClient: APIClientProtocol {
                 return try okResponse.body.json
             case .internalServerError:
                 throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422)
             case .undocumented(statusCode: let statusCode, _):
                 throw APIError.unknownStatus(statusCode: statusCode)
             }
