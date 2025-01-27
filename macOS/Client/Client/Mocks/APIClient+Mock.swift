@@ -61,6 +61,12 @@ class MockAPIClient: APIClientProtocol {
         }
     }
     
+    func listAvailableTests(projectId: String, buildId: String) async throws -> [String] {
+        try? await simulateWork()
+        
+        return Components.Schemas.BuildPublic.mock.xcTestCases ?? []
+    }
+    
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
         try? await simulateWork()
         return [Components.Schemas.DeviceWithStatus.mock]

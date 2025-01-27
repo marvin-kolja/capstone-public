@@ -14,6 +14,7 @@ extension Components.Schemas.BuildPublic {
         id: UUID().uuidString,
         projectId: Components.Schemas.XcProjectPublic.mock.id,
         scheme: Components.Schemas.XcProjectPublic.mock.schemes[0].name,
-        testPlan: Components.Schemas.XcProjectPublic.mock.schemes[0].xcTestPlans[0].name
+        testPlan: Components.Schemas.XcProjectPublic.mock.schemes[0].xcTestPlans[0].name,
+        xcTestCases: ["RPSwiftUI/RPSwiftUI/testExample"]
     )
 }

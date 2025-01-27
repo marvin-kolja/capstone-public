@@ -240,6 +240,26 @@ class APIClient: APIClientProtocol {
         }
     }
     
+    func listAvailableTests(projectId: String, buildId: String) async throws -> [String] {
+        try await handleRequestError {
+            let result = try await client.projectsListAvailableTests(.init(path: .init(projectId: projectId, buildId: buildId)))
+            switch result {
+            case .ok(let response):
+                return try response.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
+            case .unprocessableContent(_):
+                throw APIError.clientRequestError(statusCode: 422)
+            }
+        }
+    }
+    
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus] {
         try await handleRequestError {
             let result = try await client.devicesListDevices()

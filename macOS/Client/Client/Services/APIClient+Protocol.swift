@@ -13,6 +13,7 @@ protocol APIClientProtocol {
     func listBuilds(projectId: String) async throws -> [Components.Schemas.BuildPublic]
     func startBuild(projectId: String, data: Components.Schemas.StartBuildRequest) async throws -> Components.Schemas.BuildPublic
     func streamBuildUpdates(projectId: String, buildId: String) async throws -> AsyncThrowingStream<Components.Schemas.BuildPublic, Error>
+    func listAvailableTests(projectId: String, buildId: String) async throws -> [String]
     
     func listDevices() async throws -> [Components.Schemas.DeviceWithStatus]
     func pairDevice(deviceId: String) async throws
