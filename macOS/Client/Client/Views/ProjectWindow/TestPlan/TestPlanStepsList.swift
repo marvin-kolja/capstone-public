@@ -16,7 +16,11 @@ struct TestPlanStepsList: View {
     var body: some View {
         List {
             ForEach(testPlanStepStore.steps, id: \.id) { step in
-                TestPlanStepEditSection(step: step, testPlanData: testPlanData)
+                TestPlanStepEditSection(
+                    step: step,
+                    testPlanData: testPlanData,
+                    availableXcTestCases: availableXcTestCases
+                )
                 
                 Divider()
             }

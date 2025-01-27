@@ -44,17 +44,17 @@ struct AddTestPlanView: View {
             }
             
             LoadingButton(isLoading: testPlanStore.addingTestPlan) {
-                guard let buildId = selectedBuildId, let build = buildStore.getBuildById(buildId: buildId) else {
+                guard let buildId = selectedBuildId else {
                     return
                 }
                 
                 let data: Components.Schemas.SessionTestPlanCreate = .init(
+                    buildId: buildId,
                     metrics: [],
                     name: "Test Plan \(testPlanStore.testPlans.count)",
                     projectId: testPlanStore.projectId,
                     repetitionStrategy: .entireSuite,
-                    repetitions: 1,
-                    xcTestPlanName: build.testPlan
+                    repetitions: 1
                 )
                 
                 Task {

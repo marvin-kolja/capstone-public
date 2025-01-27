@@ -9,33 +9,10 @@ import SwiftUI
 
 struct TestPlanConfigForm: View {
     @Binding var data: TestPlanFormData
-    var availableXcTestPlans: [String]
 
     var body: some View {
         Form {
             TextField("Name", text: $data.name)
-
-            Divider()
-
-            Picker(selection: $data.xcTestPlanName) {
-                if let defaultXcTestPlan = data.defaultXcTestPlanName, !availableXcTestPlans.contains(defaultXcTestPlan) {
-                    Text(defaultXcTestPlan)
-                        .tag(defaultXcTestPlan)
-                }
-
-                ForEach(availableXcTestPlans, id: \.self) { xcTestPlan in
-                    Text(xcTestPlan)
-                }
-            } label: {
-                HStack {
-                    Text("Xc Test Plan")
-                    if !availableXcTestPlans.contains(data.xcTestPlanName) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                            .help("Unable to find '\(data.xcTestPlanName)' in any of the builds.")
-                    }
-                }
-            }
 
             Divider()
 
@@ -76,8 +53,5 @@ struct TestPlanConfigForm: View {
 #Preview {
     @Previewable @State var data = TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
 
-    TestPlanConfigForm(data: $data, availableXcTestPlans: [
-        "Xc test plan",
-        "Another Xc test plan"
-    ])
+    TestPlanConfigForm(data: $data)
 }

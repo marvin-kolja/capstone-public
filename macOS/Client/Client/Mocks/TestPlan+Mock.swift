@@ -20,6 +20,7 @@ extension Components.Schemas.SessionTestPlanStepPublic {
 
 extension Components.Schemas.SessionTestPlanPublic {
     static let mock = Components.Schemas.SessionTestPlanPublic(
+        buildId: Components.Schemas.BuildPublic.mock.id,
         endOnFailure: true,
         id: UUID().uuidString,
         metrics: [Components.Schemas.Metric.cpu],
@@ -30,7 +31,6 @@ extension Components.Schemas.SessionTestPlanPublic {
         reinstallApp: false,
         repetitionStrategy: Components.Schemas.RepetitionStrategy.entireSuite,
         repetitions: 1,
-        steps: [Components.Schemas.SessionTestPlanStepPublic.mock],
-        xcTestPlanName: Components.Schemas.BuildPublic.mock.testPlan
+        steps: [Components.Schemas.SessionTestPlanStepPublic.mock]
     )
 }

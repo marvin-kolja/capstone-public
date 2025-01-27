@@ -15,14 +15,19 @@ struct TestPlanStepEditSection: View {
     let testPlanData: TestPlanFormData
     
     @State private var stepFormData: TestPlanStepFormData
+    
+    var availableXcTestCases: [String]
 
-    init(step: Components.Schemas.SessionTestPlanStepPublic, testPlanData: TestPlanFormData) {
+    init(
+        step: Components.Schemas.SessionTestPlanStepPublic,
+        testPlanData: TestPlanFormData,
+        availableXcTestCases: [String]
+    ) {
         self.step = step
         self.testPlanData = testPlanData
         _stepFormData = State(initialValue: TestPlanStepFormData.fromExisting(step: step, testPlanData: testPlanData))
+        self.availableXcTestCases = availableXcTestCases
     }
-    
-    let availableXcTestCases = [""]
     
     var body: some View {
         CustomSection { _ in
@@ -94,7 +99,11 @@ struct TestPlanStepEditSection: View {
     let testPlanId = Components.Schemas.SessionTestPlanPublic.mock.id
     let testPlanData = TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
     
-    TestPlanStepEditSection(step: Components.Schemas.SessionTestPlanStepPublic.mock, testPlanData: testPlanData)
+    TestPlanStepEditSection(
+        step: Components.Schemas.SessionTestPlanStepPublic.mock,
+        testPlanData: testPlanData,
+        availableXcTestCases: Components.Schemas.BuildPublic.mock.xcTestCases ?? []
+    )
         .environmentObject(TestPlanStepStore(
             projectId: projectId,
             testPlanId: testPlanId,

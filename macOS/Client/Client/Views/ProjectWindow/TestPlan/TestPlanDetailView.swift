@@ -28,9 +28,6 @@ struct TestPlanDetailView: View {
 
     @State private var selectedPage: TestPlanPage = .testConfig
 
-    /// TODO: Needs to replaced! We need to get the XcTestCases from the backend first
-    private var availableXcTestCases = ["Some/Test/case"]
-
     var body: some View {
         VStack {
             Picker("", selection: $selectedPage, content: {
@@ -44,10 +41,8 @@ struct TestPlanDetailView: View {
                 case .testConfig:
                     VStack {
                         ScrollView {
-                            TestPlanConfigForm(
-                                data: $testPlanData,
-                                availableXcTestPlans: buildsStore.uniqueXcTestPlans
-                            ).disabled(testPlanStore.updatingTestPlans[testPlan.id] ?? false)
+                            TestPlanConfigForm(data: $testPlanData)
+                                .disabled(testPlanStore.updatingTestPlans[testPlan.id] ?? false)
                         }
                         HStack {
                             Spacer()
@@ -73,6 +68,11 @@ struct TestPlanDetailView: View {
         }
         .padding()
         .task { await buildsStore.loadBuilds() }
+    }
+    
+    var availableXcTestCases: [String] {
+        print(buildsStore.getBuildById(buildId: testPlan.buildId))
+        return buildsStore.getBuildById(buildId: testPlan.buildId)?.xcTestCases ?? []
     }
 }
 

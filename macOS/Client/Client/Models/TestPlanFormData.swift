@@ -7,10 +7,8 @@
 
 struct TestPlanFormData {
     let id: String
-    
+    let buildId: String
     var name: String = ""
-    var xcTestPlanName: String = ""
-    let defaultXcTestPlanName: String?
     var endOnFailure: Bool = false
     var reinstallApp: Bool = false
     var repetitions: Int = 1
@@ -23,9 +21,8 @@ struct TestPlanFormData {
     static func fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic) -> TestPlanFormData {
         return .init(
             id: testPlan.id,
+            buildId: testPlan.buildId,
             name: testPlan.name,
-            xcTestPlanName: testPlan.xcTestPlanName,
-            defaultXcTestPlanName: testPlan.xcTestPlanName,
             endOnFailure: testPlan.endOnFailure,
             reinstallApp: testPlan.reinstallApp,
             repetitions: testPlan.repetitions,
@@ -39,6 +36,7 @@ struct TestPlanFormData {
     /// Creates a create test plan request data from the form data
     func toTestPlanCreate(projectId: String) -> Components.Schemas.SessionTestPlanCreate {
         return .init(
+            buildId: buildId,
             endOnFailure: endOnFailure,
             metrics: metrics,
             name: name,
@@ -47,8 +45,7 @@ struct TestPlanFormData {
             recordingStrategy: recordingStrategy,
             reinstallApp: reinstallApp,
             repetitionStrategy: repetitionStrategy,
-            repetitions: repetitions,
-            xcTestPlanName: xcTestPlanName
+            repetitions: repetitions
         )
     }
 
@@ -62,13 +59,12 @@ struct TestPlanFormData {
             recordingStrategy: recordingStrategy,
             reinstallApp: reinstallApp,
             repetitionStrategy: repetitionStrategy,
-            repetitions: repetitions,
-            xcTestPlanName: xcTestPlanName
+            repetitions: repetitions
         )
     }
 
     func validate() -> Bool {
-        guard name != "" && xcTestPlanName != "" else {
+        guard name != "" else {
             return false
         }
         return true
