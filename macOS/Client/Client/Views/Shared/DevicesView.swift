@@ -69,6 +69,7 @@ struct DevicesView: View {
                         LoadingButton(isLoading: deviceStore.isPairing(deviceId)) {
                             Task {
                                 await deviceStore.pair(deviceId)
+                                await deviceStore.loadDevices()
                             }
                         } label: {
                             Text("Pair")
@@ -84,6 +85,7 @@ struct DevicesView: View {
                         LoadingButton(isLoading: deviceStore.isEnablingDeveloperMode(deviceId)) {
                             Task {
                                 await deviceStore.enableDeveloperMode(deviceId)
+                                await deviceStore.loadDevices()
                             }
                         } label: {
                             Text("Enable")
@@ -98,6 +100,7 @@ struct DevicesView: View {
                         LoadingButton(isLoading: deviceStore.isMounting(deviceId)) {
                             Task {
                                 await deviceStore.mountDdi(deviceId)
+                                await deviceStore.loadDevices()
                             }
                         } label: {
                             Text("Enable")
@@ -113,6 +116,7 @@ struct DevicesView: View {
                         LoadingButton(isLoading: deviceStore.isConnectingTunnel(deviceId)) {
                             Task {
                                 await deviceStore.connectTunnel(deviceId)
+                                await deviceStore.loadDevices()
                             }
                         } label: {
                             Text("Connect")
