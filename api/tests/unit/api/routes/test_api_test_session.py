@@ -38,7 +38,7 @@ async def test_start_test_session():
     # NOTE: This is a very complex test case. It simply makes sure that the method calls all the necessary methods with
     #  the correct arguments. Each of the called methods are tested separately in their own test cases.
 
-    session = MagicMock()
+    session = AsyncMock(spec=AsyncSession)
     job_runner = AsyncMock()
     device_manager = MagicMock()
     session_create = TestSessionCreate(
@@ -75,6 +75,11 @@ async def test_start_test_session():
             "create_test_session",
             return_value=mock_db_test_session,
         ) as mock_create_test_session,
+        patch.object(
+            api_test_session_service,
+            "read_test_session",
+            return_value=mock_db_test_session,
+        ) as mock_read_test_session,
         patch.object(
             api_test_session_service, "start_test_session", return_value=None
         ) as mock_start_session,

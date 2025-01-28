@@ -76,7 +76,7 @@ async def start_test_session(
         core_execution_plan=core_execution_plan,
     )
 
-    db_test_session = await api_test_session_service.create_test_session(
+    _ = await api_test_session_service.create_test_session(
         session=session,
         public_plan=public_plan,
         public_build=public_build,
@@ -93,7 +93,9 @@ async def start_test_session(
         i_device=device_manager.get_device(public_device.id),
     )
 
-    return db_test_session
+    return await api_test_session_service.read_test_session(
+        session=session, test_session_id=session_id
+    )
 
 
 @router.get(

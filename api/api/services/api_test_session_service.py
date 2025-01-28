@@ -70,7 +70,21 @@ async def read_test_session(
     """
     Read a test session from the database by its ID.
     """
-    return await session.get(TestSession, test_session_id)
+    statement = (
+        select(TestSession)
+        .options(
+            selectinload(TestSession.execution_steps).selectinload(
+                ExecutionStep.xc_test_result
+            ),
+            selectinload(TestSession.execution_steps).selectinload(
+                ExecutionStep.trace_result,
+            ),
+        )
+        .where(TestSession.id == test_session_id)
+    )
+
+    res = await session.execute(statement)
+    return res.scalar_one_or_none()
 
 
 def plan_execution(
