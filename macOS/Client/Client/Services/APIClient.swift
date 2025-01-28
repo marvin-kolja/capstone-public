@@ -69,7 +69,7 @@ class APIClient: APIClientProtocol {
         self.httpClient = HTTPClient(eventLoopGroupProvider: .singleton,
                                      configuration: HTTPClient.Configuration(timeout: timeout))
         
-        self.serverURL = try Servers.Server2.url()
+        self.serverURL = try Servers.Server2.url() // TODO: Allow specifying port
         self.client = Client(
             serverURL: serverURL,
             configuration: .init(dateTranscoder: .iso8601),

@@ -9,4 +9,6 @@ import Foundation
 
 /// State that should be shared across the application
 @MainActor
-class AppState: ObservableObject {}
+class AppState: ObservableObject {
+    // TODO: Store API port and allow changing that port
+}
