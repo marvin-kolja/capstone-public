@@ -24,6 +24,7 @@ struct ProjectContentView: View {
     @StateObject private var buildsStore: BuildStore
     @StateObject private var currentProjectStore: CurrentProjectStore
     @StateObject private var testPlanStore: TestPlanStore
+    @StateObject private var sessionStore: SessionStore
 
     @State private var visibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var selection: Selection = .general
@@ -32,6 +33,7 @@ struct ProjectContentView: View {
         _currentProjectStore = StateObject(wrappedValue: CurrentProjectStore(project: project))
         _buildsStore = StateObject(wrappedValue: BuildStore(projectId: project.id, apiClient: apiClient))
         _testPlanStore = StateObject(wrappedValue: TestPlanStore(projectId: project.id, apiClient: apiClient))
+        _sessionStore = StateObject(wrappedValue: SessionStore(projectId: project.id, apiClient: apiClient))
     }
 
     var body: some View {
@@ -66,6 +68,7 @@ struct ProjectContentView: View {
             .environmentObject(currentProjectStore)
             .environmentObject(buildsStore)
             .environmentObject(testPlanStore)
+            .environmentObject(sessionStore)
         }
         .task { await devicesStore.loadDevices() }
         .toolbar {
