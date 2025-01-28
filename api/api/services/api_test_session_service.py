@@ -269,6 +269,8 @@ async def _start_test_session_job(
 
             test_session_task = asyncio.create_task(test_session.run())
             await test_session_task
+            stop_event.set()
+            await update_handler_task
 
             db_test_session.status = "completed"
             session.add(db_test_session)
