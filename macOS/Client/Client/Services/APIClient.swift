@@ -62,6 +62,8 @@ class APIClient: APIClientProtocol {
     
     let apiCallSuccessSubject = PassthroughSubject<Bool,Never>()
     
+    private let decoder: JSONDecoder
+    
     init() throws {
         let timeout = HTTPClient.Configuration.Timeout(connect: .seconds(1), read: .minutes(1))
         self.httpClient = HTTPClient(eventLoopGroupProvider: .singleton,
@@ -70,8 +72,12 @@ class APIClient: APIClientProtocol {
         self.serverURL = try Servers.Server2.url()
         self.client = Client(
             serverURL: serverURL,
+            configuration: .init(dateTranscoder: .iso8601),
             transport: AsyncHTTPClientTransport(configuration: .init(client: httpClient, timeout: .minutes(1)))
         )
+        
+        self.decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
     }
     
     /// Generic API request handler that throws an `APIError.unknown` on any unknown errors that happen during
@@ -220,9 +226,10 @@ class APIClient: APIClientProtocol {
                                     logger.debug("Got nil build")
                                 }
                             }
+                            logger.debug("Finish listening to build updates")
                             continuation.finish()
                         } catch {
-                            continuation.finish(throwing: error)
+                            logger.warning("Finish listening to build updates with error \(error)")
                         }
                     }
                     
@@ -506,6 +513,133 @@ class APIClient: APIClientProtocol {
                 throw APIError.serverError(statusCode: 422, detail: try response.body.json.detail.description)
             case .undocumented(statusCode: let statusCode, _):
                 throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func listTestSession(projectId: String) async throws -> [Components.Schemas.TestSessionPublic] {
+        try await handleRequestError {
+            let result = try await client.testSessionListTestSessions(query: .init(projectId: projectId))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent:
+                throw APIError.clientRequestError(statusCode: 422)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func startTestSession(data: Components.Schemas.TestSessionCreate) async throws -> Components.Schemas.TestSessionPublic {
+        try await handleRequestError {
+            let result = try await client.testSessionStartTestSession(body: .json(data))
+            
+            switch result {
+            case .ok(let okResponse):
+                return try okResponse.body.json
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent:
+                throw APIError.clientRequestError(statusCode: 422)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            }
+        }
+    }
+    
+    func cancelTestSession(sessionId: String) async throws {
+        try await handleRequestError {
+            let result = try await client.testSessionCancelTestSession(path: .init(testSessionId: sessionId))
+            
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent:
+                throw APIError.clientRequestError(statusCode: 422)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
+            }
+        }
+    }
+    
+    func streamSessionExecutionStepUpdates(sessionId: String) async throws -> AsyncThrowingStream<Components.Schemas.ExecutionStepPublic, any Error> {
+        try await handleRequestError {
+            let result = try await client.testSessionStreamExecutionStepUpdates(path: .init(testSessionId: sessionId))
+            
+            switch result {
+            case .ok(let okResponse):
+                let stream = try okResponse.body.textEventStream.asDecodedServerSentEventsWithJSONData(
+                    of: Components.Schemas.ExecutionStepPublic.self,
+                    decoder: decoder
+                )
+                return AsyncThrowingStream { continuation in
+                    let task = Task {
+                        do {
+                            logger.debug("Listening for execution step updates")
+                            for try await event in stream {
+                                if let stepData = event.data {
+                                    logger.debug("Got new execution step: \(stepData.id)")
+                                    continuation.yield(stepData)
+                                } else {
+                                    logger.debug("Got nil execution step")
+                                }
+                            }
+                            logger.debug("Finish listening to execution step updates")
+                            continuation.finish()
+                        } catch {
+                            logger.warning("Finish listening to execution step updates with error \(error)")
+                            continuation.finish(throwing: error)
+                        }
+                    }
+                    
+                    continuation.onTermination = { _ in
+                        task.cancel()
+                    }
+                }
+                
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
+            case .unprocessableContent(let response):
+                throw APIError.clientRequestError(statusCode: 422, detail: try response.body.json.detail.description)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            }
+        }
+    }
+    
+    func exportSessionResults(sessionId: String) async throws {
+        try await handleRequestError {
+            let result = try await client.testSessionExportTestSessionResults(path: .init(testSessionId: sessionId))
+            
+            switch result {
+            case .ok:
+                return
+            case .internalServerError:
+                throw APIError.serverError(statusCode: 500)
+            case .unprocessableContent:
+                throw APIError.clientRequestError(statusCode: 422)
+            case .undocumented(statusCode: let statusCode, _):
+                throw APIError.unknownStatus(statusCode: statusCode)
+            case .badRequest(let response):
+                throw APIError.clientRequestError(statusCode: 400, detail: try response.body.json.detail)
+            case .notFound(let response):
+                throw APIError.clientRequestError(statusCode: 404, detail: try response.body.json.detail)
             }
         }
     }

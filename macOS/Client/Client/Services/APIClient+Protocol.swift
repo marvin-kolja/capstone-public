@@ -29,4 +29,10 @@ protocol APIClientProtocol {
     func updateTestPlanStep(testPlanId: String, stepId: String, data: Components.Schemas.SessionTestPlanStepUpdate) async throws -> Components.Schemas.SessionTestPlanStepPublic
     func deleteTestPlanStep(testPlanId: String, stepId: String) async throws -> Void
     func reorderTestPlanSteps(testPlanId: String, ids: [String]) async throws
+    
+    func listTestSession(projectId: String) async throws -> [Components.Schemas.TestSessionPublic]
+    func startTestSession(data: Components.Schemas.TestSessionCreate) async throws -> Components.Schemas.TestSessionPublic
+    func cancelTestSession(sessionId: String) async throws
+    func streamSessionExecutionStepUpdates(sessionId: String) async throws -> AsyncThrowingStream<Components.Schemas.ExecutionStepPublic, Error>
+    func exportSessionResults(sessionId: String) async throws
 }

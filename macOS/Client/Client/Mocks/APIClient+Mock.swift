@@ -133,4 +133,45 @@ class MockAPIClient: APIClientProtocol {
         try? await simulateWork()
         return
     }
+    
+    func listTestSession(projectId: String) async throws -> [Components.Schemas.TestSessionPublic] {
+        try? await simulateWork()
+        return [Components.Schemas.TestSessionPublic.mock]
+    }
+    
+    func startTestSession(data: Components.Schemas.TestSessionCreate) async throws -> Components.Schemas.TestSessionPublic {
+        try? await simulateWork()
+        return Components.Schemas.TestSessionPublic.mock
+    }
+    
+    func cancelTestSession(sessionId: String) async throws {
+        try? await simulateWork()
+        return
+    }
+    
+    func streamSessionExecutionStepUpdates(sessionId: String) async throws -> AsyncThrowingStream<Components.Schemas.ExecutionStepPublic, any Error> {
+        try? await simulateWork()
+        return AsyncThrowingStream { continuation in
+            Task {
+                try? await simulateWork()
+                
+                var build_running = Components.Schemas.ExecutionStepPublic.mock
+                build_running.status = .running
+                continuation.yield(build_running)
+                
+                try? await simulateWork()
+                
+                var build_success = Components.Schemas.ExecutionStepPublic.mock
+                build_success.status = .completed
+                continuation.yield(build_success)
+                
+                continuation.finish()
+            }
+        }
+    }
+    
+    func exportSessionResults(sessionId: String) async throws {
+        try? await simulateWork()
+        return
+    }
 }
