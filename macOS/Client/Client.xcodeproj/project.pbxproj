@@ -39,27 +39,17 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				apple_device_types.txt,
+				parse_apple_device_types.sh,
 			);
 			target = CE75DF942CD0E3B000CAB26A /* Client */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		CE4706BB2D47E64E0030302D /* Exceptions for "Scripts" folder in "Compile Sources" phase from "Client" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = CE75DF912CD0E3B000CAB26A /* Sources */;
-			membershipExceptions = (
-				apple_device_types.txt,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CE4706B22D47E5640030302D /* Scripts */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				CE4706BA2D47E64E0030302D /* Exceptions for "Scripts" folder in "Client" target */,
-				CE4706BB2D47E64E0030302D /* Exceptions for "Scripts" folder in "Compile Sources" phase from "Client" target */,
 			);
 			path = Scripts;
 			sourceTree = "<group>";
