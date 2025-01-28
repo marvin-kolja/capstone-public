@@ -7,6 +7,7 @@ from core.exceptions import i_device as core_device_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, col
 
+from api.config import settings
 from api.models import DeviceWithStatus, Device, DeviceBase
 from api.services.helpers import update_db_model
 
@@ -192,7 +193,7 @@ async def connect_tunnel(*, device: IDevice):
     :raises core_device_exceptions.RsdNotSupported: If RSD is not supported.
     """
     try:
-        await device.establish_trusted_channel()
+        await device.establish_trusted_channel(port=settings.TUNNEL_CONNECT_PORT)
     except (
         core_device_exceptions.DeviceNotPaired,
         core_device_exceptions.DeveloperModeNotEnabled,

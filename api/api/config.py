@@ -53,5 +53,9 @@ class Settings(BaseSettings):
             raise ValueError(f"TEST_SESSIONS_DIR does not exist: {path}")
         return path
 
+    API_PORT: int = 8000
+
+    TUNNEL_CONNECT_PORT: int = 49151
+
 
 settings = Settings()  # type: ignore

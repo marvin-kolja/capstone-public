@@ -81,7 +81,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "api.main:app",
         host="127.0.0.1",
-        port=8000,
+        port=settings.API_PORT,
         # TODO: Find and use free port in production. We could also do this from outside and pass it as a parameter.
         reload=settings.ENVIRONMENT == "local",
         log_config=LOGGING_CONFIG,
