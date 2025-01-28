@@ -31,13 +31,9 @@ async def test_health_check(
             tunnel_client_mock.get_tunnel.side_effect = AsyncMock(side_effect=Exception)
 
         if db_status == "ok":
-            mock_db_session_dependencies.execute.return_value.first = MagicMock(
-                return_value=None
-            )
+            mock_db_session_dependencies.execute.side_effect = None
         else:
-            mock_db_session_dependencies.execute.return_value.first = MagicMock(
-                side_effect=Exception
-            )
+            mock_db_session_dependencies.execute.side_effect = Exception
 
         response = await async_client.get("/health")
 
