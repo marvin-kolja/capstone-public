@@ -10,6 +10,7 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
 from api.async_jobs import AsyncJobRunner
@@ -211,6 +212,7 @@ async def get_unique_build(
             .where(Build.scheme == build_request.scheme)
             .where(Build.configuration == build_request.configuration)
             .where(Build.test_plan == build_request.test_plan)
+            .options(selectinload(Build.xctestrun))
         )
 
         return (await session.execute(statement)).scalar_one()
@@ -236,6 +238,7 @@ async def create_build(
     )
     session.add(db_build)
     await session.commit()
+    await session.refresh(db_build)
 
     return db_build
 
