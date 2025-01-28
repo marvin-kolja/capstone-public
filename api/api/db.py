@@ -13,7 +13,7 @@ engine = create_async_engine(
 
 
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    logger.critical("Setting PRAGMA foreign_keys=ON for SQLite connection")
+    logger.debug("Setting PRAGMA foreign_keys=ON for SQLite connection")
     # Required for SQLite to enforce foreign keys
     dbapi_connection.execute("PRAGMA foreign_keys = ON;")
 
