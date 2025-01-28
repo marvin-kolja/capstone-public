@@ -242,6 +242,7 @@ async def _start_test_session_job(
 
         stop_event = asyncio.Event()
         update_handler_task: Optional[asyncio.Task] = None
+        test_session_task: Optional[asyncio.Task] = None
 
         try:
             output_dir = get_test_session_dir_path(test_session_id=db_test_session.id)
@@ -265,7 +266,9 @@ async def _start_test_session_job(
                     queue=queue,
                 )
             )
-            await test_session.run()
+
+            test_session_task = asyncio.create_task(test_session.run())
+            await test_session_task
 
             db_test_session.status = "completed"
             session.add(db_test_session)
@@ -283,6 +286,10 @@ async def _start_test_session_job(
             session.add(db_test_session)
             await session.commit()
         finally:
+            with suppress(asyncio.CancelledError, Exception):
+                if test_session_task:
+                    test_session_task.cancel()
+                    await test_session_task
             stop_event.set()
             with suppress(asyncio.CancelledError):
                 if update_handler_task:
