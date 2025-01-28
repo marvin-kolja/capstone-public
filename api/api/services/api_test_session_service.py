@@ -385,7 +385,10 @@ async def _parse_xcresult_to_xc_test_result_model(
         skipped_tests=summary.skipped_tests,
         failed_tests=summary.failed_tests,
         passed_tests=summary.passed_tests,
-        test_failures=summary.test_failures,
+        test_failures=[
+            test_failure.model_dump(mode="json")
+            for test_failure in summary.test_failures
+        ],
         total_test_count=summary.total_test_count,
         start_time=summary.start_time,
         end_time=summary.finish_time,

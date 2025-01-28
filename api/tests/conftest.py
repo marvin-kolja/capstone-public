@@ -125,7 +125,14 @@ def test_summary():
             "skippedTests": 0,
             "startTime": 1737456094.16,
             "statistics": [],
-            "testFailures": [],
+            "testFailures": [
+                {
+                    "failureText": "Test operation was canceled.",
+                    "targetName": "RP SwiftUITests",
+                    "testIdentifier": 1,
+                    "testName": "RP SwiftUITests-Runner encountered an error",
+                }
+            ],
             "title": "Test - RP Swift",
             "topInsights": [],
             "totalTestCount": 1,

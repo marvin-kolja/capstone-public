@@ -6,6 +6,7 @@ import pytest
 from core.test_session.session_state import ExecutionStepStateSnapshot
 from core.xc.xcresult.models.test_results.summary import TestResult
 from fastapi import Request
+from sqlalchemy import select
 
 from api.models import (
     SessionTestPlanPublic,
@@ -15,6 +16,7 @@ from api.models import (
     ExecutionStep,
     XcTestResult,
     ExecutionStepPublic,
+    XcTestResultPublic,
 )
 
 # noinspection PyProtectedMember
@@ -22,6 +24,7 @@ from api.services.api_test_session_service import (
     create_test_session,
     _handle_execution_state_snapshot,
     listen_to_execution_step_updates,
+    _parse_xcresult_to_xc_test_result_model,
 )
 
 
@@ -241,3 +244,46 @@ async def test_listen_to_execution_step_updates_disconnect(
         continue
 
     request_mock.is_disconnected.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_store_xc_test_result_model(db, new_db_fake_execution_step, test_summary):
+    """
+    GIVEN: a test summary
+    AND: an execution step in the database
+
+    WHEN: Storing the parsed xcresult to the database
+    AND: Retrieving the result from the database
+    AND: Parsing it using a public model
+
+    THEN: No errors should be raised
+    """
+    xcresult_path = pathlib.Path("/path/to/xcresult")
+
+    with patch(
+        "api.services.api_test_session_service.XcresultTool"
+    ) as mock_xcresult_tool:
+        mock_xcresult_tool_instance = AsyncMock()
+        mock_xcresult_tool.return_value = mock_xcresult_tool_instance
+        mock_xcresult_tool_instance.get_test_summary.return_value = test_summary
+
+        result = await _parse_xcresult_to_xc_test_result_model(
+            execution_step_id=new_db_fake_execution_step.id,
+            xcresult_path=xcresult_path,
+        )
+
+        db.add(result)
+        await db.commit()
+
+        statement = select(XcTestResult).where(
+            XcTestResult.execution_step_id == new_db_fake_execution_step.id
+        )
+
+        db.expire_all()
+
+        res = await db.execute(statement)
+        db_data = res.scalar_one()
+
+        assert result == db_data
+
+        XcTestResultPublic.model_validate(db_data)

@@ -27,6 +27,34 @@ from api.custom_db_types import PathType, CreatedAtField, UpdatedAtField
 _common_relationship_kwargs = {"lazy": "selectin"}
 
 
+def list_of_dicts_to_pydantic_validator(model: type[BaseModel]):
+    """
+    Returns a function that validates incoming data using the passed model assuming the data is a list of dictionaries
+    :param model: pydantic model
+    :return: a function that can be used in a BeforeValidator
+    """
+
+    def parse(data: Any) -> Any:
+        validated = [model.model_validate(item) for item in data]
+        return validated
+
+    return parse
+
+
+def dict_to_pydantic_validator(model: type[BaseModel]):
+    """
+    Returns a function that validates the incoming data using passed model assuming the data is a dictionary
+    :param model: pydantic model
+    :return: a function that can be used in a BeforeValidator
+    """
+
+    def parse(data: Any) -> Any:
+        validated = model.model_validate(data)
+        return validated
+
+    return parse
+
+
 ######################################
 #           Health Check             #
 ######################################
@@ -412,9 +440,10 @@ class XcTestResultDataBase(SQLModel):
     failed_tests: int
     skipped_tests: int
     expected_failures: int
-    test_failures: list[xcresult_test_summary.TestFailure] = SQLField(
-        sa_column=Column(JSON)
-    )
+    # TODO: Pydantic models do not serialize to JSON by default. For now we use list of dicts which requires dumping
+    #  and loading to convert to and from JSON. We should consider using one of the suggested solutions in the following
+    #  issue: https://github.com/fastapi/sqlmodel/issues/63#issuecomment-2581016387
+    test_failures: list[dict] = SQLField(sa_column=Column(JSON))
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -429,7 +458,12 @@ class XcTestResult(XcTestResultDataBase, table=True):
 
 
 class XcTestResultPublic(XcTestResultDataBase):
-    pass
+    test_failures: Annotated[
+        list[xcresult_test_summary.TestFailure],
+        BeforeValidator(
+            list_of_dicts_to_pydantic_validator(xcresult_test_summary.TestFailure)
+        ),
+    ]
 
 
 class TraceResultDataBase(SQLModel):
@@ -595,20 +629,6 @@ class TestSession(TestSessionBase, table=True):
     )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-def dict_to_pydantic_validator(model: type[BaseModel]):
-    """
-    Returns a function that validates the incoming data using passed model
-    :param model: pydantic model
-    :return: a function that can be used in a BeforeValidator
-    """
-
-    def parse(data: Any) -> Any:
-        validated = model.model_validate(data)
-        return validated
-
-    return parse
 
 
 class TestSessionPublic(TestSessionBase):

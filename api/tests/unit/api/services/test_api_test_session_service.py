@@ -429,7 +429,9 @@ async def test_parse_xcresult_to_xc_test_result_model(test_summary):
         assert result.skipped_tests == test_summary.skipped_tests
         assert result.failed_tests == test_summary.failed_tests
         assert result.passed_tests == test_summary.passed_tests
-        assert result.test_failures == test_summary.test_failures
+        assert result.test_failures == [
+            item.model_dump(mode="json") for item in test_summary.test_failures
+        ]
         assert result.total_test_count == test_summary.total_test_count
         assert result.start_time == test_summary.start_time
         assert result.end_time == test_summary.finish_time
