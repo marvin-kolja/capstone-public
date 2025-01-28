@@ -30,15 +30,7 @@ struct ExecutionStepView: View {
 
                 Grid(alignment: .leading) {
                     GridRow {
-                        Text("Metrics:")
-                            .bold()
-                        ForEach(step.metrics, id: \.rawValue) { metric in
-                            Text(metric.rawValue.uppercased())
-                        }
-                    }
-
-                    GridRow {
-                        Text("Recording")
+                        Text("Recording Strategy")
                             .bold()
                         Text(step.recordingStartStrategy.rawValue.capitalized)
                     }
@@ -49,21 +41,34 @@ struct ExecutionStepView: View {
                         Text(step.reinstallApp ? "True" : "False")
 
                     }
+                    
+                    Divider()
+                    
                     GridRow {
-                        Text("Test Cases:")
+                        Text("Test Cases")
                             .bold()
                         ForEach(step.testCases, id: \.self) { testCase in
                             Text(testCase)
                         }
                     }
+                    
+                    GridRow {
+                        Text("Test Result File")
+                            .bold()
+                        LocalFileLinkButton(path: step.xcresultPath)
+                    }
+                    
+                    Divider()
+                    
+                    GridRow {
+                        Text("Trace File")
+                            .bold()
+                        LocalFileLinkButton(path: step.tracePath)
+                    }
                     GridRow {
                         Text("Export Status")
                             .bold()
-                        if let exportStatus = step.traceResult?.exportStatus {
-                            Text(exportStatus.rawValue)
-                        } else {
-                            Text("Not Started")
-                        }
+                        TestStatusIcon(status: step.traceResult?.exportStatus?.rawValue)
                     }
                 }.font(.subheadline)
                 
