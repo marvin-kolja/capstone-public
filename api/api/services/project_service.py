@@ -9,11 +9,12 @@ from core.xc.xctest import Xctest
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import NoResultFound
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from api.async_jobs import AsyncJobRunner
 from api.config import settings
-from api.db import engine
+from api.db import async_session_maker
 from api.models import (
     XcProjectPublic,
     XcProject,
@@ -33,8 +34,8 @@ from api.services.orm_update_listener import ModelUpdateListener
 logger = logging.getLogger(__name__)
 
 
-def list_projects(*, session: Session) -> list[XcProjectPublic]:
-    db_projects = session.exec(select(XcProject)).all()
+async def list_projects(*, session: AsyncSession) -> list[XcProjectPublic]:
+    db_projects = (await session.execute(select(XcProject))).scalars().all()
     return [XcProjectPublic.model_validate(project) for project in db_projects]
 
 
@@ -48,7 +49,7 @@ def get_core_xc_project(*, path: pathlib.Path) -> core_xc_project.XcProject:
 
 
 async def add_project(
-    *, session: Session, xc_project_interface: core_xc_project.XcProject
+    *, session: AsyncSession, xc_project_interface: core_xc_project.XcProject
 ) -> XcProjectPublic:
     """
     Add a new project to the database after it was validated and information was retrieved from the project.
@@ -64,16 +65,17 @@ async def add_project(
     )
     session.add(db_project)
 
-    session.commit()
-    session.refresh(db_project)
+    await session.commit()
+    await session.refresh(db_project)
 
     return XcProjectPublic.model_validate(db_project)
 
 
-def read_project(*, session: Session, project_id: uuid.UUID) -> Optional[XcProject]:
-    db_project = session.exec(
-        select(XcProject).where(XcProject.id == project_id)
-    ).first()
+async def read_project(
+    *, session: AsyncSession, project_id: uuid.UUID
+) -> Optional[XcProject]:
+    statement = select(XcProject).where(XcProject.id == project_id)
+    db_project = (await session.execute(statement)).scalar_one_or_none()
     if db_project is None:
         return None
     return db_project
@@ -81,7 +83,7 @@ def read_project(*, session: Session, project_id: uuid.UUID) -> Optional[XcProje
 
 async def refresh_project(
     *,
-    session: Session,
+    session: AsyncSession,
     db_project: XcProject,
     xc_project_interface: core_xc_project.XcProject,
 ) -> XcProjectPublic:
@@ -89,21 +91,24 @@ async def refresh_project(
         session=session, db_project=db_project, xc_project=xc_project_interface
     )
 
-    session.commit()
-    session.refresh(db_project)
+    await session.commit()
+    await session.refresh(db_project)
 
     return XcProjectPublic.model_validate(db_project)
 
 
-def list_builds(*, session: Session, project_id: uuid.UUID) -> list[BuildPublic]:
-    db_builds = session.exec(select(Build).where(Build.project_id == project_id)).all()
+async def list_builds(
+    *, session: AsyncSession, project_id: uuid.UUID
+) -> list[BuildPublic]:
+    statement = select(Build).where(Build.project_id == project_id)
+    db_builds = (await session.execute(statement)).scalars().all()
     logger.debug(f"Found {len(db_builds)} builds for project '{project_id}'")
     return [BuildPublic.model_validate(build) for build in db_builds]
 
 
-def read_build(
+async def read_build(
     *,
-    session: Session,
+    session: AsyncSession,
     build_id: uuid.UUID,
     project_id: Optional[uuid.UUID] = None,
 ) -> Optional[Build]:
@@ -112,7 +117,7 @@ def read_build(
         if project_id:
             statement = statement.where(Build.project_id == project_id)
 
-        db_build = session.exec(statement).one()
+        db_build = (await session.execute(statement)).scalar_one_or_none()
         logger.debug(f"Found build '{build_id}'")
         return db_build
     except NoResultFound:
@@ -192,28 +197,30 @@ def get_build_job_id(*, db_build: Build) -> str:
     )
 
 
-def get_unique_build(
+async def get_unique_build(
     *,
-    session: Session,
+    session: AsyncSession,
     project_id: uuid.UUID,
     build_request: StartBuildRequest,
 ) -> Optional[Build]:
     try:
-        return session.exec(
+        statement = (
             select(Build)
             .where(Build.project_id == project_id)
             .where(Build.device_id == build_request.device_id)
             .where(Build.scheme == build_request.scheme)
             .where(Build.configuration == build_request.configuration)
             .where(Build.test_plan == build_request.test_plan)
-        ).one()
+        )
+
+        return (await session.execute(statement)).scalar_one()
     except NoResultFound:
         return None
 
 
-def create_build(
+async def create_build(
     *,
-    session: Session,
+    session: AsyncSession,
     project_id: uuid.UUID,
     build_request: StartBuildRequest,
 ) -> Build:
@@ -228,14 +235,14 @@ def create_build(
         test_plan=build_request.test_plan,
     )
     session.add(db_build)
-    session.commit()
+    await session.commit()
 
     return db_build
 
 
-def start_build(
+async def start_build(
     *,
-    session: Session,
+    session: AsyncSession,
     db_build: Build,
     job_runner: AsyncJobRunner,
     app_builder: AppBuilder,
@@ -249,9 +256,9 @@ def start_build(
     db_build.xc_test_cases = None
     # Clear the xctestrun path as the new build will generate a new one
     if db_build.xctestrun:
-        session.delete(db_build.xctestrun)
-    session.commit()
-    session.refresh(db_build)
+        await session.delete(db_build.xctestrun)
+    await session.commit()
+    await session.refresh(db_build)
 
     job_runner.add_job(
         _build_project_job,
@@ -277,8 +284,9 @@ async def _build_project_job(
     build_id: uuid.UUID,
     output_dir: str,
 ):
-    with Session(engine) as session:
-        db_build = read_build(session=session, build_id=build_id)
+    print(async_session_maker)
+    async with async_session_maker() as session:
+        db_build = await read_build(session=session, build_id=build_id)
 
         logger.info(f"Starting build for project '{db_build.project_id}'")
 
@@ -288,7 +296,7 @@ async def _build_project_job(
 
         db_build.status = "running"
         session.add(db_build)
-        session.commit()
+        await session.commit()
 
         logger.debug(f"Starting build for testing for project '{db_build.project_id}'")
 
@@ -322,7 +330,7 @@ async def _build_project_job(
             )
             db_build.xctestrun = db_xctestrun
             session.add(db_build)
-            session.commit()
+            await session.commit()
 
             requires_normal_build = False
             # Usually, the app that is tested is built when building for testing, as it is set as a Target Dependency in the
@@ -353,7 +361,7 @@ async def _build_project_job(
 
             db_build.status = "success"
             session.add(db_build)
-            session.commit()
+            await session.commit()
 
             logger.info(
                 f"Build for project '{db_build.project_id}' finished successfully"
@@ -364,7 +372,7 @@ async def _build_project_job(
             )
             db_build.status = "failure"
             session.add(db_build)
-            session.commit()
+            await session.commit()
 
 
 async def listen_to_build_updates(
@@ -382,7 +390,7 @@ async def listen_to_build_updates(
     )
 
     async for update in listener.listen():
-        with Session(engine) as session:
+        async with async_session_maker() as session:
             if update is None:
                 if await request.is_disconnected():
                     logger.debug(f"Request disconnected, stopping listener")
@@ -392,10 +400,10 @@ async def listen_to_build_updates(
             if update.id != db_build.id:
                 continue  # Skip updates for other builds
 
-            build = read_build(
+            build = await read_build(
                 session=session, build_id=update.id, project_id=update.project_id
             )
-            session.refresh(build)  # Refresh the build to get the latest data
+            await session.refresh(build)  # Refresh the build to get the latest data
 
             yield "data: " + BuildPublic.model_validate(
                 build
@@ -427,9 +435,9 @@ _ProjectResource = TypeVar(
 )
 
 
-def sync_project_resources(
+async def sync_project_resources(
     *,
-    session: Session,
+    session: AsyncSession,
     db_items: list[_ProjectResource],
     new_item_names: list[str],
     project_id: uuid.UUID,
@@ -466,7 +474,7 @@ def sync_project_resources(
     for db_item in db_items:
         # Remove items that are not in the new items anymore
         if db_item.name not in new_item_names:
-            session.delete(db_item)
+            await session.delete(db_item)
         else:
             # Still exists, add to the result list
             result.append(db_item)  # Add to the new list
@@ -487,7 +495,7 @@ def sync_project_resources(
 
 async def sync_db_project(
     *,
-    session: Session,
+    session: AsyncSession,
     db_project: XcProject,
     xc_project: core_xc_project.XcProject,
 ):
@@ -512,21 +520,21 @@ async def sync_db_project(
     if project_details.name != db_project.name:
         db_project.name = project_details.name
 
-    sync_project_resources(
+    await sync_project_resources(
         session=session,
         db_items=db_project.configurations,
         new_item_names=project_details.configurations,
         project_id=db_project.id,
         model_class=XcProjectConfiguration,
     )
-    sync_project_resources(
+    await sync_project_resources(
         session=session,
         db_items=db_project.targets,
         new_item_names=project_details.targets,
         project_id=db_project.id,
         model_class=XcProjectTarget,
     )
-    db_schemes = sync_project_resources(
+    db_schemes = await sync_project_resources(
         session=session,
         db_items=db_project.schemes,
         new_item_names=project_details.schemes,
@@ -537,7 +545,7 @@ async def sync_db_project(
     for db_scheme in db_schemes:
         xc_test_plans = await xc_project.xcode_test_plans(scheme=db_scheme.name)
 
-        sync_project_resources(
+        await sync_project_resources(
             session=session,
             db_items=db_scheme.xc_test_plans,
             new_item_names=xc_test_plans,
@@ -547,18 +555,17 @@ async def sync_db_project(
         )
 
 
-def project_has_xc_test_plan(
-    *, session: Session, project_id: uuid.UUID, xc_test_plan: str
+async def project_has_xc_test_plan(
+    *, session: AsyncSession, project_id: uuid.UUID, xc_test_plan: str
 ) -> bool:
     """
     Check if a project has a specific xc test plan.
     """
-    return (
-        session.exec(
-            select(XcProjectTestPlan)
-            .join(XcProject)
-            .where(XcProject.id == project_id)
-            .where(XcProjectTestPlan.name == xc_test_plan)
-        ).first()
-        is not None
+    statement = (
+        select(XcProjectTestPlan)
+        .join(XcProject)
+        .where(XcProject.id == project_id)
+        .where(XcProjectTestPlan.name == xc_test_plan)
     )
+    result = await session.execute(statement)
+    return result.scalar_one_or_none() is not None

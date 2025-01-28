@@ -1,10 +1,14 @@
+import pytest
 from sqlalchemy import text
 from sqlmodel import select
 
 from api.models import SessionTestPlan, SessionTestPlanStep, RepetitionStrategy
 
 
-def test_session_test_plan_cascade_deletion(db, new_db_project, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_session_test_plan_cascade_deletion(
+    db, new_db_project, new_db_fake_build
+):
     """
     GIVEN: A test plan with test steps
 
@@ -22,8 +26,8 @@ def test_session_test_plan_cascade_deletion(db, new_db_project, new_db_fake_buil
         metrics=[],
     )
     db.add(test_plan)
-    db.commit()
-    db.refresh(test_plan)
+    await db.commit()
+    await db.refresh(test_plan)
 
     test_plan_id = test_plan.id
 
@@ -41,23 +45,31 @@ def test_session_test_plan_cascade_deletion(db, new_db_project, new_db_fake_buil
     )
     db.add(test_step_1)
     db.add(test_step_2)
-    db.commit()
+    await db.commit()
 
     # Delete the test plan
     # noinspection SqlResolve
-    db.execute(
+    await db.execute(
         text("DELETE FROM session_testplan WHERE id=:plan_id;"),
         {"plan_id": test_plan_id.hex},
     )
 
+    db.expire_all()
+
     # Check if the test steps are deleted
-    db_plan = db.get(SessionTestPlan, test_plan_id)
+    db_plan = await db.get(SessionTestPlan, test_plan_id)
     assert db_plan is None
 
     # Check if the test plan is deleted
-    db_steps = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.test_plan_id == test_plan_id
+    db_steps = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.test_plan_id == test_plan_id
+                )
+            )
         )
-    ).all()
+        .scalars()
+        .all()
+    )
     assert db_steps == []

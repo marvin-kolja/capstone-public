@@ -25,13 +25,13 @@ async def test_orm_update_listener_updates(db, new_db_fake_build):
         """Simulate updates"""
         new_db_fake_build.scheme = "Debug"
         db.add(new_db_fake_build)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
         new_db_fake_build.status = "failure"
         db.add(new_db_fake_build)
-        db.commit()
+        await db.commit()
 
     task = asyncio.create_task(update_task())
 

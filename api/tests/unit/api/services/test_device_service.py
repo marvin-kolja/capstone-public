@@ -10,7 +10,8 @@ from api.services.device_service import (
 from tests.conftest import assert_base_device_equal
 
 
-def test_update_device_fields():
+@pytest.mark.asyncio
+async def test_update_device_fields():
     """
     GIVEN: a device from DB
     AND: a new device base
@@ -68,7 +69,8 @@ def test_update_device_fields():
         ),
     ],
 )
-def test_update_or_add(device_from_db):
+@pytest.mark.asyncio
+async def test_update_or_add(device_from_db):
     """
     GIVEN: a device with status
     AND: an optional device from db

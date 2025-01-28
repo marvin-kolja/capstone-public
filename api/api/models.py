@@ -24,6 +24,9 @@ from sqlmodel import (
 from api.custom_db_types import PathType, CreatedAtField, UpdatedAtField
 
 
+_common_relationship_kwargs = {"lazy": "selectin"}
+
+
 ######################################
 #           Health Check             #
 ######################################
@@ -191,7 +194,9 @@ class SessionTestPlan(SessionTestPlanBase, table=True):
     project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
     build_id: uuid.UUID = SQLField(foreign_key="build.id", ondelete="CASCADE")
 
-    steps: list[SessionTestPlanStep] = Relationship(cascade_delete=True)
+    steps: list[SessionTestPlanStep] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -260,7 +265,9 @@ class XcProjectTestPlanPublic(XcProjectResourceModelBase):
 class XcProjectScheme(XcProjectResourceModel, table=True):
     __tablename__ = "xc_project_scheme"
 
-    xc_test_plans: list[XcProjectTestPlan] = Relationship(cascade_delete=True)
+    xc_test_plans: list[XcProjectTestPlan] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
 
 class XcProjectSchemePublic(XcProjectResourceModelBase):
@@ -285,9 +292,15 @@ class XcProject(XcProjectBase, table=True):
     id: uuid.UUID = SQLField(primary_key=True, default_factory=uuid.uuid4)
     name: str
 
-    configurations: list[XcProjectConfiguration] = Relationship(cascade_delete=True)
-    schemes: list[XcProjectScheme] = Relationship(cascade_delete=True)
-    targets: list[XcProjectTarget] = Relationship(cascade_delete=True)
+    configurations: list[XcProjectConfiguration] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    schemes: list[XcProjectScheme] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    targets: list[XcProjectTarget] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
 
 class XcProjectCreate(XcProjectBase):
@@ -364,7 +377,9 @@ class Build(BuildBase, table=True):
     id: uuid.UUID | None = SQLField(primary_key=True, default_factory=uuid.uuid4)
     project_id: uuid.UUID = SQLField(foreign_key="xc_project.id", ondelete="CASCADE")
     device_id: str = SQLField(foreign_key="device.id", ondelete="CASCADE")
-    xctestrun: Xctestrun | None = Relationship(cascade_delete=True)
+    xctestrun: Xctestrun | None = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
 
 class BuildPublic(BuildBase):
@@ -447,9 +462,15 @@ class TraceResult(TraceResultBase, table=True):
         foreign_key="execution_step.id", ondelete="CASCADE"
     )
 
-    sysmon: list[SysmonDB] = Relationship(cascade_delete=True)
-    core_animation: list[CoreAnimationDB] = Relationship(cascade_delete=True)
-    process_stdout_err: list[ProcessStdoutErrDB] = Relationship(cascade_delete=True)
+    sysmon: list[SysmonDB] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    core_animation: list[CoreAnimationDB] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    process_stdout_err: list[ProcessStdoutErrDB] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
 
 class TraceResultPublic(TraceResultBase):
@@ -505,8 +526,12 @@ class ExecutionStep(ExecutionStepBase, table=True):
     )
     session_id: uuid.UUID = SQLField(foreign_key="session.id", ondelete="CASCADE")
 
-    xc_test_result: XcTestResult | None = Relationship(cascade_delete=True)
-    trace_result: TraceResult | None = Relationship(cascade_delete=True)
+    xc_test_result: XcTestResult | None = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    trace_result: TraceResult | None = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -556,10 +581,18 @@ class TestSession(TestSessionBase, table=True):
     plan_snapshot: dict = SQLField(sa_column=Column(JSON))
     build_snapshot: dict = SQLField(sa_column=Column(JSON))
 
-    device: Device | None = Relationship()
-    plan: SessionTestPlan | None = Relationship()
-    build: Build | None = Relationship()
-    execution_steps: list[ExecutionStep] = Relationship(cascade_delete=True)
+    device: Device | None = Relationship(
+        sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    plan: SessionTestPlan | None = Relationship(
+        sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    build: Build | None = Relationship(
+        sa_relationship_kwargs=_common_relationship_kwargs
+    )
+    execution_steps: list[ExecutionStep] = Relationship(
+        cascade_delete=True, sa_relationship_kwargs=_common_relationship_kwargs
+    )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

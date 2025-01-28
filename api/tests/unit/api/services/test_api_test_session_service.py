@@ -7,7 +7,7 @@ import pytest
 from core.test_session import execution_plan
 from core.test_session.metrics import Metric
 from core.xc.xctrace.xml_parser import Schema, Sysmon, ProcessStdoutErr, CoreAnimation
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.async_jobs import AsyncJobRunner
 from api.models import (
@@ -557,7 +557,8 @@ def test_parse_api_test_plan_to_core_test_plan(
         "cancelled",
     ],
 )
-def test_session_is_done(status):
+@pytest.mark.asyncio
+async def test_session_is_done(status):
     """
     GIVEN: A test session
 
@@ -571,7 +572,7 @@ def test_session_is_done(status):
     with patch("api.services.api_test_session_service.read_test_session") as mock_read:
         mock_read.return_value = test_session
 
-        assert session_is_done(
+        assert await session_is_done(
             session=MagicMock(), test_session_id=uuid.uuid4()
         ), f"Session should be done if status is {status}"
 
@@ -672,7 +673,7 @@ async def test_process_execution_step_trace_results_no_trace_file(execution_step
     THEN: a ValueError should be raised
     AND: the db sessions add or commit should not be called
     """
-    db_session = MagicMock(spec=Session)
+    db_session = AsyncMock(spec=AsyncSession)
     execution_step_mock.trace_path = None
 
     with pytest.raises(ValueError):
@@ -703,7 +704,7 @@ async def test_process_execution_step_trace_results_already_running_or_complete(
 
     THEN: None should be returned
     """
-    db_session = MagicMock(spec=Session)
+    db_session = AsyncMock(spec=AsyncSession)
 
     execution_step_mock.trace_path = "/path/to/trace"
     trace_result_mock.export_status = export_status
@@ -735,7 +736,7 @@ async def test_process_execution_step_trace_results_cancel(
     async def simulate_work(*args, **kwargs):
         await asyncio.sleep(0.5)
 
-    db_session = MagicMock(spec=Session)
+    db_session = AsyncMock(spec=AsyncSession)
     execution_step_mock.trace_path = "/path/to/trace"
     trace_result_mock.export_status = "not_started"
 
@@ -773,7 +774,7 @@ async def test_process_execution_step_trace_results_failure(
     THEN: The export status should be set to failed
     """
 
-    db_session = MagicMock(spec=Session)
+    db_session = AsyncMock(spec=AsyncSession)
     execution_step_mock.trace_path = "/path/to/trace"
     trace_result_mock.export_status = "not_started"
 
@@ -869,7 +870,8 @@ async def test_process_trace_file_trace_does_not_exist():
             await process_trace_file(trace_path=fake_trace_path)
 
 
-def test_store_trace_results_invalid_type():
+@pytest.mark.asyncio
+async def test_store_trace_results_invalid_type():
     """
     GIVEN: list of trace results with invalid type
 
@@ -879,13 +881,14 @@ def test_store_trace_results_invalid_type():
     """
 
     with pytest.raises(ValueError):
-        store_trace_results(
+        await store_trace_results(
             session=MagicMock(),
             trace_result_id=MagicMock(spec=uuid.UUID),
             data=[1, 2, 3],
         )
 
 
+@pytest.mark.asyncio
 async def test_store_trace_results_session_add():
     """
     GIVEN: list of trace results
@@ -895,9 +898,9 @@ async def test_store_trace_results_session_add():
     THEN: the session should be called to add all trace results
     AND: the session should commit the changes
     """
-    session_mock = MagicMock(spec=Session)
+    session_mock = AsyncMock(spec=AsyncSession)
 
-    store_trace_results(
+    await store_trace_results(
         session=session_mock,
         trace_result_id=uuid.uuid4(),
         data=[

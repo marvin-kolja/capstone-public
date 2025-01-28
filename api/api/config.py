@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        return "sqlite+aiosqlite:///" + self.SQLITE_PATH
+
+    # noinspection PyPep8Naming
+    @computed_field
+    @property
+    def SQLALCHEMY_DATABASE_URI_SYNC(self) -> str:
         return "sqlite:///" + self.SQLITE_PATH
 
     BUILD_DIR: str

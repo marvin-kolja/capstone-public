@@ -6,9 +6,10 @@ import pytest
 from api.models import Build, Xctestrun
 
 
-def test_list_available_tests_no_build(client):
+@pytest.mark.asyncio
+async def test_list_available_tests_no_build(async_client):
     """
-    GIVEN: A client
+    GIVEN: A async_client
 
     WHEN: A request is made to get available tests for a build that does not exist
 
@@ -17,7 +18,7 @@ def test_list_available_tests_no_build(client):
     with patch("api.services.project_service.read_build") as mock_read_build:
         mock_read_build.return_value = None
 
-        r = client.get(
+        r = await async_client.get(
             f"/projects/{uuid.uuid4()}/builds/{uuid.uuid4()}/available-tests"
         )
 
@@ -33,9 +34,10 @@ def test_list_available_tests_no_build(client):
     "xctestrun",
     [None, MagicMock(spec=Xctestrun)],
 )
-def test_list_available_tests_build_not_finished(client, status, xctestrun):
+@pytest.mark.asyncio
+async def test_list_available_tests_build_not_finished(async_client, status, xctestrun):
     """
-    GIVEN: A client
+    GIVEN: A async_client
 
     WHEN: A request is made to get available tests for a build that is not finished
 
@@ -46,7 +48,7 @@ def test_list_available_tests_build_not_finished(client, status, xctestrun):
             spec=Build, status="running", xctestrun=xctestrun
         )
 
-        r = client.get(
+        r = await async_client.get(
             f"/projects/{uuid.uuid4()}/builds/{uuid.uuid4()}/available-tests"
         )
 
@@ -54,9 +56,10 @@ def test_list_available_tests_build_not_finished(client, status, xctestrun):
         assert r.json() == {"code": 400, "detail": "Build is not finished"}
 
 
-def test_list_available_tests_device_not_connected(client):
+@pytest.mark.asyncio
+async def test_list_available_tests_device_not_connected(async_client):
     """
-    GIVEN: A client
+    GIVEN: A async_client
 
     WHEN: A request is made to get available tests for a build with a device that is not connected
 
@@ -72,7 +75,7 @@ def test_list_available_tests_device_not_connected(client):
         ) as mock_get_device_by_id:
             mock_get_device_by_id.return_value = None
 
-            r = client.get(
+            r = await async_client.get(
                 f"/projects/{uuid.uuid4()}/builds/{uuid.uuid4()}/available-tests"
             )
 
@@ -80,9 +83,10 @@ def test_list_available_tests_device_not_connected(client):
             assert r.json() == {"code": 400, "detail": "Device is not connected"}
 
 
-def test_list_available_tests_success(client, mock_db_session_dependencies):
+@pytest.mark.asyncio
+async def test_list_available_tests_success(async_client, mock_db_session_dependencies):
     """
-    GIVEN: A client
+    GIVEN: A async_client
 
     WHEN: A request is made to get available tests for a build that is successful
 
@@ -108,7 +112,7 @@ def test_list_available_tests_success(client, mock_db_session_dependencies):
             ) as mock_list_available_tests:
                 mock_list_available_tests.return_value = ["test1", "test2"]
 
-                r = client.get(
+                r = await async_client.get(
                     f"/projects/{uuid.uuid4()}/builds/{uuid.uuid4()}/available-tests"
                 )
 

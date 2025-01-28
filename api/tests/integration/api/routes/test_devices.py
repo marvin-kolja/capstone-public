@@ -1,13 +1,10 @@
 import pytest
-from core.device.i_device_manager import IDeviceManager
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
-from api.services.device_service import mount_ddi
 
-
-def test_list_devices(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_list_devices(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -21,7 +18,7 @@ def test_list_devices(
     if real_device is None:
         pytest.skip("Requires a real device to be connected")
 
-    r = client.get("/devices/")
+    r = await async_client.get("/devices/")
     assert r.status_code == 200
 
     data = r.json()
@@ -33,8 +30,9 @@ def test_list_devices(
     assert len(matching_devices) == 1
 
 
-def test_read_device(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_read_device(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -47,7 +45,7 @@ def test_read_device(
     if real_device is None:
         pytest.skip("Requires a real device to be connected")
 
-    r = client.get(f"/devices/{real_device.udid}")
+    r = await async_client.get(f"/devices/{real_device.udid}")
     assert r.status_code == 200
 
     data = r.json()
@@ -56,7 +54,8 @@ def test_read_device(
     assert data["id"] == real_device.udid
 
 
-def test_read_device_not_found(client: TestClient, random_device_id):
+@pytest.mark.asyncio
+async def test_read_device_not_found(async_client: AsyncClient, random_device_id):
     """
     GIVEN: a device id that does not exist
 
@@ -64,12 +63,13 @@ def test_read_device_not_found(client: TestClient, random_device_id):
 
     THEN: The response should be a 404
     """
-    r = client.get(f"/devices/{random_device_id}")
+    r = await async_client.get(f"/devices/{random_device_id}")
     assert r.status_code == 404
 
 
-def test_pair_device(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_pair_device(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -85,19 +85,20 @@ def test_pair_device(
     if real_device.paired:
         real_device.unpair()
 
-    r = client.post(f"/devices/{real_device.udid}/pair")
+    r = await async_client.post(f"/devices/{real_device.udid}/pair")
 
     assert r.status_code == 200
 
-    r_2 = client.post(
+    r_2 = await async_client.post(
         f"/devices/{real_device.udid}/pair"
     )  # Pairing the same device twice should not fail.
 
     assert r_2.status_code == 200
 
 
-def test_unpair_device(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_unpair_device(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -111,23 +112,24 @@ def test_unpair_device(
     if real_device is None:
         pytest.skip("Requires a real device to be connected")
 
-    client.post(
+    await async_client.post(
         f"/devices/{real_device.udid}/pair"
     )  # Make sure the device is paired first.
 
-    r = client.post(f"/devices/{real_device.udid}/unpair")
+    r = await async_client.post(f"/devices/{real_device.udid}/unpair")
 
     assert r.status_code == 200
 
-    r_2 = client.post(
+    r_2 = await async_client.post(
         f"/devices/{real_device.udid}/unpair"
     )  # Unpairing the same device twice should fail.
 
     assert r_2.status_code == 500
 
 
-def test_enable_developer_mode(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_enable_developer_mode(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -142,11 +144,11 @@ def test_enable_developer_mode(
     if real_device is None:
         pytest.skip("Requires a real device to be connected")
 
-    client.post(
+    await async_client.post(
         f"/devices/{real_device.udid}/pair"
     )  # Make sure the device is paired first.
 
-    r = client.post(f"/devices/{real_device.udid}/developer-mode/enable")
+    r = await async_client.post(f"/devices/{real_device.udid}/developer-mode/enable")
 
     if not real_device.requires_developer_mode:
         assert r.status_code == 400
@@ -190,8 +192,9 @@ async def test_mount_ddi(
     assert r_2.status_code == 400
 
 
-def test_unmount_ddi(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_unmount_ddi(
+    async_client: AsyncClient,
     real_device,
 ):
     """
@@ -205,16 +208,18 @@ def test_unmount_ddi(
     if real_device is None:
         pytest.skip("Requires a real device to be connected")
 
-    client.post(
+    await async_client.post(
         f"/devices/{real_device.udid}/pair"
     )  # Make sure the device is paired first.
-    client.post(f"/devices/{real_device.udid}/ddi/mount")  # Mount the DDI first
+    await async_client.post(
+        f"/devices/{real_device.udid}/ddi/mount"
+    )  # Mount the DDI first
 
-    r = client.post(f"/devices/{real_device.udid}/ddi/unmount")
+    r = await async_client.post(f"/devices/{real_device.udid}/ddi/unmount")
 
     assert r.status_code == 200
 
-    r_2 = client.post(
+    r_2 = await async_client.post(
         f"/devices/{real_device.udid}/ddi/unmount"
     )  # Unmounting the same device twice should fail.
 

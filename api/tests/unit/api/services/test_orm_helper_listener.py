@@ -5,7 +5,8 @@ from api.models import Build
 from api.services.orm_update_listener import ModelUpdateListener
 
 
-def test_orm_update_listener_invalid_instance():
+@pytest.mark.asyncio
+async def test_orm_update_listener_invalid_instance():
     """
     GIVEN: An instance of ModelUpdateListener
     AND: A sql model instance
@@ -18,7 +19,8 @@ def test_orm_update_listener_invalid_instance():
         ModelUpdateListener(db_instance=SQLModel(), model_class=Build)
 
 
-def test_orm_update_listener_no_instance():
+@pytest.mark.asyncio
+async def test_orm_update_listener_no_instance():
     """
     GIVEN: An instance of ModelUpdateListener
     AND: A sql model instance

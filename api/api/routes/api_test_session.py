@@ -3,14 +3,14 @@ from typing import Optional
 
 from core.device.i_device_manager import IDeviceManager
 from fastapi import APIRouter, HTTPException, Request
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
 from api.custom_responses import (
     SSEStreamingResponse,
     build_common_http_exception_responses,
 )
-from api.depends import SessionDep, AsyncJobRunnerDep, DeviceManagerDep
+from api.depends import AsyncSessionDep, AsyncJobRunnerDep, DeviceManagerDep
 from api.models import (
     TestSessionCreate,
     TestSessionPublic,
@@ -33,12 +33,12 @@ router = APIRouter(prefix="/test-sessions", tags=["testSession"])
     responses=build_common_http_exception_responses([422, 500]),
 )
 async def list_test_sessions(
-    *, session: SessionDep, project_id: Optional[uuid.UUID] = None
+    *, session: AsyncSessionDep, project_id: Optional[uuid.UUID] = None
 ) -> list[TestSessionPublic]:
     """
     List all test sessions.
     """
-    return api_test_session_service.list_test_sessions(
+    return await api_test_session_service.list_test_sessions(
         session=session, project_id=project_id
     )
 
@@ -49,7 +49,7 @@ async def list_test_sessions(
 )
 async def start_test_session(
     *,
-    session: SessionDep,
+    session: AsyncSessionDep,
     job_runner: AsyncJobRunnerDep,
     device_manager: DeviceManagerDep,
     session_create: TestSessionCreate,
@@ -57,7 +57,7 @@ async def start_test_session(
     """
     Create and start new test session.
     """
-    public_build, public_plan, public_device = _validate_test_session_input(
+    public_build, public_plan, public_device = await _validate_test_session_input(
         session=session,
         device_manager=device_manager,
         session_create=session_create,
@@ -76,7 +76,7 @@ async def start_test_session(
         core_execution_plan=core_execution_plan,
     )
 
-    db_test_session = api_test_session_service.create_test_session(
+    db_test_session = await api_test_session_service.create_test_session(
         session=session,
         public_plan=public_plan,
         public_build=public_build,
@@ -101,12 +101,12 @@ async def start_test_session(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def read_test_session(
-    *, session: SessionDep, test_session_id: uuid.UUID
+    *, session: AsyncSessionDep, test_session_id: uuid.UUID
 ) -> TestSessionPublic:
     """
     Get the details of a test session.
     """
-    db_test_session = api_test_session_service.read_test_session(
+    db_test_session = await api_test_session_service.read_test_session(
         session=session, test_session_id=test_session_id
     )
     if db_test_session is None:
@@ -120,12 +120,15 @@ async def read_test_session(
     responses=build_common_http_exception_responses([400, 404, 422, 500]),
 )
 async def cancel_test_session(
-    *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
+    *,
+    session: AsyncSessionDep,
+    job_runner: AsyncJobRunnerDep,
+    test_session_id: uuid.UUID,
 ):
     """
     Cancels a running test session.
     """
-    db_test_session = api_test_session_service.read_test_session(
+    db_test_session = await api_test_session_service.read_test_session(
         session=session, test_session_id=test_session_id
     )
     if db_test_session is None:
@@ -145,12 +148,12 @@ async def cancel_test_session(
     responses=build_common_http_exception_responses([400, 404, 422, 500]),
 )
 async def stream_execution_step_updates(
-    *, session: SessionDep, test_session_id: uuid.UUID, request: Request
+    *, session: AsyncSessionDep, test_session_id: uuid.UUID, request: Request
 ) -> StreamingResponse:
     """
     Stream updates of the execution steps of a test session. Can return any execution step when it is updated.
     """
-    db_test_session = api_test_session_service.read_test_session(
+    db_test_session = await api_test_session_service.read_test_session(
         session=session, test_session_id=test_session_id
     )
     if db_test_session is None:
@@ -176,12 +179,15 @@ async def stream_execution_step_updates(
     responses=build_common_http_exception_responses([400, 404, 422, 500]),
 )
 async def export_test_session_results(
-    *, session: SessionDep, job_runner: AsyncJobRunnerDep, test_session_id: uuid.UUID
+    *,
+    session: AsyncSessionDep,
+    job_runner: AsyncJobRunnerDep,
+    test_session_id: uuid.UUID,
 ):
     """
     Start processing the trace results of a test session.
     """
-    db_test_session = api_test_session_service.read_test_session(
+    db_test_session = await api_test_session_service.read_test_session(
         session=session, test_session_id=test_session_id
     )
     if db_test_session is None:
@@ -197,9 +203,9 @@ async def export_test_session_results(
     )
 
 
-def _validate_test_session_input(
+async def _validate_test_session_input(
     *,
-    session: Session,
+    session: AsyncSession,
     device_manager: IDeviceManager,
     session_create: TestSessionCreate,
 ) -> tuple[BuildPublic, SessionTestPlanPublic, DeviceWithStatus]:
@@ -214,13 +220,15 @@ def _validate_test_session_input(
 
     :return: The build, plan and device
     """
-    db_plan = api_test_plan_service.read_test_plan(
+    db_plan = await api_test_plan_service.read_test_plan(
         session=session, test_plan_id=session_create.plan_id
     )
     if db_plan is None:
         raise HTTPException(status_code=400, detail="Invalid plan id")
 
-    db_build = project_service.read_build(session=session, build_id=db_plan.build_id)
+    db_build = await project_service.read_build(
+        session=session, build_id=db_plan.build_id
+    )
     if db_build is None:
         raise HTTPException(status_code=500)
 
@@ -247,7 +255,7 @@ def _validate_test_session_input(
             detail="Xctestrun file not found. Try rebuilding the project",
         )
 
-    device_with_status = device_service.get_device_by_id(
+    device_with_status = await device_service.get_device_by_id(
         session=session, device_id=db_build.device_id, device_manager=device_manager
     )
     if device_with_status is None or not device_with_status.connected:

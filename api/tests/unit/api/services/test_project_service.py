@@ -10,7 +10,7 @@ from core.xc.commands.xcodebuild_command import IOSDestination
 from core.xc.xctest import XctestOverview
 from core.xc.xctestrun import Xctestrun, XcTestConfiguration, XcTestTarget
 from fastapi.exceptions import RequestValidationError
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import (
     XcProjectResourceModel,
@@ -73,8 +73,13 @@ def gen_random_list_of_integers(
         )  # Generate n random test cases with random number of resources
     ],
 )
-def test_sync_resources(
-    model_class, additional_fields, resource_numbers, number_of_new_resources
+@pytest.mark.asyncio
+async def test_sync_resources(
+    model_class,
+    additional_fields,
+    resource_numbers,
+    number_of_new_resources,
+    mock_db_session,
 ):
     """
     GIVEN: a mocked db session
@@ -88,7 +93,7 @@ def test_sync_resources(
     AND: The correct values are added to the database
     AND: The correct values are removed from the database
     """
-    db_session_mock = MagicMock(spec=Session)
+    db_session_mock = mock_db_session
     project_id = uuid.uuid4()
 
     project_resources = [
@@ -108,7 +113,7 @@ def test_sync_resources(
         overlaps
     )  # Calculate how many resources need to be created
 
-    return_value = sync_project_resources(
+    return_value = await sync_project_resources(
         session=db_session_mock,
         db_items=project_resources,
         new_item_names=new_project_resources,
@@ -156,7 +161,7 @@ async def test_sync_db_project():
         "api.services.project_service.sync_project_resources"
     ) as sync_project_resources_mock:
 
-        db_session_mock = MagicMock(spec=Session)
+        db_session_mock = AsyncMock(spec=AsyncSession)
         db_project_mock = MagicMock(spec=XcProject)
         db_project_mock.name = "Old Name"
         db_project_mock.schemes = [
@@ -238,7 +243,8 @@ async def test_sync_db_project():
         ),
     ],
 )
-def test_validate_build_request(
+@pytest.mark.asyncio
+async def test_validate_build_request(
     scheme_name, test_plan_name, configuration, expected_error, random_device_id
 ):
     """

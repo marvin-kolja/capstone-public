@@ -32,7 +32,8 @@ from api.services.api_test_plan_service import (
 )
 
 
-def test_list_test_plans(new_test_plan, new_test_plan_step, db):
+@pytest.mark.asyncio
+async def test_list_test_plans(new_test_plan, new_test_plan_step, db):
     """
     GIVEN: A database with a test plan
 
@@ -41,7 +42,7 @@ def test_list_test_plans(new_test_plan, new_test_plan_step, db):
     THEN: The function should return a list of test plans
     """
 
-    plans = list_test_plans(session=db)
+    plans = await list_test_plans(session=db)
     assert len(plans) >= 1
 
     found = False
@@ -56,7 +57,8 @@ def test_list_test_plans(new_test_plan, new_test_plan_step, db):
     assert found
 
 
-def test_read_test_plan(new_test_plan, db):
+@pytest.mark.asyncio
+async def test_read_test_plan(new_test_plan, db):
     """
     GIVEN: A database with a test plan
 
@@ -64,10 +66,13 @@ def test_read_test_plan(new_test_plan, db):
 
     THEN: The function should return the test plan
     """
-    assert read_test_plan(session=db, test_plan_id=new_test_plan.id) == new_test_plan
+    assert (
+        await read_test_plan(session=db, test_plan_id=new_test_plan.id) == new_test_plan
+    )
 
 
-def test_create_test_plan(db, new_db_project, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_create_test_plan(db, new_db_project, new_db_fake_build):
     """
     GIVEN: A test plan
 
@@ -85,11 +90,17 @@ def test_create_test_plan(db, new_db_project, new_db_fake_build):
         project_id=new_db_project.id,
     )
 
-    created_plan = create_test_plan(session=db, plan=test_plan)
+    created_plan = await create_test_plan(session=db, plan=test_plan)
 
-    db_plan = db.exec(
-        select(SessionTestPlan).where(SessionTestPlan.id == created_plan.id)
-    ).first()
+    db_plan = (
+        (
+            await db.execute(
+                select(SessionTestPlan).where(SessionTestPlan.id == created_plan.id)
+            )
+        )
+        .scalars()
+        .first()
+    )
 
     assert created_plan == SessionTestPlanPublic.model_validate(db_plan)
 
@@ -101,7 +112,8 @@ def test_create_test_plan(db, new_db_project, new_db_fake_build):
     assert created_plan.metrics == test_plan.metrics
 
 
-def test_update_test_plan(new_test_plan, db):
+@pytest.mark.asyncio
+async def test_update_test_plan(new_test_plan, db):
     """
     GIVEN: An existing test plan
 
@@ -116,17 +128,20 @@ def test_update_test_plan(new_test_plan, db):
 
     assert new_test_plan.name != plan_update.name
 
-    updated_plan = update_test_plan(session=db, plan=plan_update, db_plan=new_test_plan)
+    updated_plan = await update_test_plan(
+        session=db, plan=plan_update, db_plan=new_test_plan
+    )
 
     assert updated_plan.name == plan_update.name
 
-    db.refresh(new_test_plan)
+    await db.refresh(new_test_plan)
 
     assert new_test_plan.name == plan_update.name
     assert updated_plan == SessionTestPlanPublic.model_validate(new_test_plan)
 
 
-def test_delete_test_plan(new_test_plan, new_test_plan_step, db):
+@pytest.mark.asyncio
+async def test_delete_test_plan(new_test_plan, new_test_plan_step, db):
     """
     GIVEN: A database with a test plan
 
@@ -135,24 +150,33 @@ def test_delete_test_plan(new_test_plan, new_test_plan_step, db):
     THEN: The test plan should be deleted from the DB
     AND: The test plan steps should be deleted from the DB
     """
-    delete_test_plan(session=db, db_plan=new_test_plan)
+    await delete_test_plan(session=db, db_plan=new_test_plan)
 
-    plan = db.exec(
-        select(SessionTestPlan).where(SessionTestPlan.id == new_test_plan.id)
-    ).first()
+    plan = (
+        await db.execute(
+            select(SessionTestPlan).where(SessionTestPlan.id == new_test_plan.id)
+        )
+    ).scalar_one_or_none()
 
     assert plan is None
 
-    steps = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.test_plan_id == new_test_plan.id
+    steps = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.test_plan_id == new_test_plan.id
+                )
+            )
         )
-    ).all()
+        .scalars()
+        .all()
+    )
 
     assert len(steps) == 0
 
 
-def test_create_test_plan_step(new_test_plan, new_test_plan_step, db):
+@pytest.mark.asyncio
+async def test_create_test_plan_step(new_test_plan, new_test_plan_step, db):
     """
     GIVEN: A test plan and a step in the db
 
@@ -166,13 +190,21 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db):
         test_cases=["test/case/path"],
     )
 
-    created_step = create_test_plan_step(
+    created_step = await create_test_plan_step(
         session=db, db_plan=new_test_plan, step=test_plan_step
     )
 
-    db_step = db.exec(
-        select(SessionTestPlanStep).where(SessionTestPlanStep.id == created_step.id)
-    ).first()
+    db_step = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.id == created_step.id
+                )
+            )
+        )
+        .scalars()
+        .first()
+    )
 
     assert created_step == SessionTestPlanStepPublic.model_validate(db_step)
 
@@ -186,7 +218,8 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db):
     assert created_step.repetitions == test_plan_step.repetitions
 
 
-def test_update_test_plan_step(new_test_plan, new_test_plan_step, db):
+@pytest.mark.asyncio
+async def test_update_test_plan_step(new_test_plan, new_test_plan_step, db):
     """
     GIVEN: A test plan and a step in the db
 
@@ -202,7 +235,7 @@ def test_update_test_plan_step(new_test_plan, new_test_plan_step, db):
 
     assert new_test_plan_step.name != step_update.name
 
-    updated_step = update_test_plan_step(
+    updated_step = await update_test_plan_step(
         session=db,
         db_step=new_test_plan_step,
         step=step_update,
@@ -211,13 +244,14 @@ def test_update_test_plan_step(new_test_plan, new_test_plan_step, db):
     assert updated_step.name == step_update.name
     assert updated_step.test_cases == step_update.test_cases
 
-    db.refresh(new_test_plan_step)
+    await db.refresh(new_test_plan_step)
 
     assert new_test_plan_step.name == step_update.name
     assert updated_step == SessionTestPlanStepPublic.model_validate(new_test_plan_step)
 
 
-def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db):
+@pytest.mark.asyncio
+async def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db):
     """
     GIVEN: A test plan and a step in the db
 
@@ -225,21 +259,28 @@ def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db):
 
     THEN: The step should be deleted
     """
-    delete_test_plan_step(
+    await delete_test_plan_step(
         session=db,
         db_step=new_test_plan_step,
     )
 
-    step = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.id == new_test_plan_step.id
+    step = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.id == new_test_plan_step.id
+                )
+            )
         )
-    ).first()
+        .scalars()
+        .first()
+    )
 
     assert step is None
 
 
-def test_reorder_test_plan_steps(new_test_plan, db):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps(new_test_plan, db):
     """
     GIVEN: A test plan with steps
 
@@ -255,7 +296,7 @@ def test_reorder_test_plan_steps(new_test_plan, db):
         for i in range(3)
     ]
     created_steps = [
-        create_test_plan_step(session=db, db_plan=new_test_plan, step=step)
+        await create_test_plan_step(session=db, db_plan=new_test_plan, step=step)
         for step in steps
     ]
 
@@ -263,19 +304,20 @@ def test_reorder_test_plan_steps(new_test_plan, db):
 
     new_order = [steps_in_order[1].id, steps_in_order[2].id, steps_in_order[0].id]
 
-    reorder_test_plan_steps(
+    await reorder_test_plan_steps(
         session=db,
         db_plan=new_test_plan,
         step_ids=new_order,
     )
 
-    db.refresh(new_test_plan)
+    await db.refresh(new_test_plan)
 
     for step in new_test_plan.steps:
         assert step.order == int(new_order.index(step.id))
 
 
-def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, db):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, db):
     """
     GIVEN: A test plan with a step
 
@@ -286,14 +328,15 @@ def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, db):
     step_id = uuid.uuid4()
 
     with pytest.raises(RequestValidationError) as e:
-        reorder_test_plan_steps(
+        await reorder_test_plan_steps(
             session=db,
             db_plan=new_test_plan,
             step_ids=[step_id, step_id],
         )
 
 
-def test_reorder_test_plan_steps_id_mismatch(new_test_plan, db):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps_id_mismatch(new_test_plan, db):
     """
     GIVEN: A test plan with a step
 
@@ -302,7 +345,7 @@ def test_reorder_test_plan_steps_id_mismatch(new_test_plan, db):
     THEN: The function should raise a RequestValidationError
     """
     with pytest.raises(RequestValidationError) as e:
-        reorder_test_plan_steps(
+        await reorder_test_plan_steps(
             session=db,
             db_plan=new_test_plan,
             step_ids=[uuid.uuid4()],
@@ -316,7 +359,8 @@ def test_reorder_test_plan_steps_id_mismatch(new_test_plan, db):
         False,
     ],
 )
-def test_read_test_plan_step(db, new_test_plan, new_test_plan_step, exists):
+@pytest.mark.asyncio
+async def test_read_test_plan_step(db, new_test_plan, new_test_plan_step, exists):
     """
     GIVEN: A test plan id and a step id
 
@@ -327,14 +371,14 @@ def test_read_test_plan_step(db, new_test_plan, new_test_plan_step, exists):
     """
 
     if exists:
-        step = read_test_plan_step(
+        step = await read_test_plan_step(
             session=db, test_plan_id=new_test_plan.id, step_id=new_test_plan_step.id
         )
         assert step == new_test_plan_step
     else:
         plan_uuid = uuid.uuid4()
         step_uuid = uuid.uuid4()
-        step = read_test_plan_step(
+        step = await read_test_plan_step(
             session=db, test_plan_id=plan_uuid, step_id=step_uuid
         )
         assert step is None

@@ -24,7 +24,7 @@ from api.models import (
 
 
 @pytest.fixture(scope="function")
-def new_test_plan(db, new_db_project, new_db_fake_build):
+async def new_test_plan(db, new_db_project, new_db_fake_build) -> SessionTestPlan:
     test_plan = SessionTestPlan(
         name="test plan",
         build_id=new_db_fake_build.id,
@@ -34,8 +34,8 @@ def new_test_plan(db, new_db_project, new_db_fake_build):
         project_id=new_db_project.id,
     )
     db.add(test_plan)
-    db.commit()
-    db.refresh(test_plan)
+    await db.commit()
+    await db.refresh(test_plan)
 
     yield test_plan
 
@@ -44,7 +44,7 @@ def new_test_plan(db, new_db_project, new_db_fake_build):
 
 
 @pytest.fixture(scope="function")
-def new_test_plan_step(db, new_test_plan):
+async def new_test_plan_step(db, new_test_plan) -> SessionTestPlanStep:
     test_plan_step = SessionTestPlanStep(
         name="test step",
         test_plan_id=new_test_plan.id,
@@ -52,9 +52,9 @@ def new_test_plan_step(db, new_test_plan):
         test_cases=["test/case/path"],
     )
     db.add(test_plan_step)
-    db.commit()
-    db.refresh(test_plan_step)
-    db.refresh(new_test_plan)
+    await db.commit()
+    await db.refresh(test_plan_step)
+    await db.refresh(new_test_plan)
 
     yield test_plan_step
 
@@ -63,7 +63,7 @@ def new_test_plan_step(db, new_test_plan):
 
 
 @pytest.fixture(scope="function")
-def new_db_fake_device(db, random_device_id):
+async def new_db_fake_device(db, random_device_id) -> Device:
     device = Device(
         id=random_device_id,
         udid=random_device_id,
@@ -74,20 +74,20 @@ def new_db_fake_device(db, random_device_id):
         product_type="Fake",
     )
     db.add(device)
-    db.commit()
-    db.refresh(device)
+    await db.commit()
+    await db.refresh(device)
 
     yield device
 
-    db.delete(device)
-    db.commit()
+    await db.delete(device)
+    await db.commit()
 
 
 @pytest.fixture
-def new_db_project(db, path_to_example_project):
+async def new_db_project(db, path_to_example_project) -> XcProject:
     project = XcProject(name="project_1", path=path_to_example_project)
     db.add(project)
-    db.commit()
+    await db.commit()
 
     scheme = XcProjectScheme(name="scheme_1", project_id=project.id)
     target = XcProjectTarget(name="target_1", project_id=project.id)
@@ -97,19 +97,22 @@ def new_db_project(db, path_to_example_project):
     db.add(scheme)
     db.add(target)
     db.add(configuration)
-    db.commit()
+    await db.commit()
 
     xc_test_plan = XcProjectTestPlan(
         name="xc_test_plan_1", scheme_id=scheme.id, project_id=project.id
     )
     db.add(xc_test_plan)
-    db.commit()
+    await db.commit()
+
+    await db.refresh(scheme)  # Refresh all data attached to the scheme
+    await db.refresh(project)  # Refresh all data attached to the project
 
     return project
 
 
 @pytest.fixture
-def new_db_fake_build(db, new_db_project, new_db_fake_device):
+async def new_db_fake_build(db, new_db_project, new_db_fake_device) -> Build:
     """
     Add a new build to the database.
     """
@@ -121,13 +124,14 @@ def new_db_fake_build(db, new_db_project, new_db_fake_device):
         device_id=new_db_fake_device.id,
     )
     db.add(db_build)
-    db.commit()
+    await db.commit()
+    await db.refresh(db_build)
 
     return db_build
 
 
 @pytest.fixture
-def new_db_fake_xctestrun(db, new_db_fake_build):
+async def new_db_fake_xctestrun(db, new_db_fake_build) -> Xctestrun:
     """
     Add a new xctestrun to the database.
     """
@@ -137,15 +141,16 @@ def new_db_fake_xctestrun(db, new_db_fake_build):
         build_id=new_db_fake_build.id,
     )
     db.add(xctestrun)
-    db.commit()
+    await db.commit()
+    await db.refresh(xctestrun)  # Refresh all data attached
 
     return xctestrun
 
 
 @pytest.fixture
-def new_db_fake_test_session(
+async def new_db_fake_test_session(
     db, new_db_fake_build, new_db_fake_device, new_test_plan, new_test_plan_step
-):
+) -> TestSession:
     """
     Add a new test session to the database.
     """
@@ -163,15 +168,16 @@ def new_db_fake_test_session(
         device_snapshot=public_device.model_dump(mode="json"),
     )
     db.add(test_session)
-    db.commit()
+    await db.commit()
+    await db.refresh(test_session)  # Refresh all data attached
 
     return test_session
 
 
 @pytest.fixture
-def new_db_fake_execution_step(
+async def new_db_fake_execution_step(
     db, new_db_fake_test_session, new_test_plan_step, new_test_plan
-):
+) -> ExecutionStep:
     """
     Add a new execution step to the database.
     """
@@ -189,6 +195,7 @@ def new_db_fake_execution_step(
         test_target_name="fake target name",  # TODO: replace with an actual value when needed
     )
     db.add(execution_step)
-    db.commit()
+    await db.commit()
+    await db.refresh(execution_step)  # Refresh all data attached
 
     return execution_step

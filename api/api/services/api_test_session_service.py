@@ -11,8 +11,9 @@ from core.xc.xcresult.xcresulttool import XcresultTool
 from core.xc.xctrace.xctrace_interface import Xctrace
 from core.xc.xctrace.xml_parser import Schema, Sysmon, ProcessStdoutErr, CoreAnimation
 from fastapi import Request
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from core.test_session import (
     plan as core_plan,
@@ -22,7 +23,7 @@ from core.test_session import (
 
 from api.async_jobs import AsyncJobRunner
 from api.config import settings
-from api.db import engine
+from api.db import async_session_maker
 from api.models import (
     TestSession,
     ExecutionStep,
@@ -43,17 +44,16 @@ from api.services.orm_update_listener import ModelUpdateListener
 logger = logging.getLogger(__name__)
 
 
-def list_test_sessions(
-    *, session: Session, project_id: Optional[uuid.UUID] = None
+async def list_test_sessions(
+    *, session: AsyncSession, project_id: Optional[uuid.UUID] = None
 ) -> list[TestSession]:
     """
     List all test sessions in the database.
     """
-    sessions = list(
-        session.exec(
-            select(TestSession).options(selectinload(TestSession.execution_steps))
-        ).all()
-    )
+    statement = select(TestSession).options(selectinload(TestSession.execution_steps))
+    res = await session.execute(statement)
+
+    sessions = list(res.scalars().all())
     if project_id:
         # NOTE: This is rather inefficient, as it loads all test sessions and then filters them in Python.
         # However, as sessions can have all its references deleted, it is not possible to filter them in the query.
@@ -64,13 +64,13 @@ def list_test_sessions(
     return sessions
 
 
-def read_test_session(
-    *, session: Session, test_session_id: uuid.UUID
+async def read_test_session(
+    *, session: AsyncSession, test_session_id: uuid.UUID
 ) -> Optional[TestSession]:
     """
     Read a test session from the database by its ID.
     """
-    return session.get(TestSession, test_session_id)
+    return await session.get(TestSession, test_session_id)
 
 
 def plan_execution(
@@ -98,9 +98,9 @@ def plan_execution(
     return core_execution_plan
 
 
-def create_test_session(
+async def create_test_session(
     *,
-    session: Session,
+    session: AsyncSession,
     public_plan: SessionTestPlanPublic,
     public_build: BuildPublic,
     public_device: DeviceWithStatus,
@@ -132,8 +132,8 @@ def create_test_session(
         xc_test_configuration_name=xc_test_configuration_name,
     )
     session.add(db_test_session)
-    session.commit()
-    session.refresh(db_test_session)
+    await session.commit()
+    await session.refresh(db_test_session)
     return db_test_session
 
 
@@ -218,13 +218,13 @@ async def _start_test_session_job(
     """
     Execute the test session and update the status of the test session in the database based on the result.
     """
-    with Session(engine) as session:
-        db_test_session = read_test_session(
+    async with async_session_maker() as session:
+        db_test_session = await read_test_session(
             session=session, test_session_id=test_session_id
         )
         db_test_session.status = "running"
         session.add(db_test_session)
-        session.commit()
+        await session.commit()
 
         stop_event = asyncio.Event()
         update_handler_task: Optional[asyncio.Task] = None
@@ -245,7 +245,7 @@ async def _start_test_session_job(
 
             update_handler_task = asyncio.create_task(
                 _handle_execution_state_updates_task(
-                    session=session,
+                    session_maker=async_session_maker,
                     test_session_id=db_test_session.id,
                     stop_event=stop_event,
                     queue=queue,
@@ -255,19 +255,19 @@ async def _start_test_session_job(
 
             db_test_session.status = "completed"
             session.add(db_test_session)
-            session.commit()
+            await session.commit()
         except asyncio.CancelledError:
             logger.info(f"Test session '{db_test_session.id}' was cancelled")
             db_test_session.status = "cancelled"
             session.add(db_test_session)
-            session.commit()
+            await session.commit()
         except Exception as e:
             logger.error(
                 f"Error running test session '{db_test_session.id}'", exc_info=e
             )
             db_test_session.status = "failed"
             session.add(db_test_session)
-            session.commit()
+            await session.commit()
         finally:
             stop_event.set()
             with suppress(asyncio.CancelledError):
@@ -277,7 +277,7 @@ async def _start_test_session_job(
 
 async def _handle_execution_state_updates_task(
     *,
-    session: Session,
+    session_maker: async_session_maker,
     test_session_id: uuid.UUID,
     stop_event: asyncio.Event,
     queue: asyncio.Queue[ExecutionStepStateSnapshot],
@@ -285,9 +285,10 @@ async def _handle_execution_state_updates_task(
     async for snapshot in _async_execution_state_updates_generator(
         stop_event=stop_event, queue=queue
     ):
-        await _handle_execution_state_snapshot(
-            session=session, test_session_id=test_session_id, snapshot=snapshot
-        )
+        async with session_maker() as session:
+            await _handle_execution_state_snapshot(
+                session=session, test_session_id=test_session_id, snapshot=snapshot
+            )
 
 
 async def _async_execution_state_updates_generator(
@@ -320,7 +321,7 @@ async def _async_execution_state_updates_generator(
 
 async def _handle_execution_state_snapshot(
     *,
-    session: Session,
+    session: AsyncSession,
     test_session_id: uuid.UUID,
     snapshot: ExecutionStepStateSnapshot,
 ):
@@ -329,18 +330,19 @@ async def _handle_execution_state_snapshot(
 
     If the snapshot has a xcresult path, this will be parsed and saved to the database as well.
 
-    :param session: Session to use for database operations
+    :param session: AsyncSession to use for database operations
     :param test_session_id: The ID of the test session
     :param snapshot: The snapshot of the execution step state
     """
-    db_execution_step = session.exec(
-        select(ExecutionStep).where(
-            ExecutionStep.session_id == test_session_id,
-            ExecutionStep.plan_step_order == snapshot.execution_step.plan_step_order,
-            ExecutionStep.step_repetition == snapshot.execution_step.step_repetition,
-            ExecutionStep.plan_repetition == snapshot.execution_step.plan_repetition,
-        )
-    ).one()
+    statement = select(ExecutionStep).where(
+        ExecutionStep.session_id == test_session_id,
+        ExecutionStep.plan_step_order == snapshot.execution_step.plan_step_order,
+        ExecutionStep.step_repetition == snapshot.execution_step.step_repetition,
+        ExecutionStep.plan_repetition == snapshot.execution_step.plan_repetition,
+    )
+
+    res = await session.execute(statement)
+    db_execution_step = res.scalar_one()
 
     db_execution_step.status = snapshot.status
     db_execution_step.trace_path = snapshot.trace_path
@@ -354,7 +356,7 @@ async def _handle_execution_state_snapshot(
         db_execution_step.xc_test_result = xc_test_result
 
     session.add(db_execution_step)
-    session.commit()
+    await session.commit()
 
 
 async def _parse_xcresult_to_xc_test_result_model(
@@ -451,7 +453,7 @@ def generate_session_id() -> uuid.UUID:
     return uuid.uuid4()
 
 
-def session_is_done(*, session: Session, test_session_id: uuid.UUID) -> bool:
+async def session_is_done(*, session: AsyncSession, test_session_id: uuid.UUID) -> bool:
     """
     Check if the test session is done (completed, failed or cancelled).
 
@@ -459,7 +461,7 @@ def session_is_done(*, session: Session, test_session_id: uuid.UUID) -> bool:
     :param test_session_id: The ID of the test session
     :return:
     """
-    db_test_session = read_test_session(
+    db_test_session = await read_test_session(
         session=session, test_session_id=test_session_id
     )
     return db_test_session.status in {"completed", "failed", "cancelled"}
@@ -480,8 +482,10 @@ async def listen_to_execution_step_updates(
     )
 
     async for update in listener.listen():
-        with Session(engine) as session:
-            is_done = session_is_done(session=session, test_session_id=test_session_id)
+        async with async_session_maker() as session:
+            is_done = await session_is_done(
+                session=session, test_session_id=test_session_id
+            )
 
             if update is None:
                 if await request.is_disconnected():
@@ -526,8 +530,8 @@ async def _process_trace_results_job(*, test_session_id: uuid.UUID):
 
     :param test_session_id: The ID of the test session
     """
-    with Session(engine) as session:
-        db_test_session = read_test_session(
+    async with async_session_maker() as session:
+        db_test_session = await read_test_session(
             session=session, test_session_id=test_session_id
         )
 
@@ -544,7 +548,7 @@ async def _process_trace_results_job(*, test_session_id: uuid.UUID):
 
 
 async def process_execution_step_trace_results(
-    *, session: Session, db_execution_step: ExecutionStep
+    *, session: AsyncSession, db_execution_step: ExecutionStep
 ):
     """
     Start processing the trace results of a test session.
@@ -581,7 +585,7 @@ async def process_execution_step_trace_results(
         combined_data = await process_trace_file(
             trace_path=db_execution_step.trace_path
         )
-        store_trace_results(
+        await store_trace_results(
             session=session,
             trace_result_id=db_execution_step.trace_result.id,
             data=combined_data,
@@ -602,7 +606,7 @@ async def process_execution_step_trace_results(
         db_execution_step.trace_result.export_status = "failed"
     finally:
         session.add(db_execution_step)
-        session.commit()
+        await session.commit()
 
 
 async def process_trace_file(
@@ -656,9 +660,9 @@ async def process_trace_file(
     return merged_data
 
 
-def store_trace_results(
+async def store_trace_results(
     *,
-    session: Session,
+    session: AsyncSession,
     trace_result_id: uuid.UUID,
     data: list[Sysmon | ProcessStdoutErr | CoreAnimation],
 ):
@@ -692,4 +696,4 @@ def store_trace_results(
         )
 
         session.add(db_instance)
-    session.commit()
+    await session.commit()

@@ -4,7 +4,7 @@ from core.tunnel.client import get_tunnel_client
 from fastapi import APIRouter
 from sqlmodel import text, select
 
-from api.depends import SessionDep
+from api.depends import AsyncSessionDep
 from api.models import HealthCheck, ServerStatus, ResourceStatus
 
 router = APIRouter(tags=["health"])
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/health")
-async def health_check(db: SessionDep) -> HealthCheck:
+async def health_check(db: AsyncSessionDep) -> HealthCheck:
     """
     Health check endpoint.
 
@@ -24,7 +24,7 @@ async def health_check(db: SessionDep) -> HealthCheck:
     tunnel_connect_status: ResourceStatus = "unavailable"
 
     try:
-        db.exec(select(text("1"))).first()
+        await db.execute(select(text("1")))
         db_status = "ok"
     except Exception:
         logger.debug("Unable to connect to DB", exc_info=True)

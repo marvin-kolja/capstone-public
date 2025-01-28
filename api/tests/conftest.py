@@ -75,16 +75,7 @@ def mock_device_manager(mock_i_device):
 
 
 @pytest.fixture(scope="module")
-def client() -> Generator[TestClient, None, None]:
-    with TestClient(
-        app,
-        raise_server_exceptions=True,
-    ) as c:
-        yield c
-
-
-@pytest.fixture(scope="module")
-async def async_client() -> Generator[AsyncClient, None, None]:
+async def async_client() -> AsyncClient:
     async with AsyncClient(
         transport=ASGITransport(
             app=app,

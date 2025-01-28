@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.custom_responses import build_common_http_exception_responses
 from api.models import DeviceWithStatus
-from api.depends import SessionDep, DeviceManagerDep
+from api.depends import AsyncSessionDep, DeviceManagerDep
 from api.services import device_service
 from core.exceptions import i_device as core_device_exceptions
 
@@ -16,13 +16,13 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 )
 async def list_devices(
     *,
-    db_session: SessionDep,
+    db_session: AsyncSessionDep,
     device_manager: DeviceManagerDep,
 ) -> list[DeviceWithStatus]:
     """
     List all devices.
     """
-    return device_service.list_devices(
+    return await device_service.list_devices(
         session=db_session, device_manager=device_manager
     )
 
@@ -32,12 +32,12 @@ async def list_devices(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def read_device(
-    *, device_id: str, db_session: SessionDep, device_manager: DeviceManagerDep
+    *, device_id: str, db_session: AsyncSessionDep, device_manager: DeviceManagerDep
 ) -> DeviceWithStatus:
     """
     Get the details of a device.
     """
-    device = device_service.get_device_by_id(
+    device = await device_service.get_device_by_id(
         device_id=device_id, session=db_session, device_manager=device_manager
     )
     if not device:

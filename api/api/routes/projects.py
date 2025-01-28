@@ -8,7 +8,7 @@ from api.custom_responses import (
     SSEStreamingResponse,
     build_common_http_exception_responses,
 )
-from api.depends import SessionDep, DeviceManagerDep, AsyncJobRunnerDep
+from api.depends import AsyncSessionDep, DeviceManagerDep, AsyncJobRunnerDep
 from api.services import project_service, device_service
 from api.models import (
     XcProjectPublic,
@@ -24,11 +24,11 @@ router = APIRouter(prefix="/projects", tags=["projects"])
     "/",
     responses=build_common_http_exception_responses([500]),
 )
-async def list_projects(*, session: SessionDep) -> list[XcProjectPublic]:
+async def list_projects(*, session: AsyncSessionDep) -> list[XcProjectPublic]:
     """
     List all projects.
     """
-    return project_service.list_projects(session=session)
+    return await project_service.list_projects(session=session)
 
 
 @router.post(
@@ -36,7 +36,7 @@ async def list_projects(*, session: SessionDep) -> list[XcProjectPublic]:
     responses=build_common_http_exception_responses([400, 422, 500]),
 )
 async def add_project(
-    *, session: SessionDep, project: XcProjectCreate
+    *, session: AsyncSessionDep, project: XcProjectCreate
 ) -> XcProjectPublic:
     """
     Add a new project.
@@ -59,12 +59,12 @@ async def add_project(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def read_project(
-    *, session: SessionDep, project_id: uuid.UUID
+    *, session: AsyncSessionDep, project_id: uuid.UUID
 ) -> XcProjectPublic:
     """
     Get the details of a project.
     """
-    project = project_service.read_project(session=session, project_id=project_id)
+    project = await project_service.read_project(session=session, project_id=project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
@@ -75,12 +75,14 @@ async def read_project(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def refresh_project(
-    *, session: SessionDep, project_id: uuid.UUID
+    *, session: AsyncSessionDep, project_id: uuid.UUID
 ) -> XcProjectPublic:
     """
     Refreshes the data of a project.
     """
-    db_project = project_service.read_project(session=session, project_id=project_id)
+    db_project = await project_service.read_project(
+        session=session, project_id=project_id
+    )
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -103,12 +105,12 @@ async def refresh_project(
     responses=build_common_http_exception_responses([422, 500]),
 )
 async def list_builds(
-    *, session: SessionDep, project_id: uuid.UUID
+    *, session: AsyncSessionDep, project_id: uuid.UUID
 ) -> list[BuildPublic]:
     """
     List builds that belong to a project.
     """
-    return project_service.list_builds(session=session, project_id=project_id)
+    return await project_service.list_builds(session=session, project_id=project_id)
 
 
 @router.post(
@@ -117,7 +119,7 @@ async def list_builds(
 )
 async def start_build(
     *,
-    session: SessionDep,
+    session: AsyncSessionDep,
     device_manager: DeviceManagerDep,
     job_runner: AsyncJobRunnerDep,
     project_id: uuid.UUID,
@@ -126,7 +128,9 @@ async def start_build(
     """
     Start a new build for a project.
     """
-    db_project = project_service.read_project(session=session, project_id=project_id)
+    db_project = await project_service.read_project(
+        session=session, project_id=project_id
+    )
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -139,7 +143,7 @@ async def start_build(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid project path") from e
 
-    device = device_service.get_device_by_id(
+    device = await device_service.get_device_by_id(
         session=session,
         device_id=build_request.device_id,
         device_manager=device_manager,
@@ -147,11 +151,11 @@ async def start_build(
     if device is None or not device.connected:
         raise HTTPException(status_code=404, detail="Device not found")
 
-    db_build = project_service.get_unique_build(
+    db_build = await project_service.get_unique_build(
         session=session,
         project_id=project_id,
         build_request=build_request,
-    ) or project_service.create_build(
+    ) or await project_service.create_build(
         session=session,
         project_id=project_id,
         build_request=build_request,
@@ -163,7 +167,7 @@ async def start_build(
     if job_runner.job_exists(job_id):
         raise HTTPException(status_code=400, detail="Build already in progress")
 
-    project_service.start_build(
+    await project_service.start_build(
         session=session,
         db_build=db_build,
         app_builder=AppBuilder(xc_project=xc_project),
@@ -179,12 +183,12 @@ async def start_build(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def read_build(
-    *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID
+    *, session: AsyncSessionDep, project_id: uuid.UUID, build_id: uuid.UUID
 ) -> BuildPublic:
     """
     Get the details of a build.
     """
-    db_build = project_service.read_build(
+    db_build = await project_service.read_build(
         session=session, project_id=project_id, build_id=build_id
     )
     if db_build is None:
@@ -198,12 +202,16 @@ async def read_build(
     responses=build_common_http_exception_responses([404, 422, 500]),
 )
 async def stream_build_updates(
-    *, session: SessionDep, project_id: uuid.UUID, build_id: uuid.UUID, request: Request
+    *,
+    session: AsyncSessionDep,
+    project_id: uuid.UUID,
+    build_id: uuid.UUID,
+    request: Request,
 ) -> StreamingResponse:
     """
     Stream build status updates.
     """
-    db_build = project_service.read_build(
+    db_build = await project_service.read_build(
         session=session, project_id=project_id, build_id=build_id
     )
     if db_build is None:
@@ -227,7 +235,7 @@ async def stream_build_updates(
 )
 async def list_available_tests(
     *,
-    session: SessionDep,
+    session: AsyncSessionDep,
     device_manager: DeviceManagerDep,
     project_id: uuid.UUID,
     build_id: uuid.UUID,
@@ -237,7 +245,7 @@ async def list_available_tests(
     is available and the device the build war run on is connected. If any of these conditions are not met, an error will
     be raised.
     """
-    db_build = project_service.read_build(
+    db_build = await project_service.read_build(
         session=session, project_id=project_id, build_id=build_id
     )
     if db_build is None:
@@ -246,7 +254,7 @@ async def list_available_tests(
     if db_build.xctestrun is None or db_build.status != "success":
         raise HTTPException(status_code=400, detail="Build is not finished")
 
-    device = device_service.get_device_by_id(
+    device = await device_service.get_device_by_id(
         session=session, device_id=db_build.device_id, device_manager=device_manager
     )
 
@@ -257,6 +265,6 @@ async def list_available_tests(
 
     db_build.xc_test_cases = xc_test_cases
     session.add(db_build)
-    session.commit()
+    await session.commit()
 
     return xc_test_cases

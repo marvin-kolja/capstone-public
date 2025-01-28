@@ -1,8 +1,11 @@
+import pytest
+
 from api.models import TestSessionPublic
 
 
-def test_list_test_sessions(
-    client, new_db_fake_test_session, new_db_fake_execution_step
+@pytest.mark.asyncio
+async def test_list_test_sessions(
+    async_client, new_db_fake_test_session, new_db_fake_execution_step
 ):
     """
     GIVEN: a test session in the database with an execution step
@@ -12,7 +15,7 @@ def test_list_test_sessions(
     THEN: it should return a list of test sessions
     AND: the list should contain the test session
     """
-    r = client.get("/test-sessions/")
+    r = await async_client.get("/test-sessions/")
 
     assert r.status_code == 200
 
@@ -32,8 +35,9 @@ def test_list_test_sessions(
     assert found, "Test session not found in the response"
 
 
-def test_list_test_sessions_filter_by_project(
-    client, new_db_fake_test_session, new_db_fake_execution_step, new_db_project
+@pytest.mark.asyncio
+async def test_list_test_sessions_filter_by_project(
+    async_client, new_db_fake_test_session, new_db_fake_execution_step, new_db_project
 ):
     """
     GIVEN: a test session in the database with an execution step
@@ -42,7 +46,7 @@ def test_list_test_sessions_filter_by_project(
 
     THEN: it should return a list of test sessions related to the project
     """
-    r = client.get(f"/test-sessions/?project_id={new_db_project.id}")
+    r = await async_client.get(f"/test-sessions/?project_id={new_db_project.id}")
 
     assert r.status_code == 200
 
@@ -55,7 +59,8 @@ def test_list_test_sessions_filter_by_project(
     assert public_test_session.build_snapshot.project_id == new_db_project.id
 
 
-def test_list_test_sessions_invalid_query(client):
+@pytest.mark.asyncio
+async def test_list_test_sessions_invalid_query(async_client):
     """
     GIVEN: No test sessions in the database
 
@@ -63,15 +68,16 @@ def test_list_test_sessions_invalid_query(client):
 
     THEN: it should return a 422
     """
-    r = client.get("/test-sessions/?project_id=1")
+    r = await async_client.get("/test-sessions/?project_id=1")
 
     assert r.status_code == 422
     assert r.json()["code"] == 422
     assert r.json()["detail"][0]["loc"] == ["query", "project_id"]
 
 
-def test_read_test_session(
-    client, new_db_fake_test_session, new_db_fake_execution_step
+@pytest.mark.asyncio
+async def test_read_test_session(
+    async_client, new_db_fake_test_session, new_db_fake_execution_step
 ):
     """
     GIVEN: a test session in the database with an execution step
@@ -80,7 +86,7 @@ def test_read_test_session(
 
     THEN: it should return the test session
     """
-    r = client.get(f"/test-sessions/{new_db_fake_test_session.id}")
+    r = await async_client.get(f"/test-sessions/{new_db_fake_test_session.id}")
 
     assert r.status_code == 200
 
@@ -92,7 +98,8 @@ def test_read_test_session(
     assert len(validated_test_session.execution_steps) == 1
 
 
-def test_read_test_session_not_found(client, new_db_fake_test_session):
+@pytest.mark.asyncio
+async def test_read_test_session_not_found(async_client, new_db_fake_test_session):
     """
     GIVEN: No matching test session in the database
 
@@ -100,7 +107,7 @@ def test_read_test_session_not_found(client, new_db_fake_test_session):
 
     THEN: it should return a 404
     """
-    r = client.get("/test-sessions/00000000-0000-0000-0000-000000000000")
+    r = await async_client.get("/test-sessions/00000000-0000-0000-0000-000000000000")
 
     assert r.status_code == 404
     assert r.json() == {"code": 404, "detail": "Test session not found"}

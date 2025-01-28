@@ -5,7 +5,7 @@ import pytest
 from core.device.i_device import IDeviceStatus
 from core.device.i_device_manager import IDeviceManager
 from fastapi import HTTPException
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.async_jobs import AsyncJobRunner
 from api.depends import get_job_runner
@@ -42,7 +42,6 @@ async def test_start_test_session():
     job_runner = AsyncMock()
     device_manager = MagicMock()
     session_create = TestSessionCreate(
-        build_id=uuid.uuid4(),
         plan_id=uuid.uuid4(),
         xc_test_configuration_name="TestConfig",
     )
@@ -141,7 +140,8 @@ def mock_async_job_runner_dependency():
     app.dependency_overrides = {}
 
 
-def test_cancel_test_session(client, mock_async_job_runner_dependency):
+@pytest.mark.asyncio
+async def test_cancel_test_session(async_client, mock_async_job_runner_dependency):
     """
     GIVEN: a running test session
 
@@ -159,7 +159,7 @@ def test_cancel_test_session(client, mock_async_job_runner_dependency):
         return_value=mock_db_test_session,
     ) as mock_read_test_session:
 
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/cancel",
         )
 
@@ -175,7 +175,8 @@ def test_cancel_test_session(client, mock_async_job_runner_dependency):
         )
 
 
-def test_cancel_test_session_test_session_not_found(client):
+@pytest.mark.asyncio
+async def test_cancel_test_session_test_session_not_found(async_client):
     """
     GIVEN: a test session that does not exist
 
@@ -190,7 +191,7 @@ def test_cancel_test_session_test_session_not_found(client):
         return_value=None,
     ) as mock_read_test_session:
 
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/cancel",
         )
 
@@ -199,8 +200,9 @@ def test_cancel_test_session_test_session_not_found(client):
         mock_read_test_session.assert_called_once()
 
 
-def test_cancel_test_session_test_session_not_running(
-    client, mock_async_job_runner_dependency
+@pytest.mark.asyncio
+async def test_cancel_test_session_test_session_not_running(
+    async_client, mock_async_job_runner_dependency
 ):
     """
     GIVEN: a test session that is not running
@@ -221,7 +223,7 @@ def test_cancel_test_session_test_session_not_running(
         return_value=mock_db_test_session,
     ):
 
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/cancel",
         )
 
@@ -232,7 +234,8 @@ def test_cancel_test_session_test_session_not_running(
         )
 
 
-def test_stream_execution_step_updates_test_session_not_found(client):
+@pytest.mark.asyncio
+async def test_stream_execution_step_updates_test_session_not_found(async_client):
     """
     GIVEN: a test session that does not exist
 
@@ -247,7 +250,7 @@ def test_stream_execution_step_updates_test_session_not_found(client):
         return_value=None,
     ) as mock_read_test_session:
 
-        r = client.get(
+        r = await async_client.get(
             f"/test-sessions/{fake_test_session_id}/execution-step-stream",
         )
 
@@ -264,7 +267,10 @@ def test_stream_execution_step_updates_test_session_not_found(client):
         "cancelled",
     ],
 )
-def test_stream_execution_step_updates_test_session_not_running(client, status):
+@pytest.mark.asyncio
+async def test_stream_execution_step_updates_test_session_not_running(
+    async_client, status
+):
     """
     GIVEN: a test session that is completed
 
@@ -283,7 +289,7 @@ def test_stream_execution_step_updates_test_session_not_running(client, status):
         return_value=mock_db_test_session,
     ) as mock_read_test_session:
 
-        r = client.get(
+        r = await async_client.get(
             f"/test-sessions/{fake_test_session_id}/execution-step-stream",
         )
 
@@ -292,7 +298,8 @@ def test_stream_execution_step_updates_test_session_not_running(client, status):
         mock_read_test_session.assert_called_once()
 
 
-def test_export_test_session_results_not_found(client):
+@pytest.mark.asyncio
+async def test_export_test_session_results_not_found(async_client):
     """
     GIVEN: a test session that does not exist
 
@@ -307,7 +314,7 @@ def test_export_test_session_results_not_found(client):
         return_value=None,
     ) as mock_read_test_session:
 
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/process-trace-results",
         )
 
@@ -316,7 +323,8 @@ def test_export_test_session_results_not_found(client):
         mock_read_test_session.assert_called_once()
 
 
-def test_export_test_session_results_not_completed(client):
+@pytest.mark.asyncio
+async def test_export_test_session_results_not_completed(async_client):
     """
     GIVEN: a test session that is not completed
 
@@ -334,7 +342,7 @@ def test_export_test_session_results_not_completed(client):
         "api.routes.api_test_session.api_test_session_service.read_test_session",
         return_value=mock_db_test_session,
     ) as mock_read_test_session:
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/process-trace-results",
         )
 
@@ -343,7 +351,10 @@ def test_export_test_session_results_not_completed(client):
         mock_read_test_session.assert_called_once()
 
 
-def test_export_test_session_results_200(client, mock_async_job_runner_dependency):
+@pytest.mark.asyncio
+async def test_export_test_session_results_200(
+    async_client, mock_async_job_runner_dependency
+):
     """
     GIVEN: a test session that is completed
 
@@ -367,7 +378,7 @@ def test_export_test_session_results_200(client, mock_async_job_runner_dependenc
         ) as mock_process_results,
     ):
 
-        r = client.post(
+        r = await async_client.post(
             f"/test-sessions/{fake_test_session_id}/process-trace-results",
         )
 
@@ -416,6 +427,7 @@ def fake_db_plan(fake_project_id):
     db_plan_mock.id = uuid.uuid4()
     db_plan_mock.project_id = fake_project_id
     db_plan_mock.xc_test_plan_name = "fake_plan_name"
+    db_plan_mock.build_id = uuid.uuid4()
     return db_plan_mock
 
 
@@ -428,7 +440,9 @@ def mock_get_device_by_id(fake_device_with_status):
 
 @pytest.fixture
 def mock_read_build(fake_db_build):
-    with patch("api.routes.api_test_session.project_service.read_build") as mock:
+    with patch(
+        "api.routes.api_test_session.project_service.read_build", AsyncMock()
+    ) as mock:
         mock.return_value = fake_db_build
         yield mock
 
@@ -450,14 +464,15 @@ def test_session_create(fake_db_plan):
     )
 
 
-def test_validate_test_session_input_db_build_not_found(
-    mock_read_build, test_session_create
+@pytest.mark.asyncio
+async def test_validate_test_session_input_db_build_not_found(
+    mock_read_build, mock_read_test_plan, test_session_create
 ):
     mock_read_build.return_value = None
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -465,14 +480,15 @@ def test_validate_test_session_input_db_build_not_found(
     assert e.value.status_code == 500
 
 
-def test_validate_test_session_input_db_plan_not_found(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_db_plan_not_found(
     mock_read_test_plan, test_session_create
 ):
     mock_read_test_plan.return_value = None
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -481,14 +497,15 @@ def test_validate_test_session_input_db_plan_not_found(
     assert e.value.detail == "Invalid plan id"
 
 
-def test_validate_test_session_input_build_and_plan_not_same_project(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_build_and_plan_not_same_project(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_plan
 ):
     fake_db_plan.project_id = uuid.uuid4()
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -497,14 +514,15 @@ def test_validate_test_session_input_build_and_plan_not_same_project(
     assert e.value.detail == "Plan and build must belong to the same project"
 
 
-def test_validate_test_session_input_build_is_part_of_project(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_build_is_part_of_project(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_plan
 ):
     mock_read_build.return_value.project_id = uuid.uuid4()
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -513,14 +531,15 @@ def test_validate_test_session_input_build_is_part_of_project(
     assert e.value.detail == "Plan and build must belong to the same project"
 
 
-def test_validate_test_session_input_build_not_completed(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_build_not_completed(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_build
 ):
     fake_db_build.status = "in_progress"
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -529,14 +548,15 @@ def test_validate_test_session_input_build_not_completed(
     assert e.value.detail == "Build must be completed"
 
 
-def test_validate_test_session_input_xc_test_configuration_not_in_build(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_xc_test_configuration_not_in_build(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_build
 ):
     test_session_create.xc_test_configuration_name = "different_test_config"
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -545,14 +565,15 @@ def test_validate_test_session_input_xc_test_configuration_not_in_build(
     assert e.value.detail == "Invalid test configuration name"
 
 
-def test_validate_test_session_input_xctestrun_path_not_exists(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_xctestrun_path_not_exists(
     test_session_create, mock_read_build, mock_read_test_plan, fake_db_build
 ):
     fake_db_build.xctestrun.path.exists.return_value = False
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -561,14 +582,15 @@ def test_validate_test_session_input_xctestrun_path_not_exists(
     assert e.value.detail == "Xctestrun file not found. Try rebuilding the project"
 
 
-def test_validate_test_session_input_device_not_found(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_device_not_found(
     test_session_create, mock_read_build, mock_read_test_plan, mock_get_device_by_id
 ):
     mock_get_device_by_id.return_value = None
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -577,14 +599,15 @@ def test_validate_test_session_input_device_not_found(
     assert e.value.detail == "Device not connected"
 
 
-def test_validate_test_session_input_device_not_connected(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_device_not_connected(
     test_session_create, mock_read_build, mock_read_test_plan, mock_get_device_by_id
 ):
     mock_get_device_by_id.return_value.connected = False
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -593,14 +616,15 @@ def test_validate_test_session_input_device_not_connected(
     assert e.value.detail == "Device not connected"
 
 
-def test_validate_test_session_input_device_tunnel_not_connected(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_device_tunnel_not_connected(
     test_session_create, mock_read_build, mock_read_test_plan, mock_get_device_by_id
 ):
     mock_get_device_by_id.return_value.status.tunnel_connected = False
 
     with pytest.raises(HTTPException) as e:
-        _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )
@@ -609,7 +633,8 @@ def test_validate_test_session_input_device_tunnel_not_connected(
     assert e.value.detail == "No tunnel connection to the device"
 
 
-def test_validate_test_session_input_valid(
+@pytest.mark.asyncio
+async def test_validate_test_session_input_valid(
     test_session_create, mock_read_build, mock_read_test_plan, mock_get_device_by_id
 ):
     with (
@@ -621,8 +646,8 @@ def test_validate_test_session_input_valid(
         mock_build_public_validate.return_value = MagicMock(spec=BuildPublic)
         mock_plan_public_validate.return_value = MagicMock(spec=SessionTestPlanPublic)
 
-        result = _validate_test_session_input(
-            session=MagicMock(spec=Session),
+        result = await _validate_test_session_input(
+            session=AsyncMock(spec=AsyncSession),
             device_manager=MagicMock(spec=IDeviceManager),
             session_create=test_session_create,
         )

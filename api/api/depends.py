@@ -1,28 +1,25 @@
 import logging
-from typing import Generator, Annotated
+from typing import Generator, Annotated, AsyncGenerator
 
 from core.device.i_device_manager import IDeviceManager
 from fastapi import Depends
 from sqlalchemy import text
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.async_jobs import AsyncJobRunner
-from api.db import engine
+from api.db import async_session_maker
 
 logger = logging.getLogger(__name__)
 
 
-def get_db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_maker() as session:
         logger.debug("Creating database session")
-        session.execute(
-            text("PRAGMA foreign_keys=ON")
-        )  # required for SQLite to enforce foreign keys
         yield session
         logger.debug("Closing database session")
 
 
-SessionDep = Annotated[Session, Depends(get_db)]
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 
 device_manager = IDeviceManager()
 

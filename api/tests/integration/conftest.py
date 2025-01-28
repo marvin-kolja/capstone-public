@@ -1,29 +1,22 @@
 import pathlib
-from typing import Generator
+from typing import Generator, AsyncGenerator
 
 import pytest
 from core.device.i_device import IDevice
 from core.device.i_device_manager import IDeviceManager
-from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
-from sqlmodel import Session, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.db import engine
-from api.models import Device
-from api.main import app
+from api.db import async_session_maker
 
 
-@pytest.fixture(scope="session", autouse=True)
-def db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
-        session.execute(
+@pytest.fixture
+async def db() -> AsyncSession:
+    async with async_session_maker() as session:
+        await session.execute(
             text("PRAGMA foreign_keys=ON")
         )  # required for SQLite to enforce foreign keys
         yield session
-        statement = delete(Device)
-        session.execute(statement)
-        session.commit()
 
 
 @pytest.fixture(scope="session")

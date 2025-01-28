@@ -13,7 +13,8 @@ from api.services.helpers import update_db_model
         {"non_existent_key": "value"},
     ],
 )
-def test_update_db_model(new_data):
+@pytest.mark.asyncio
+async def test_update_db_model(new_data):
     """
     GIVEN: A db_model and a new_data_model
 

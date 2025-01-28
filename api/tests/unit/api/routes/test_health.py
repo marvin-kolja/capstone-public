@@ -12,8 +12,9 @@ import pytest
         ("unavailable", "unavailable", "unhealthy"),
     ],
 )
-def test_health_check(
-    client,
+@pytest.mark.asyncio
+async def test_health_check(
+    async_client,
     mock_db_session_dependencies,
     db_status,
     tunnel_connect_status,
@@ -30,11 +31,15 @@ def test_health_check(
             tunnel_client_mock.get_tunnel.side_effect = AsyncMock(side_effect=Exception)
 
         if db_status == "ok":
-            mock_db_session_dependencies.exec.return_value.first.side_effect = None
+            mock_db_session_dependencies.execute.return_value.first = MagicMock(
+                return_value=None
+            )
         else:
-            mock_db_session_dependencies.exec.return_value.first.side_effect = Exception
+            mock_db_session_dependencies.execute.return_value.first = MagicMock(
+                side_effect=Exception
+            )
 
-        response = client.get("/health")
+        response = await async_client.get("/health")
 
         assert response.status_code == 200, response.text
         assert response.json() == {

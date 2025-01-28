@@ -18,7 +18,8 @@ from api.services.project_service import (
 )
 
 
-def test_unique_build(db, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_unique_build(db, new_db_fake_build):
     """
     GIVEN: A build in the database
 
@@ -33,7 +34,7 @@ def test_unique_build(db, new_db_fake_build):
         configuration="Release",
     )
 
-    db_build = get_unique_build(
+    db_build = await get_unique_build(
         session=db,
         project_id=new_db_fake_build.project_id,
         build_request=build_request,
@@ -42,7 +43,8 @@ def test_unique_build(db, new_db_fake_build):
     assert db_build == new_db_fake_build
 
 
-def test_unique_build_not_found(db, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_unique_build_not_found(db, new_db_fake_build):
     """
     GIVEN: A build in the database
 
@@ -57,7 +59,7 @@ def test_unique_build_not_found(db, new_db_fake_build):
         configuration="Different Configuration",
     )
 
-    db_build = get_unique_build(
+    db_build = await get_unique_build(
         session=db,
         project_id=new_db_fake_build.project_id,
         build_request=build_request,
@@ -66,7 +68,8 @@ def test_unique_build_not_found(db, new_db_fake_build):
     assert db_build is None
 
 
-def test_create_build(db, new_db_project, new_db_fake_device):
+@pytest.mark.asyncio
+async def test_create_build(db, new_db_project, new_db_fake_device):
     """
     GIVEN: A project in the database
 
@@ -81,7 +84,7 @@ def test_create_build(db, new_db_project, new_db_fake_device):
         configuration="Release",
     )
 
-    db_build = create_build(
+    db_build = await create_build(
         session=db,
         project_id=new_db_project.id,
         build_request=build_request,
@@ -93,7 +96,12 @@ def test_create_build(db, new_db_project, new_db_fake_device):
     assert db_build.project_id == new_db_project.id
     assert db_build.device_id == new_db_fake_device.id
 
-    assert db_build == db.exec(select(Build).filter(Build.id == db_build.id)).one()
+    assert (
+        db_build
+        == (
+            await db.execute(select(Build).filter(Build.id == db_build.id))
+        ).scalar_one()
+    )
 
 
 @pytest.mark.parametrize(
@@ -103,7 +111,8 @@ def test_create_build(db, new_db_project, new_db_fake_device):
         (False,),
     ],
 )
-def test_start_build(
+@pytest.mark.asyncio
+async def test_start_build(
     db,
     xcodebuild_fails,
     new_db_project,
@@ -128,7 +137,7 @@ def test_start_build(
     new_db_fake_build.xctestrun = new_db_fake_xctestrun
     new_db_fake_build.xc_test_cases = ["Some/Test/case"]
     db.add(new_db_fake_build)
-    db.commit()
+    await db.commit()
 
     job_runner = AsyncJobRunner()
     app_builder = MagicMock(spec=AppBuilder)
@@ -139,7 +148,7 @@ def test_start_build(
     ) as mock_build_output_dir:
         mock_build_output_dir.return_value = pathlib.Path("/output_dir")
 
-        start_build(
+        await start_build(
             session=db,
             job_runner=job_runner,
             db_build=new_db_fake_build,
@@ -157,7 +166,7 @@ def test_start_build(
             job_id=job_id,
         )
 
-        db.refresh(new_db_fake_build)
+        await db.refresh(new_db_fake_build)
 
         assert new_db_fake_build.status == "pending"
         assert new_db_fake_build.xctestrun is None
@@ -196,19 +205,19 @@ async def test_listen_to_build_updates(db, new_db_fake_build, build_status_last_
             xctestrun=None,
         )
         db.add(another_build)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
         another_build.status = "running"
         db.add(another_build)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
         new_db_fake_build.status = build_status_last_update
         db.add(new_db_fake_build)
-        db.commit()
+        await db.commit()
 
     task = asyncio.create_task(simulate_updates())
 

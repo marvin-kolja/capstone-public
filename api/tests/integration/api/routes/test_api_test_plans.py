@@ -1,5 +1,6 @@
 import uuid
 
+import pytest
 from core.test_session.metrics import Metric
 from sqlmodel import select
 
@@ -16,7 +17,8 @@ from api.models import (
 )
 
 
-def test_list_test_plans(new_test_plan, new_test_plan_step, client):
+@pytest.mark.asyncio
+async def test_list_test_plans(new_test_plan, new_test_plan_step, async_client):
     """
     GIVEN: A test plan in the database
 
@@ -24,7 +26,7 @@ def test_list_test_plans(new_test_plan, new_test_plan_step, client):
 
     THEN: The response should contain a list of test plans with the test plan from the database
     """
-    r = client.get("/test-plans/")
+    r = await async_client.get("/test-plans/")
 
     assert r.status_code == 200
 
@@ -44,8 +46,9 @@ def test_list_test_plans(new_test_plan, new_test_plan_step, client):
     assert found
 
 
-def test_list_test_plans_filter_by_project(
-    new_test_plan, new_test_plan_step, new_db_project, client
+@pytest.mark.asyncio
+async def test_list_test_plans_filter_by_project(
+    new_test_plan, new_test_plan_step, new_db_project, async_client
 ):
     """
     GIVEN: A test plan in the database
@@ -54,7 +57,7 @@ def test_list_test_plans_filter_by_project(
 
     THEN: The response should contain a list of test plans with the test plan from the database
     """
-    r = client.get(f"/test-plans/?project_id={new_db_project.id}")
+    r = await async_client.get(f"/test-plans/?project_id={new_db_project.id}")
 
     assert r.status_code == 200
 
@@ -67,7 +70,8 @@ def test_list_test_plans_filter_by_project(
     assert plan.project_id == new_db_project.id
 
 
-def test_list_test_plans_invalid_query(client):
+@pytest.mark.asyncio
+async def test_list_test_plans_invalid_query(async_client):
     """
     GIVEN: No test plans in the database
 
@@ -75,7 +79,7 @@ def test_list_test_plans_invalid_query(client):
 
     THEN: The response should be a 400
     """
-    r = client.get("/test-plans/?project_id=1")
+    r = await async_client.get("/test-plans/?project_id=1")
 
     assert r.status_code == 422
 
@@ -84,7 +88,8 @@ def test_list_test_plans_invalid_query(client):
     assert data["detail"][0]["loc"] == ["query", "project_id"]
 
 
-def test_read_test_plan(new_test_plan, client):
+@pytest.mark.asyncio
+async def test_read_test_plan(new_test_plan, async_client):
     """
     GIVEN: A test plan in the database
 
@@ -92,7 +97,7 @@ def test_read_test_plan(new_test_plan, client):
 
     THEN: The response should contain the test plan
     """
-    r = client.get(f"/test-plans/{new_test_plan.id}")
+    r = await async_client.get(f"/test-plans/{new_test_plan.id}")
 
     assert r.status_code == 200
 
@@ -101,7 +106,8 @@ def test_read_test_plan(new_test_plan, client):
     ) == SessionTestPlanPublic.model_validate(new_test_plan)
 
 
-def test_read_test_plan_not_found(client):
+@pytest.mark.asyncio
+async def test_read_test_plan_not_found(async_client):
     """
     GIVEN: no test plan in the database
 
@@ -109,12 +115,13 @@ def test_read_test_plan_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.get(f"/test-plans/{uuid.uuid4().hex}")
+    r = await async_client.get(f"/test-plans/{uuid.uuid4().hex}")
 
     assert r.status_code == 404
 
 
-def test_create_test_plan(client, db, new_db_project, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_create_test_plan(async_client, db, new_db_project, new_db_fake_build):
     """
     GIVEN: A test plan creation model
 
@@ -132,15 +139,21 @@ def test_create_test_plan(client, db, new_db_project, new_db_fake_build):
         project_id=new_db_project.id.hex,
     )
 
-    r = client.post("/test-plans/", json=test_plan.model_dump(mode="json"))
+    r = await async_client.post("/test-plans/", json=test_plan.model_dump(mode="json"))
 
     assert r.status_code == 200
 
     created_plan = SessionTestPlanPublic.model_validate(r.json())
 
-    db_plan = db.exec(
-        select(SessionTestPlan).where(SessionTestPlan.id == created_plan.id)
-    ).first()
+    db_plan = (
+        (
+            await db.execute(
+                select(SessionTestPlan).where(SessionTestPlan.id == created_plan.id)
+            )
+        )
+        .scalars()
+        .first()
+    )
 
     assert created_plan == SessionTestPlanPublic.model_validate(db_plan)
 
@@ -152,7 +165,8 @@ def test_create_test_plan(client, db, new_db_project, new_db_fake_build):
     assert created_plan.metrics == test_plan.metrics
 
 
-def test_create_test_plan_invalid_project(client, db, new_db_fake_build):
+@pytest.mark.asyncio
+async def test_create_test_plan_invalid_project(async_client, db, new_db_fake_build):
     """
     GIVEN: A test plan creation model with an invalid project id
 
@@ -160,7 +174,7 @@ def test_create_test_plan_invalid_project(client, db, new_db_fake_build):
 
     THEN: The response should be a 400
     """
-    r = client.post(
+    r = await async_client.post(
         "/test-plans/",
         json=SessionTestPlanCreate(
             name="test plan",
@@ -175,7 +189,8 @@ def test_create_test_plan_invalid_project(client, db, new_db_fake_build):
     assert r.status_code == 400
 
 
-def test_create_test_plan_invalid_build(client, db, new_db_project):
+@pytest.mark.asyncio
+async def test_create_test_plan_invalid_build(async_client, db, new_db_project):
     """
     GIVEN: A test plan creation model with an invalid build id
 
@@ -183,7 +198,7 @@ def test_create_test_plan_invalid_build(client, db, new_db_project):
 
     THEN: The response should be a 400
     """
-    r = client.post(
+    r = await async_client.post(
         "/test-plans/",
         json=SessionTestPlanCreate(
             name="test plan",
@@ -198,7 +213,8 @@ def test_create_test_plan_invalid_build(client, db, new_db_project):
     assert r.status_code == 400
 
 
-def test_update_test_plan(new_test_plan, db, client):
+@pytest.mark.asyncio
+async def test_update_test_plan(new_test_plan, db, async_client):
     """
     GIVEN: An existing test plan in the database
 
@@ -213,12 +229,10 @@ def test_update_test_plan(new_test_plan, db, client):
 
     assert new_test_plan.name != plan_update.name
 
-    r = client.patch(
+    r = await async_client.patch(
         f"/test-plans/{new_test_plan.id}",
         json=plan_update.model_dump(exclude_unset=True),
     )
-
-    print(r.text)
 
     assert r.status_code == 200
 
@@ -226,13 +240,14 @@ def test_update_test_plan(new_test_plan, db, client):
 
     assert updated_plan.name == plan_update.name
 
-    db.refresh(new_test_plan)
+    await db.refresh(new_test_plan)
 
     assert new_test_plan.name == plan_update.name
     assert updated_plan == SessionTestPlanPublic.model_validate(new_test_plan)
 
 
-def test_update_test_plan_not_found(client):
+@pytest.mark.asyncio
+async def test_update_test_plan_not_found(async_client):
     """
     GIVEN: no test plan in the database
 
@@ -240,7 +255,7 @@ def test_update_test_plan_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.patch(
+    r = await async_client.patch(
         f"/test-plans/{uuid.uuid4()}",
         json=SessionTestPlanUpdate(name="updated test plan").model_dump(
             exclude_unset=True
@@ -250,7 +265,8 @@ def test_update_test_plan_not_found(client):
     assert r.status_code == 404
 
 
-def test_delete_test_plan(new_test_plan, new_test_plan_step, db, client):
+@pytest.mark.asyncio
+async def test_delete_test_plan(new_test_plan, new_test_plan_step, db, async_client):
     """
     GIVEN: A test plan in the database
 
@@ -259,25 +275,34 @@ def test_delete_test_plan(new_test_plan, new_test_plan_step, db, client):
     THEN: The test plan should be deleted from the DB
     AND: The test plan steps should be deleted from the DB
     """
-    r = client.delete(f"/test-plans/{new_test_plan.id}")
+    r = await async_client.delete(f"/test-plans/{new_test_plan.id}")
     assert r.status_code == 200
 
-    plan = db.exec(
-        select(SessionTestPlan).where(SessionTestPlan.id == new_test_plan.id)
-    ).first()
+    plan = (
+        await db.execute(
+            select(SessionTestPlan).where(SessionTestPlan.id == new_test_plan.id)
+        )
+    ).scalar_one_or_none()
 
     assert plan is None
 
-    steps = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.test_plan_id == new_test_plan.id
+    steps = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.test_plan_id == new_test_plan.id
+                )
+            )
         )
-    ).all()
+        .scalars()
+        .all()
+    )
 
     assert len(steps) == 0
 
 
-def test_delete_test_plan_not_found(client):
+@pytest.mark.asyncio
+async def test_delete_test_plan_not_found(async_client):
     """
     GIVEN: no test plan in the database
 
@@ -285,11 +310,14 @@ def test_delete_test_plan_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.delete(f"/test-plans/{uuid.uuid4().hex}")
+    r = await async_client.delete(f"/test-plans/{uuid.uuid4().hex}")
     assert r.status_code == 404
 
 
-def test_create_test_plan_step(new_test_plan, new_test_plan_step, db, client):
+@pytest.mark.asyncio
+async def test_create_test_plan_step(
+    new_test_plan, new_test_plan_step, db, async_client
+):
     """
     GIVEN: A test plan and a step in the db
 
@@ -303,7 +331,7 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db, client):
         test_cases=["test/case/path"],
     )
 
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{new_test_plan.id}/steps",
         json=test_plan_step.model_dump(),
     )
@@ -312,9 +340,11 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db, client):
 
     created_step = SessionTestPlanStepPublic.model_validate(r.json())
 
-    db_step = db.exec(
-        select(SessionTestPlanStep).where(SessionTestPlanStep.id == created_step.id)
-    ).first()
+    db_step = (
+        await db.execute(
+            select(SessionTestPlanStep).where(SessionTestPlanStep.id == created_step.id)
+        )
+    ).scalar()
 
     assert created_step == SessionTestPlanStepPublic.model_validate(db_step)
 
@@ -328,7 +358,8 @@ def test_create_test_plan_step(new_test_plan, new_test_plan_step, db, client):
     assert created_step.repetitions == test_plan_step.repetitions
 
 
-def test_create_test_plan_step_invalid_test_cases(client, new_test_plan):
+@pytest.mark.asyncio
+async def test_create_test_plan_step_invalid_test_cases(async_client, new_test_plan):
     """
     GIVEN: A test plan in the db
 
@@ -336,7 +367,7 @@ def test_create_test_plan_step_invalid_test_cases(client, new_test_plan):
 
     THEN: The response should be a 422
     """
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{new_test_plan.id}/steps",
         json=SessionTestPlanStepCreate(
             name="new step",
@@ -348,7 +379,8 @@ def test_create_test_plan_step_invalid_test_cases(client, new_test_plan):
     assert r.json()["detail"][0]["msg"] == "Invalid test case path"
 
 
-def test_create_test_plan_step_no_test_plan(client):
+@pytest.mark.asyncio
+async def test_create_test_plan_step_no_test_plan(async_client):
     """
     GIVEN: No test plan in the database
 
@@ -356,14 +388,17 @@ def test_create_test_plan_step_no_test_plan(client):
 
     THEN: The response should be a 404
     """
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{uuid.uuid4()}/steps",
         json=SessionTestPlanStepCreate(name="new step", test_cases=[""]).model_dump(),
     )
     assert r.status_code == 404
 
 
-def test_update_test_plan_step(new_test_plan, new_test_plan_step, db, client):
+@pytest.mark.asyncio
+async def test_update_test_plan_step(
+    new_test_plan, new_test_plan_step, db, async_client
+):
     """
     GIVEN: A test plan and a step in the db
 
@@ -379,7 +414,7 @@ def test_update_test_plan_step(new_test_plan, new_test_plan_step, db, client):
 
     assert new_test_plan_step.name != step_update.name
 
-    r = client.patch(
+    r = await async_client.patch(
         f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}",
         json=step_update.model_dump(exclude_unset=True),
     )
@@ -391,14 +426,15 @@ def test_update_test_plan_step(new_test_plan, new_test_plan_step, db, client):
     assert updated_step.name == step_update.name
     assert updated_step.test_cases == step_update.test_cases
 
-    db.refresh(new_test_plan_step)
+    await db.refresh(new_test_plan_step)
 
     assert new_test_plan_step.name == step_update.name
     assert updated_step == SessionTestPlanStepPublic.model_validate(new_test_plan_step)
 
 
-def test_update_test_plan_step_invalid_test_cases(
-    client, new_test_plan, new_test_plan_step
+@pytest.mark.asyncio
+async def test_update_test_plan_step_invalid_test_cases(
+    async_client, new_test_plan, new_test_plan_step
 ):
     """
     GIVEN: A test plan and a step in the db
@@ -407,7 +443,7 @@ def test_update_test_plan_step_invalid_test_cases(
 
     THEN: The response should be a 422
     """
-    r = client.patch(
+    r = await async_client.patch(
         f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}",
         json=SessionTestPlanStepUpdate(
             name="updated step", test_cases=["invalid"]
@@ -418,7 +454,8 @@ def test_update_test_plan_step_invalid_test_cases(
     assert r.json()["detail"][0]["msg"] == "Invalid test case path"
 
 
-def test_update_test_plan_step_not_found(new_test_plan, client):
+@pytest.mark.asyncio
+async def test_update_test_plan_step_not_found(new_test_plan, async_client):
     """
     GIVEN: A test plan in the db, but no matching step
 
@@ -426,7 +463,7 @@ def test_update_test_plan_step_not_found(new_test_plan, client):
 
     THEN: The response should be a 404
     """
-    r = client.patch(
+    r = await async_client.patch(
         f"/test-plans/{new_test_plan.id}/steps/{uuid.uuid4()}",
         json=SessionTestPlanStepUpdate(name="updated step").model_dump(
             exclude_unset=True
@@ -436,7 +473,10 @@ def test_update_test_plan_step_not_found(new_test_plan, client):
     assert r.status_code == 404
 
 
-def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db, client):
+@pytest.mark.asyncio
+async def test_delete_test_plan_step(
+    new_test_plan, new_test_plan_step, db, async_client
+):
     """
     GIVEN: A test plan and a step in the db
 
@@ -444,20 +484,27 @@ def test_delete_test_plan_step(new_test_plan, new_test_plan_step, db, client):
 
     THEN: The step should be deleted from the DB
     """
-    r = client.delete(f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}")
+    r = await async_client.delete(
+        f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}"
+    )
 
     assert r.status_code == 200
 
-    step = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.id == new_test_plan_step.id
+    step = (
+        await db.execute(
+            select(SessionTestPlanStep).where(
+                SessionTestPlanStep.id == new_test_plan_step.id
+            )
         )
-    ).first()
+    ).scalar()
 
     assert step is None
 
 
-def test_delete_test_plan_step_order(new_test_plan, new_test_plan_step, db, client):
+@pytest.mark.asyncio
+async def test_delete_test_plan_step_order(
+    new_test_plan, new_test_plan_step, db, async_client
+):
     """
     GIVEN: A test plan and two steps in the db
 
@@ -473,17 +520,27 @@ def test_delete_test_plan_step_order(new_test_plan, new_test_plan_step, db, clie
         test_cases=["test/case/path"],
     )
     db.add(new_test_plan_step_2)
-    db.commit()
+    await db.commit()
 
-    r = client.delete(f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}")
+    r = await async_client.delete(
+        f"/test-plans/{new_test_plan.id}/steps/{new_test_plan_step.id}"
+    )
 
     assert r.status_code == 200
 
-    steps = db.exec(
-        select(SessionTestPlanStep).where(
-            SessionTestPlanStep.test_plan_id == new_test_plan.id
+    db.expire(new_test_plan_step_2)
+
+    steps = (
+        (
+            await db.execute(
+                select(SessionTestPlanStep).where(
+                    SessionTestPlanStep.test_plan_id == new_test_plan.id
+                )
+            )
         )
-    ).all()
+        .scalars()
+        .all()
+    )
 
     assert len(steps) == 1
 
@@ -491,7 +548,8 @@ def test_delete_test_plan_step_order(new_test_plan, new_test_plan_step, db, clie
     assert steps[0].order == 0
 
 
-def test_delete_test_plan_step_not_found(new_test_plan, client):
+@pytest.mark.asyncio
+async def test_delete_test_plan_step_not_found(new_test_plan, async_client):
     """
     GIVEN: A test plan, but no step in the db
 
@@ -499,11 +557,14 @@ def test_delete_test_plan_step_not_found(new_test_plan, client):
 
     THEN: The response should be a 404
     """
-    r = client.delete(f"/test-plans/{new_test_plan.id}/steps/{uuid.uuid4().hex}")
+    r = await async_client.delete(
+        f"/test-plans/{new_test_plan.id}/steps/{uuid.uuid4().hex}"
+    )
     assert r.status_code == 404
 
 
-def test_reorder_test_plan_steps(new_test_plan, db, client):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps(new_test_plan, db, async_client):
     """
     GIVEN: A test plan with steps in the db
 
@@ -521,9 +582,11 @@ def test_reorder_test_plan_steps(new_test_plan, db, client):
 
     created_steps = [
         SessionTestPlanStepPublic.model_validate(
-            client.post(
-                f"/test-plans/{new_test_plan.id.hex}/steps",
-                json=step.model_dump(),
+            (
+                await async_client.post(
+                    f"/test-plans/{new_test_plan.id.hex}/steps",
+                    json=step.model_dump(),
+                )
             ).json()
         )
         for step in steps
@@ -533,20 +596,21 @@ def test_reorder_test_plan_steps(new_test_plan, db, client):
 
     new_order = [steps_in_order[1].id, steps_in_order[2].id, steps_in_order[0].id]
 
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{new_test_plan.id.hex}/steps/reorder",
         json=[str(_id) for _id in new_order],
     )
 
     assert r.status_code == 200
 
-    db.refresh(new_test_plan)
+    await db.refresh(new_test_plan)
 
     for step in new_test_plan.steps:
         assert step.order == int(new_order.index(step.id))
 
 
-def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, client):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, async_client):
     """
     GIVEN: A test plan in the db
 
@@ -556,7 +620,7 @@ def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, client):
     """
     step_id = uuid.uuid4()
 
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{new_test_plan.id}/steps/reorder",
         json=[str(step_id), str(step_id)],
     )
@@ -565,7 +629,8 @@ def test_reorder_test_plan_steps_duplicate_ids(new_test_plan, client):
     assert r.json()["detail"][0]["msg"] == "Step ids contain duplicates"
 
 
-def test_reorder_test_plan_steps_not_found(client):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps_not_found(async_client):
     """
     GIVEN: No test plan in the db
 
@@ -573,14 +638,17 @@ def test_reorder_test_plan_steps_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{uuid.uuid4()}/steps/reorder",
         json=[str(uuid.uuid4())],
     )
     assert r.status_code == 404
 
 
-def test_reorder_test_plan_steps_id_mismatch(new_test_plan, new_test_plan_step, client):
+@pytest.mark.asyncio
+async def test_reorder_test_plan_steps_id_mismatch(
+    new_test_plan, new_test_plan_step, async_client
+):
     """
     GIVEN: A test plan and a step in the db
 
@@ -588,7 +656,7 @@ def test_reorder_test_plan_steps_id_mismatch(new_test_plan, new_test_plan_step, 
 
     THEN: The response should be a 422
     """
-    r = client.post(
+    r = await async_client.post(
         f"/test-plans/{new_test_plan.id}/steps/reorder",
         json=[str(uuid.uuid4())],
     )

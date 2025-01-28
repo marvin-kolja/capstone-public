@@ -25,7 +25,8 @@ from api.services.api_test_session_service import (
 )
 
 
-def test_create_test_session(
+@pytest.mark.asyncio
+async def test_create_test_session(
     db, new_db_project, new_db_fake_build, new_db_fake_device, new_test_plan
 ):
     """
@@ -41,7 +42,7 @@ def test_create_test_session(
     public_build = BuildPublic.model_validate(new_db_fake_build)
     public_device = DeviceWithStatus.model_validate(new_db_fake_device)
 
-    session = create_test_session(
+    session = await create_test_session(
         session=db,
         public_plan=public_plan,
         public_build=public_build,
@@ -63,7 +64,7 @@ def test_create_test_session(
     assert BuildPublic.model_validate(session.build_snapshot) == public_build
     assert DeviceWithStatus.model_validate(session.device_snapshot) == public_device
 
-    assert db.get(TestSession, session.id) == session
+    assert await db.get(TestSession, session.id) == session
 
 
 @pytest.mark.parametrize(
@@ -128,7 +129,7 @@ async def test_handle_execution_state_updates_task(
             snapshot=snapshot_mock,
         )
 
-        db_entry = db.get(ExecutionStep, db_execution_step.id)
+        db_entry = await db.get(ExecutionStep, db_execution_step.id)
         assert db_entry.status == status
         assert db_entry.trace_path == trace_path
         assert db_entry.xcresult_path == xcresult_path
@@ -158,12 +159,12 @@ async def test_listen_to_execution_step_updates(
 
     new_db_fake_test_session.status = "in_progress"
     db.add(new_db_fake_test_session)
-    db.commit()
+    await db.commit()
 
     async def simulate_updates():
         new_db_fake_execution_step.status = "completed"
         db.add(new_db_fake_execution_step)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
@@ -171,7 +172,7 @@ async def test_listen_to_execution_step_updates(
             "/test/xcresult.xcresult"
         )
         db.add(new_db_fake_execution_step)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
@@ -188,13 +189,13 @@ async def test_listen_to_execution_step_updates(
             result=TestResult.passed,
         )
         db.add(new_db_fake_execution_step)
-        db.commit()
+        await db.commit()
 
         await asyncio.sleep(0.1)
 
         new_db_fake_test_session.status = "completed"
         db.add(new_db_fake_test_session)
-        db.commit()
+        await db.commit()
 
     task = asyncio.create_task(simulate_updates())
 

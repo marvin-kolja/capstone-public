@@ -49,7 +49,8 @@ def assert_real_project_values(
         assert check_lists_equal(xc_test_plan_names, ["RP Swift"])
 
 
-def test_list_projects(path_to_example_project, new_db_project, client):
+@pytest.mark.asyncio
+async def test_list_projects(path_to_example_project, new_db_project, async_client):
     """
     GIVEN: A project in the database
 
@@ -58,7 +59,7 @@ def test_list_projects(path_to_example_project, new_db_project, client):
     THEN: The response should contain a list of projects with the project inside
     AND: The project should have the correct values
     """
-    r = client.get("/projects")
+    r = await async_client.get("/projects", follow_redirects=True)
 
     assert r.status_code == 200
 
@@ -77,7 +78,8 @@ def test_list_projects(path_to_example_project, new_db_project, client):
     assert found
 
 
-def test_read_project(path_to_example_project, new_db_project, client):
+@pytest.mark.asyncio
+async def test_read_project(path_to_example_project, new_db_project, async_client):
     """
     GIVEN: A project in the database
 
@@ -86,7 +88,7 @@ def test_read_project(path_to_example_project, new_db_project, client):
     THEN: It should return the requested project
     AND: The project should have the correct values
     """
-    r = client.get(f"/projects/{new_db_project.id}")
+    r = await async_client.get(f"/projects/{new_db_project.id}")
 
     assert r.status_code == 200
 
@@ -95,7 +97,8 @@ def test_read_project(path_to_example_project, new_db_project, client):
     assert project == XcProjectPublic.model_validate(new_db_project)
 
 
-def test_read_project_not_found(client):
+@pytest.mark.asyncio
+async def test_read_project_not_found(async_client):
     """
     GIVEN: No projects in the database
 
@@ -103,13 +106,13 @@ def test_read_project_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.get(f"/projects/{uuid.uuid4()}")
+    r = await async_client.get(f"/projects/{uuid.uuid4()}")
 
     assert r.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_add_project(db, path_to_example_project, client):
+async def test_add_project(db, path_to_example_project, async_client):
     """
     GIVEN: A project path
 
@@ -118,7 +121,7 @@ async def test_add_project(db, path_to_example_project, client):
     THEN: It should add the project to the database
     AND: Return the project with the correct values
     """
-    r = client.post(
+    r = await async_client.post(
         "/projects/",
         json={"path": str(path_to_example_project)},
     )
@@ -127,7 +130,7 @@ async def test_add_project(db, path_to_example_project, client):
 
     public_project = XcProjectPublic.model_validate(r.json())
 
-    db_project = db.get(XcProject, public_project.id)
+    db_project = await db.get(XcProject, public_project.id)
     assert db_project is not None
 
     assert_real_project_values(public_project, path_to_example_project)
@@ -138,7 +141,7 @@ async def test_add_project(db, path_to_example_project, client):
     [str(pathlib.Path(__file__)), "/tmp/this/should/not/exist.xcodeproj"],
 )
 @pytest.mark.asyncio
-async def test_add_project_invalid_path(client, invalid_path):
+async def test_add_project_invalid_path(async_client, invalid_path):
     """
     GIVEN: An invalid project path
 
@@ -146,7 +149,7 @@ async def test_add_project_invalid_path(client, invalid_path):
 
     THEN: The response should be a 400
     """
-    r = client.post(
+    r = await async_client.post(
         "/projects/",
         json={"path": invalid_path},
     )
@@ -154,7 +157,9 @@ async def test_add_project_invalid_path(client, invalid_path):
 
 
 @pytest.mark.asyncio
-async def test_refresh_project(db, new_db_project, path_to_example_project, client):
+async def test_refresh_project(
+    db, new_db_project, path_to_example_project, async_client
+):
     """
     GIVEN: A project in the database
 
@@ -165,7 +170,7 @@ async def test_refresh_project(db, new_db_project, path_to_example_project, clie
     """
     old_project = XcProjectPublic.model_validate(new_db_project)
 
-    r = client.post(f"/projects/{new_db_project.id}/refresh")
+    r = await async_client.post(f"/projects/{new_db_project.id}/refresh")
 
     assert r.status_code == 200
 
@@ -174,16 +179,18 @@ async def test_refresh_project(db, new_db_project, path_to_example_project, clie
     assert refreshed_project != old_project
     assert_real_project_values(refreshed_project, path_to_example_project)
 
-    db.refresh(new_db_project)  # We need to refresh in order to get the latest db entry
+    await db.refresh(
+        new_db_project
+    )  # We need to refresh in order to get the latest db entry
 
     assert (
-        XcProjectPublic.model_validate(db.get(XcProject, new_db_project.id))
+        XcProjectPublic.model_validate(await db.get(XcProject, new_db_project.id))
         == refreshed_project
     )
 
 
 @pytest.mark.asyncio
-async def test_refresh_project_not_found(client):
+async def test_refresh_project_not_found(async_client):
     """
     GIVEN: No projects in the database
 
@@ -191,13 +198,13 @@ async def test_refresh_project_not_found(client):
 
     THEN: The response should be a 404
     """
-    r = client.post(f"/projects/{uuid.uuid4()}/refresh")
+    r = await async_client.post(f"/projects/{uuid.uuid4()}/refresh")
 
     assert r.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_refresh_project_invalid_path(db, new_db_project, client):
+async def test_refresh_project_invalid_path(db, new_db_project, async_client):
     """
     GIVEN: A project in the database with a non-existing path
 
@@ -206,9 +213,9 @@ async def test_refresh_project_invalid_path(db, new_db_project, client):
     THEN: It should return the project as is
     """
     new_db_project.path = pathlib.Path(__file__)
-    db.commit()
+    await db.commit()
 
-    r = client.post(f"/projects/{new_db_project.id}/refresh")
+    r = await async_client.post(f"/projects/{new_db_project.id}/refresh")
 
     assert r.status_code == 200
 
@@ -217,7 +224,8 @@ async def test_refresh_project_invalid_path(db, new_db_project, client):
     assert refreshed_project == XcProjectPublic.model_validate(new_db_project)
 
 
-def test_list_builds(db, new_db_project, client, new_db_fake_device):
+@pytest.mark.asyncio
+async def test_list_builds(db, new_db_project, async_client, new_db_fake_device):
     """
     GIVEN: A project and a build in the database
 
@@ -235,9 +243,10 @@ def test_list_builds(db, new_db_project, client, new_db_fake_device):
         device_id=new_db_fake_device.id,
     )
     db.add(db_build)
-    db.commit()
+    await db.commit()
+    await db.refresh(db_build)
 
-    r = client.get(f"/projects/{new_db_project.id}/builds")
+    r = await async_client.get(f"/projects/{new_db_project.id}/builds")
 
     assert r.status_code == 200
 
@@ -255,7 +264,8 @@ def test_list_builds(db, new_db_project, client, new_db_fake_device):
     assert found
 
 
-def test_read_build(db, new_db_project, client, new_db_fake_device):
+@pytest.mark.asyncio
+async def test_read_build(db, new_db_project, async_client, new_db_fake_device):
     """
     GIVEN: A project and a build in the database
 
@@ -272,9 +282,10 @@ def test_read_build(db, new_db_project, client, new_db_fake_device):
         device_id=new_db_fake_device.id,
     )
     db.add(db_build)
-    db.commit()
+    await db.commit()
+    await db.refresh(db_build)
 
-    r = client.get(f"/projects/{new_db_project.id}/builds/{db_build.id}")
+    r = await async_client.get(f"/projects/{new_db_project.id}/builds/{db_build.id}")
 
     assert r.status_code == 200
 
@@ -283,7 +294,8 @@ def test_read_build(db, new_db_project, client, new_db_fake_device):
     assert public_build == BuildPublic.model_validate(db_build)
 
 
-def test_read_build_not_found(client, new_db_project):
+@pytest.mark.asyncio
+async def test_read_build_not_found(async_client, new_db_project):
     """
     GIVEN: No matching builds in the database
 
@@ -291,12 +303,13 @@ def test_read_build_not_found(client, new_db_project):
 
     THEN: The response should be a 404
     """
-    r = client.get(f"/projects/{new_db_project.id}/builds/{uuid.uuid4()}")
+    r = await async_client.get(f"/projects/{new_db_project.id}/builds/{uuid.uuid4()}")
 
     assert r.status_code == 404
 
 
-def test_start_build(client, new_db_project, real_device):
+@pytest.mark.asyncio
+async def test_start_build(async_client, new_db_project, real_device):
     """
     GIVEN: A project in the database
 
@@ -309,7 +322,7 @@ def test_start_build(client, new_db_project, real_device):
 
     with patch("api.routes.projects.project_service.start_build") as start_build_mock:
         # Mocking start build as we only want to test if the endpoint works up until this point
-        r = client.post(
+        r = await async_client.post(
             f"/projects/{new_db_project.id}/builds",
             json={
                 "scheme": new_db_project.schemes[0].name,
@@ -325,7 +338,8 @@ def test_start_build(client, new_db_project, real_device):
         assert BuildPublic.model_validate(r.json())
 
 
-def test_start_build_no_project(client, new_db_project, random_device_id):
+@pytest.mark.asyncio
+async def test_start_build_no_project(async_client, new_db_project, random_device_id):
     """
     GIVEN: No matching project in the database
 
@@ -333,7 +347,7 @@ def test_start_build_no_project(client, new_db_project, random_device_id):
 
     THEN: The response should be a 404
     """
-    r = client.post(
+    r = await async_client.post(
         f"/projects/{uuid.uuid4()}/builds",
         json={
             "scheme": new_db_project.schemes[0].name,
@@ -346,7 +360,10 @@ def test_start_build_no_project(client, new_db_project, random_device_id):
     assert r.status_code == 404
 
 
-def test_start_build_invalid_request_data(client, new_db_project, random_device_id):
+@pytest.mark.asyncio
+async def test_start_build_invalid_request_data(
+    async_client, new_db_project, random_device_id
+):
     """
     GIVEN: A project in the database
 
@@ -354,7 +371,7 @@ def test_start_build_invalid_request_data(client, new_db_project, random_device_
 
     THEN: The response should be a 422
     """
-    r = client.post(
+    r = await async_client.post(
         f"/projects/{new_db_project.id}/builds",
         json={
             "scheme": new_db_project.schemes[0].name,
@@ -377,7 +394,8 @@ def test_start_build_invalid_request_data(client, new_db_project, random_device_
     }
 
 
-def test_start_build_project_path_invalid(db, client, new_db_project):
+@pytest.mark.asyncio
+async def test_start_build_project_path_invalid(db, async_client, new_db_project):
     """
     GIVEN: A project in the database
     AND: The projects path is now invalid (e.g. was deleted)
@@ -388,9 +406,9 @@ def test_start_build_project_path_invalid(db, client, new_db_project):
     """
     new_db_project.path = pathlib.Path(__file__)
     db.add(new_db_project)
-    db.commit()
+    await db.commit()
 
-    r = client.post(
+    r = await async_client.post(
         f"/projects/{new_db_project.id}/builds",
         json={
             "scheme": new_db_project.schemes[0].name,
@@ -404,7 +422,8 @@ def test_start_build_project_path_invalid(db, client, new_db_project):
     assert r.json() == {"code": 400, "detail": "Invalid project path"}
 
 
-def test_start_build_invalid_device(client, new_db_project):
+@pytest.mark.asyncio
+async def test_start_build_invalid_device(async_client, new_db_project):
     """
     GIVEN: A project in the database
 
@@ -412,7 +431,7 @@ def test_start_build_invalid_device(client, new_db_project):
 
     THEN: The response should be a 404
     """
-    r = client.post(
+    r = await async_client.post(
         f"/projects/{new_db_project.id}/builds",
         json={
             "scheme": new_db_project.schemes[0].name,
@@ -426,7 +445,10 @@ def test_start_build_invalid_device(client, new_db_project):
     assert r.json() == {"code": 404, "detail": "Device not found"}
 
 
-def test_start_build_existing_build(db, client, new_db_project, real_device):
+@pytest.mark.asyncio
+async def test_start_build_existing_build(
+    db, async_client, new_db_project, real_device
+):
     """
     GIVEN: A project in the database
 
@@ -445,12 +467,12 @@ def test_start_build_existing_build(db, client, new_db_project, real_device):
     }
 
     with patch("api.routes.projects.project_service.start_build") as start_build_mock:
-        r = client.post(
+        r = await async_client.post(
             f"/projects/{new_db_project.id}/builds",
             json=request_data,
         )
 
-        r_2 = client.post(
+        r_2 = await async_client.post(
             f"/projects/{new_db_project.id}/builds",
             json=request_data,
         )
@@ -500,7 +522,7 @@ async def test_stream_build_updates(
         new_db_fake_build.status = "success"
         new_db_fake_build.xctestrun = new_db_fake_xctestrun
         db.add(new_db_fake_build)
-        db.commit()
+        await db.commit()
 
     task = asyncio.create_task(simulate_update())
 

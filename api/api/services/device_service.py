@@ -4,7 +4,8 @@ from typing import Optional
 from core.device.i_device import IDevice
 from core.device.i_device_manager import IDeviceManager
 from core.exceptions import i_device as core_device_exceptions
-from sqlmodel import Session, select, col
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select, col
 
 from api.models import DeviceWithStatus, Device, DeviceBase
 from api.services.helpers import update_db_model
@@ -12,8 +13,8 @@ from api.services.helpers import update_db_model
 logger = logging.getLogger(__name__)
 
 
-def list_devices(
-    *, session: Session, device_manager: IDeviceManager
+async def list_devices(
+    *, session: AsyncSession, device_manager: IDeviceManager
 ) -> list[DeviceWithStatus]:
     devices = device_manager.list_devices()
 
@@ -30,10 +31,10 @@ def list_devices(
             status=device.status,
         )
         devices_to_return.append(device_with_status)
-        device_from_db = session.get(Device, device.udid)
+        device_from_db = await session.get(Device, device.udid)
         session.add(_update_or_add(device_with_status, device_from_db))
 
-    session.commit()
+    await session.commit()
 
     connected_device_ids = [d.id for d in devices_to_return]
 
@@ -42,7 +43,7 @@ def list_devices(
     )
 
     statement = select(Device).where(col(Device.id).notin_(connected_device_ids))
-    devices_from_db = session.exec(statement).all()
+    devices_from_db = (await session.execute(statement)).scalars().all()
 
     logger.debug(f"Found {len(devices_from_db)} devices from DB that are not connected")
 
@@ -55,11 +56,11 @@ def list_devices(
     return devices_to_return
 
 
-def get_device_by_id(
-    *, device_id: str, session: Session, device_manager: IDeviceManager
+async def get_device_by_id(
+    *, device_id: str, session: AsyncSession, device_manager: IDeviceManager
 ) -> Optional[DeviceWithStatus]:
     device = device_manager.get_device(device_id)
-    device_from_db = session.get(Device, device_id)
+    device_from_db = await session.get(Device, device_id)
 
     device_with_status: Optional[DeviceWithStatus] = None
 
@@ -74,7 +75,7 @@ def get_device_by_id(
         )
         logger.debug(f"Adding or updating device in DB")
         session.add(_update_or_add(device_with_status, device_from_db))
-        session.commit()
+        await session.commit()
     elif device_from_db:
         logger.debug(f"Found device with id {device_id} in DB")
         device_with_status = DeviceWithStatus.model_validate(device_from_db)
