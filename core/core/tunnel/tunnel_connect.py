@@ -109,14 +109,14 @@ class TunnelConnect(TunnelConnectInterface):
             logger.debug(f"Tunnel task for device {udid} is already done")
             return
 
-        logger.debug(f"Cancelling tunnel task for device {udid}")
+        logger.info(f"Cancelling tunnel task for device {udid}")
         tunnel_task.task.cancel()
 
         # Suppress the CancelledError as it is expected.
         with suppress(asyncio.CancelledError):
             logger.debug(f"Waiting for tunnel task for device {udid} to finish")
             await tunnel_task.task
-            logger.debug(f"Tunnel task for device {udid} finished")
+            logger.info(f"Tunnel task for device {udid} finished")
 
     def get_tunnel(self, udid: str) -> Optional[TunnelResult]:
         if self._tunnel_manager.tunnel_exists_for_udid(udid):
