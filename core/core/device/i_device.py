@@ -299,7 +299,7 @@ class IDevice:
         except Exception as e:
             raise device_exceptions.DdiMountingError from e
 
-    async def establish_trusted_channel(self):
+    async def establish_trusted_channel(self, port: Optional[int] = 49151):
         """
         Creates a `RemoteServiceDiscoveryService` for the device by establishing a tunnel using `TunnelClient`. This
         communicates with the `TunnelServer` which is required to run.
@@ -312,6 +312,8 @@ class IDevice:
         The method sets the `rsd` property to the created `RemoteServiceDiscoveryService`.
 
         **Only available for >= iOS 17.0**
+
+        :param port: The port of the tunnel server. Default is 49151.
 
         :raises DeviceNotPaired:
         :raises DeveloperModeNotEnabled:
@@ -328,7 +330,7 @@ class IDevice:
 
         self.check_ddi_mounted()
 
-        with get_tunnel_client(port=49151, timeout=timedelta(seconds=10)) as client:
+        with get_tunnel_client(port=port, timeout=timedelta(seconds=10)) as client:
             try:
                 logger.debug(
                     f"Checking if tunnel exist for device {self.lockdown_client.udid}"
