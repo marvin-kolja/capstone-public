@@ -5,6 +5,7 @@ from contextlib import suppress
 from typing import Optional
 from uuid import UUID
 
+from core.common.async_wrapper import async_wrapper
 from core.device.i_device import IDevice
 from core.device.i_services import IServices
 from core.subprocess import ProcessException
@@ -136,7 +137,7 @@ class Session:
 
         :param execution_step_state: The execution step state to use.
         """
-        self._handle_app_installation(execution_step_state.execution_step)
+        await self._handle_app_installation(execution_step_state.execution_step)
         trace_path, xcresult_path = self._generate_result_paths(
             execution_step_state.execution_step
         )
@@ -152,7 +153,7 @@ class Session:
         """
         return self._execution_plan.info_plists[app_path].CFBundleIdentifier
 
-    def _handle_app_installation(self, execution_step: ExecutionStep):
+    async def _handle_app_installation(self, execution_step: ExecutionStep):
         """
         Handle the installation of the app and the UI test app.
 
@@ -167,16 +168,16 @@ class Session:
             [app_path, ui_test_app_path] if ui_test_app_path else [app_path]
         )
 
-        installed_apps = self._i_services.list_installed_apps()
+        installed_apps = await async_wrapper(self._i_services.list_installed_apps)()
 
         for path_to_install in paths_to_install:
             bundle_id = self._get_app_bundle_id(path_to_install)
 
             if bundle_id in installed_apps and execution_step.reinstall_app:
-                self._i_services.uninstall_app(bundle_id)
-                self._i_services.install_app(path_to_install)
+                await async_wrapper(self._i_services.uninstall_app)(bundle_id)
+                await async_wrapper(self._i_services.install_app)(path_to_install)
             elif bundle_id not in installed_apps:
-                self._i_services.install_app(path_to_install)
+                await async_wrapper(self._i_services.install_app)(path_to_install)
 
     def _generate_result_paths(
         self, execution_step: ExecutionStep

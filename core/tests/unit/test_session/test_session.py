@@ -529,7 +529,8 @@ class TestSession:
     )
     @pytest.mark.parametrize("reinstall_app", [True, False])
     @pytest.mark.parametrize("is_installed", [True, False])
-    def test_handle_app_installation(
+    @pytest.mark.asyncio
+    async def test_handle_app_installation(
         self,
         app_bundle_id,
         app_bundle_path,
@@ -588,7 +589,7 @@ class TestSession:
                 app_bundle_id if path == app_bundle_path else ui_app_bundle_id
             )
 
-            session._handle_app_installation(execution_step_mock)
+            await session._handle_app_installation(execution_step_mock)
 
             mock_i_services.install_app.assert_has_calls(
                 expected_install_calls, any_order=False
