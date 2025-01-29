@@ -54,6 +54,8 @@ app = FastAPI(
     ],
     root_path="/",
     root_path_in_servers=False,
+    docs_url=None,  # Disables swagger UI
+    redoc_url="/redoc" if settings.ENVIRONMENT == "local" else None,
 )
 
 
