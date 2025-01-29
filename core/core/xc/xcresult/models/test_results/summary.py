@@ -20,11 +20,11 @@ class InsightSummary(BaseModel):
 
 
 class TestResult(Enum):
-    passed = 'Passed'
-    failed = 'Failed'
-    skipped = 'Skipped'
-    expected_failure = 'Expected Failure'
-    unknown = 'unknown'
+    passed = "Passed"
+    failed = "Failed"
+    skipped = "Skipped"
+    expected_failure = "Expected Failure"
+    unknown = "unknown"
 
 
 class Statistic(BaseModel):
@@ -39,30 +39,30 @@ class Device(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    device_id: Optional[str] = Field(None, alias='deviceId')
-    device_name: str = Field(..., alias='deviceName')
+    device_id: Optional[str] = Field(None, alias="deviceId")
+    device_name: str = Field(..., alias="deviceName")
     architecture: str
-    model_name: str = Field(..., alias='modelName')
+    model_name: str = Field(..., alias="modelName")
     platform: Optional[str] = None
-    os_version: str = Field(..., alias='osVersion')
+    os_version: str = Field(..., alias="osVersion")
 
 
 class Configuration(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    configuration_id: str = Field(..., alias='configurationId')
-    configuration_name: str = Field(..., alias='configurationName')
+    configuration_id: str = Field(..., alias="configurationId")
+    configuration_name: str = Field(..., alias="configurationName")
 
 
 class TestFailure(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    test_name: str = Field(..., alias='testName')
-    target_name: str = Field(..., alias='targetName')
-    failure_text: str = Field(..., alias='failureText')
-    test_identifier: int = Field(..., alias='testIdentifier')
+    test_name: str = Field(..., alias="testName")
+    target_name: str = Field(..., alias="targetName")
+    failure_text: str = Field(..., alias="failureText")
+    test_identifier: int = Field(..., alias="testIdentifier")
 
 
 class DeviceAndConfigurationSummary(BaseModel):
@@ -70,11 +70,11 @@ class DeviceAndConfigurationSummary(BaseModel):
         populate_by_name=True,
     )
     device: Device
-    test_plan_configuration: Configuration = Field(..., alias='testPlanConfiguration')
-    passed_tests: int = Field(..., alias='passedTests')
-    failed_tests: int = Field(..., alias='failedTests')
-    skipped_tests: int = Field(..., alias='skippedTests')
-    expected_failures: int = Field(..., alias='expectedFailures')
+    test_plan_configuration: Configuration = Field(..., alias="testPlanConfiguration")
+    passed_tests: int = Field(..., alias="passedTests")
+    failed_tests: int = Field(..., alias="failedTests")
+    skipped_tests: int = Field(..., alias="skippedTests")
+    expected_failures: int = Field(..., alias="expectedFailures")
 
 
 class Summary(BaseModel):
@@ -84,28 +84,28 @@ class Summary(BaseModel):
     title: str
     start_time: Optional[float] = Field(
         None,
-        alias='startTime',
-        description='Date as a UNIX timestamp (seconds since midnight UTC on January 1, 1970)',
+        alias="startTime",
+        description="Date as a UNIX timestamp (seconds since midnight UTC on January 1, 1970)",
     )
     finish_time: Optional[float] = Field(
         None,
-        alias='finishTime',
-        description='Date as a UNIX timestamp (seconds since midnight UTC on January 1, 1970)',
+        alias="finishTime",
+        description="Date as a UNIX timestamp (seconds since midnight UTC on January 1, 1970)",
     )
     environment_description: str = Field(
         ...,
-        alias='environmentDescription',
-        description='Description of the Test Plan, OS, and environment that was used during testing',
+        alias="environmentDescription",
+        description="Description of the Test Plan, OS, and environment that was used during testing",
     )
-    top_insights: List[InsightSummary] = Field(..., alias='topInsights')
+    top_insights: List[InsightSummary] = Field(..., alias="topInsights")
     result: TestResult
-    total_test_count: int = Field(..., alias='totalTestCount')
-    passed_tests: int = Field(..., alias='passedTests')
-    failed_tests: int = Field(..., alias='failedTests')
-    skipped_tests: int = Field(..., alias='skippedTests')
-    expected_failures: int = Field(..., alias='expectedFailures')
+    total_test_count: int = Field(..., alias="totalTestCount")
+    passed_tests: int = Field(..., alias="passedTests")
+    failed_tests: int = Field(..., alias="failedTests")
+    skipped_tests: int = Field(..., alias="skippedTests")
+    expected_failures: int = Field(..., alias="expectedFailures")
     statistics: List[Statistic]
     devices_and_configurations: List[DeviceAndConfigurationSummary] = Field(
-        ..., alias='devicesAndConfigurations'
+        ..., alias="devicesAndConfigurations"
     )
-    test_failures: List[TestFailure] = Field(..., alias='testFailures')
+    test_failures: List[TestFailure] = Field(..., alias="testFailures")

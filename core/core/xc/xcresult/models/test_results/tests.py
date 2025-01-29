@@ -14,54 +14,54 @@ class Configuration(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    configuration_id: str = Field(..., alias='configurationId')
-    configuration_name: str = Field(..., alias='configurationName')
+    configuration_id: str = Field(..., alias="configurationId")
+    configuration_name: str = Field(..., alias="configurationName")
 
 
 class Device(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    device_id: Optional[str] = Field(None, alias='deviceId')
-    device_name: str = Field(..., alias='deviceName')
+    device_id: Optional[str] = Field(None, alias="deviceId")
+    device_name: str = Field(..., alias="deviceName")
     architecture: str
-    model_name: str = Field(..., alias='modelName')
+    model_name: str = Field(..., alias="modelName")
     platform: Optional[str] = None
-    os_version: str = Field(..., alias='osVersion')
+    os_version: str = Field(..., alias="osVersion")
 
 
 class TestResult(Enum):
-    passed = 'Passed'
-    failed = 'Failed'
-    skipped = 'Skipped'
-    expected_failure = 'Expected Failure'
-    unknown = 'unknown'
+    passed = "Passed"
+    failed = "Failed"
+    skipped = "Skipped"
+    expected_failure = "Expected Failure"
+    unknown = "unknown"
 
 
 class TestNodeType(Enum):
-    test_plan = 'Test Plan'
-    unit_test_bundle = 'Unit test bundle'
-    ui_test_bundle = 'UI test bundle'
-    test_suite = 'Test Suite'
-    test_case = 'Test Case'
-    device = 'Device'
-    test_plan_configuration = 'Test Plan Configuration'
-    arguments = 'Arguments'
-    repetition = 'Repetition'
-    test_case_run = 'Test Case Run'
-    failure_message = 'Failure Message'
-    source_code_reference = 'Source Code Reference'
-    attachment = 'Attachment'
-    expression = 'Expression'
-    test_value = 'Test Value'
+    test_plan = "Test Plan"
+    unit_test_bundle = "Unit test bundle"
+    ui_test_bundle = "UI test bundle"
+    test_suite = "Test Suite"
+    test_case = "Test Case"
+    device = "Device"
+    test_plan_configuration = "Test Plan Configuration"
+    arguments = "Arguments"
+    repetition = "Repetition"
+    test_case_run = "Test Case Run"
+    failure_message = "Failure Message"
+    source_code_reference = "Source Code Reference"
+    attachment = "Attachment"
+    expression = "Expression"
+    test_value = "Test Value"
 
 
 class TestNode(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    node_identifier: Optional[str] = Field(None, alias='nodeIdentifier')
-    node_type: TestNodeType = Field(..., alias='nodeType')
+    node_identifier: Optional[str] = Field(None, alias="nodeIdentifier")
+    node_type: TestNodeType = Field(..., alias="nodeType")
     name: str
     details: Optional[str] = None
     duration: Optional[str] = None
@@ -75,10 +75,10 @@ class Tests(BaseModel):
         populate_by_name=True,
     )
     test_plan_configurations: List[Configuration] = Field(
-        ..., alias='testPlanConfigurations'
+        ..., alias="testPlanConfigurations"
     )
     devices: List[Device]
-    test_nodes: List[TestNode] = Field(..., alias='testNodes')
+    test_nodes: List[TestNode] = Field(..., alias="testNodes")
 
 
 TestNode.model_rebuild()
