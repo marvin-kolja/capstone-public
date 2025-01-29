@@ -200,8 +200,8 @@ async def export_test_session_results(
             status_code=400, detail="Test session must be completed to process results"
         )
 
-    api_test_session_service.process_trace_results(
-        test_session_id=db_test_session.id, job_runner=job_runner
+    await api_test_session_service._process_trace_results_job(
+        test_session_id=db_test_session.id
     )
 
 

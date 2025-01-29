@@ -389,7 +389,7 @@ async def test_export_test_session_results_200(
 
         assert r.status_code == 200, r.text
 
-        mock_read_test_session.assert_called_once()
+        assert mock_read_test_session.call_count == 2
         mock_process_results.assert_called_once_with(
             test_session_id=fake_test_session_id,
             job_runner=mock_async_job_runner_dependency,
