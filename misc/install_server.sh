@@ -2,7 +2,7 @@
 
 set -e
 
-REPO_URL="https://github.com/marvin-kolja/capstone.git"
+REPO_URL="git@github.com:marvin-kolja/capstone.git"
 INSTALL_DIR="$HOME/capstone"
 TMP_REPO_DIR="$INSTALL_DIR/tmp/repo"
 
