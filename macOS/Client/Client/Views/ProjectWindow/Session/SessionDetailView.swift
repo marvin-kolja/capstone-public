@@ -33,6 +33,11 @@ struct SessionDetailView: View {
                 } label: {
                     Text("Process Data")
                 }.disabled(session.status != .completed)
+                JSONFileSaver(
+                    json: session
+                ) {
+                    Text("Export as JSON")
+                }
             }
             Divider()
             Grid(alignment: .leading) {
