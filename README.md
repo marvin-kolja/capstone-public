@@ -61,17 +61,20 @@ The project is divided into three main components:
 
 ### Prerequisites
 
-| Technology | Version | Description                                              |
-|------------|---------|----------------------------------------------------------|
-| Python     | 3.13+   | Api and Core were developed developed using Python 3.13. |
-| Xcode      | 16+     | Xcode for xcode specific operations.                     |
-| macOS      | -       | Running this on macOS is required.                       |
+| Technology | Version | Description                                                                                                                    |
+|------------|---------|--------------------------------------------------------------------------------------------------------------------------------|
+| Python     | 3.13+   | Api and Core were developed developed using Python 3.13.                                                                       |
+| Xcode      | 16+     | Xcode for xcode specific operations.                                                                                           |
+| macOS      | 14+     | macOS is required for this to run as the Core interacts with xcode tools. The minimum version of `14` is set by the macOS app. |
 
-### Install and Run the API
+### Install and Run the servers
 
 1. Run the installation script
 
-This will install python dependencies and sets up server environment (requires `python3.13` in PATH).
+This will install python dependencies and sets up server environment.
+
+> [!CAUTION]
+> This requires `python3.13` to be installed and available in the PATH. Check if `python3.13` is available by running `command -v python3.13`.
 
 > [!CAUTION]
 > As the project isn't publicly available on GitHub the following command requires a URL with a token.
@@ -103,7 +106,7 @@ curl http://localhost:8000/health
 ### Install and Run the macOS App
 
 > [!IMPORTANT]
-> Currently, the macOS is not distributed to GitHub. You can either build it yourself or [contact](#contact) me for a pre-built signed and notarized version.
+> Currently, the macOS is not distributed to GitHub. You can either [build it](macOS/README.md#distribution) yourself or [contact](#contact) me for a pre-built signed and notarized version.
 
 ## Development
 
