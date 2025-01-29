@@ -181,7 +181,7 @@ Since iOS 17.0 Apple has changed the way we can interact with developer services
 
 #### Elevated Privileges Requirement
 
-Creating such tunnel connections requires elevated privileges to create the tunnel. This is why some tests require `sudo` to run.
+Creating such trusted tunnels requires elevated privileges. This is why some tests require `sudo` to run.
 
 As we do not want to execute the entire code with `sudo`, a tunnel connect server was written to handle the tunnel connections. That server can be started independently and will handle the tunnel connections for the core library. This way, we can run the core library without `sudo` and still interact with physical iOS devices. The server uses the `async_socket` module to allow asynchronous communication with the core library (which uses a socket client).
 
@@ -191,7 +191,7 @@ To start the tunnel connect server, run the following command:
 python core/tunnel/server_executable.py --port 1234 --log-level DEBUG
 ```
 
-Alternatively, you can use the server inside python code by either using it directly from `core/tunnel/server` or by executing the above command in a subprocess (`core/tunnel/server_command.py`)
+Alternatively, you can use the server programmatically in python by either importing it from `core/tunnel/server.py` or by executing a subprocess that executes the command above (use `core/tunnel/server_command.py`)
 
 > [!IMPORTANT]
 > Requiring elevated privileges to create trusted tunnel is a python limitation. Other libraries do not require this. `pymobiledevice3` is actively looking into ways to remove this limitation which would make requiring a separate server run with root privileges obsolete. Read more [here](https://github.com/doronz88/pymobiledevice3/issues/1260).
