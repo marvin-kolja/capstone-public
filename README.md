@@ -97,7 +97,7 @@ sh ~/capstone/start_tunnel_connect.sh
 
 ```bash
 curl http://localhost:8000/health
-# {"status":"unhealthy","db":"ok","tunnel_connect":"ok"}
+# {"status":"ok","db":"ok","tunnel_connect":"ok"}
 ```
 
 ### Install and Run the macOS App

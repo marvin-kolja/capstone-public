@@ -142,7 +142,7 @@ sudo python3 -m core.tunnel.server_executable --port <port> # Use port as specif
 
 ```bash
 curl http://127.0.0.1:8000/health # Use port as specified in .env (API_PORT)
-# {"status":"unhealthy","db":"ok","tunnel_connect":"ok"}
+# {"status":"ok","db":"ok","tunnel_connect":"ok"}
 ```
 
 ### Tests
