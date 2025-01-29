@@ -29,7 +29,12 @@ struct SessionDetailView: View {
                 LoadingButton(isLoading: sessionStore.exportingSessionResults[session.id] ?? false)
                 {
                     Task {
+                        // TODO: Listen for updates
+                        // The api currently returns after the export was done.
+                        // Listening can be implemented once the API exposes a listener endpoint
                         await sessionStore.exportSessionResults(sessionId: session.id)
+                        // TODO: Just reload the specific session
+                        await sessionStore.loadSessions()
                     }
                 } label: {
                     Text("Process Data")
