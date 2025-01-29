@@ -66,23 +66,26 @@ enum DeleteTestPlanStepError: LocalizedError {
 class TestPlanStepStore: ProjectContext {
     @Published var steps: [Components.Schemas.SessionTestPlanStepPublic]
 
-    @Published var updatingSteps: [String:Bool] = [:]
-    @Published var errorUpdatingSteps: [String:AppError] = [:]
-    
+    @Published var updatingSteps: [String: Bool] = [:]
+    @Published var errorUpdatingSteps: [String: AppError] = [:]
+
     @Published var addingStep = false
     @Published var errorAddingStep: AppError?
-    
-    @Published var deletingSteps: [String:Bool] = [:]
-    @Published var errorDeletingSteps: [String:AppError] = [:]
+
+    @Published var deletingSteps: [String: Bool] = [:]
+    @Published var errorDeletingSteps: [String: AppError] = [:]
 
     private let testPlanId: String
 
-    init(projectId: String, testPlanId: String, apiClient: APIClientProtocol, steps: [Components.Schemas.SessionTestPlanStepPublic]) {
+    init(
+        projectId: String, testPlanId: String, apiClient: APIClientProtocol,
+        steps: [Components.Schemas.SessionTestPlanStepPublic]
+    ) {
         _steps = Published(initialValue: steps)
         self.testPlanId = testPlanId
         super.init(projectId: projectId, apiClient: apiClient)
     }
-    
+
     func add(data: Components.Schemas.SessionTestPlanStepCreate) async {
         guard !addingStep else {
             return
@@ -110,7 +113,8 @@ class TestPlanStepStore: ProjectContext {
         defer { updatingSteps[stepId] = false }
 
         do {
-            let step = try await apiClient.updateTestPlanStep(testPlanId: testPlanId, stepId: stepId, data: data)
+            let step = try await apiClient.updateTestPlanStep(
+                testPlanId: testPlanId, stepId: stepId, data: data)
             setStep(data: step)
         } catch let appError as AppError {
             errorUpdatingSteps[stepId] = appError
@@ -118,8 +122,7 @@ class TestPlanStepStore: ProjectContext {
             errorUpdatingSteps[stepId] = AppError(type: UpdateTestPlanStepError.unexpected)
         }
     }
-    
-    
+
     func delete(stepId: String) async {
         guard !(deletingSteps[stepId] ?? false) else {
             return
@@ -137,11 +140,11 @@ class TestPlanStepStore: ProjectContext {
             errorDeletingSteps[stepId] = AppError(type: DeleteTestPlanStepError.unexpected)
         }
     }
-    
+
     func getStepById(stepId: String) -> Components.Schemas.SessionTestPlanStepPublic? {
         return steps.first { $0.id == stepId }
     }
-    
+
     func setStep(data: Components.Schemas.SessionTestPlanStepPublic) {
         if let existingBuildIndex = steps.firstIndex(where: { $0.id == data.id }) {
             steps[existingBuildIndex] = data

@@ -21,10 +21,10 @@ struct TestPlanStepsList: View {
                     testPlanData: testPlanData,
                     availableXcTestCases: availableXcTestCases
                 )
-                
+
                 Divider()
             }
-            
+
             if testPlanStepStore.steps.isEmpty {
                 HStack {
                     Spacer()
@@ -34,7 +34,7 @@ struct TestPlanStepsList: View {
                     Spacer()
                 }
             }
-            
+
             HStack {
                 Spacer()
                 Button(action: {
@@ -53,13 +53,13 @@ struct TestPlanStepsList: View {
         .scrollContentBackground(.hidden)
         .listStyle(.plain)
     }
-    
+
     func addNewStep() {
         let order = testPlanStepStore.steps.count
         var data = TestPlanStepFormData.fromTestPlanData(testPlanData: testPlanData, order: order)
         data.name = "Step \(order)"
         data.testCases = [availableXcTestCases[0]]
-        
+
         Task {
             await testPlanStepStore.add(data: data.toStepCreate())
         }
@@ -68,7 +68,8 @@ struct TestPlanStepsList: View {
 
 #Preview {
     TestPlanStepsList(
-        testPlanData: TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock),
+        testPlanData: TestPlanFormData.fromExisting(
+            testPlan: Components.Schemas.SessionTestPlanPublic.mock),
         availableXcTestCases: ["Mock Xc Test Case"]
     ).environmentObject(
         TestPlanStepStore(

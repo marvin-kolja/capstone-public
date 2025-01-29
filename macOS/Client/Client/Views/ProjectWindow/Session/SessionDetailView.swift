@@ -5,8 +5,8 @@
 //  Created by Marvin Willms on 24.01.25.
 //
 
-import SwiftUI
 import Charts
+import SwiftUI
 
 struct SessionDetailView: View {
     @EnvironmentObject var sessionStore: SessionStore
@@ -26,7 +26,8 @@ struct SessionDetailView: View {
                 } label: {
                     Text("Cancel")
                 }.disabled(session.status != .running)
-                LoadingButton(isLoading: sessionStore.exportingSessionResults[session.id] ?? false) {
+                LoadingButton(isLoading: sessionStore.exportingSessionResults[session.id] ?? false)
+                {
                     Task {
                         await sessionStore.exportSessionResults(sessionId: session.id)
                     }
@@ -85,5 +86,7 @@ func formattedDate(_ date: Date) -> String {
 
 #Preview {
     SessionDetailView(session: Components.Schemas.TestSessionPublic.mock)
-        .environmentObject(SessionStore(projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
+        .environmentObject(
+            SessionStore(
+                projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
 }

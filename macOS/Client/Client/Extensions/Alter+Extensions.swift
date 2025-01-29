@@ -14,7 +14,8 @@ extension View {
             isPresented: isPresented,
             actions: {
                 Button("Ok") {}
-            }, message: {
+            },
+            message: {
                 Text(error?.userMessage ?? "")
             }
         )

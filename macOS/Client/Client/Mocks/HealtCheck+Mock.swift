@@ -6,5 +6,5 @@
 //
 
 extension Components.Schemas.HealthCheck {
-    static let mock = Components.Schemas.HealthCheck(db:.ok, status:.ok, tunnelConnect:.ok)
+    static let mock = Components.Schemas.HealthCheck(db: .ok, status: .ok, tunnelConnect: .ok)
 }

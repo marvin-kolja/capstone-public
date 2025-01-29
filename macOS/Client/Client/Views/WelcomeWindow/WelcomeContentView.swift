@@ -8,10 +8,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-
 struct ErrorText: View {
     var error: AppError
-    
+
     var body: some View {
         VStack {
             Text(error.userMessage)
@@ -20,16 +19,15 @@ struct ErrorText: View {
     }
 }
 
-
 struct WelcomeContentView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.refresh) private var refresh
-    
+
     @EnvironmentObject var projectStore: ProjectStore
     @EnvironmentObject var serverStatusStore: ServerStatusStore
-    
+
     @State private var showFileImporter = false
-    
+
     var body: some View {
         VStack {
             if projectStore.projects.isEmpty {
@@ -69,33 +67,44 @@ struct WelcomeContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .status) {
-                ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {
+                ServerStatusButton(
+                    isLoading: serverStatusStore.checkingHealth,
+                    serverStatus: serverStatusStore.serverStatus
+                ) {
                     ServerStatusDetailView()
                 }
                 .accessibilityIdentifier("server-status")
             }
             ToolbarItem(placement: .automatic) {
-                LoadingButton(isLoading: projectStore.loadingProjects, action: {
-                    Task {
-                        await projectStore.loadProjects()
+                LoadingButton(
+                    isLoading: projectStore.loadingProjects,
+                    action: {
+                        Task {
+                            await projectStore.loadProjects()
+                        }
                     }
-                }) {
+                ) {
                     Image(systemName: "arrow.clockwise")
                 }
                 .accessibilityIdentifier("refresh-projects")
             }
             ToolbarItem(placement: .automatic) {
-                LoadingButton(isLoading: projectStore.addingProject, action: {
-                    showFileImporter = true
-                }) {
+                LoadingButton(
+                    isLoading: projectStore.addingProject,
+                    action: {
+                        showFileImporter = true
+                    }
+                ) {
                     Image(systemName: "folder.badge.plus")
                 }
                 .accessibilityIdentifier("add-project")
             }
         }
-        .alert(isPresented: $projectStore.showAddingProjectError, withError: projectStore.errorAddingProject)
+        .alert(
+            isPresented: $projectStore.showAddingProjectError,
+            withError: projectStore.errorAddingProject)
     }
-    
+
     func handleFileResult(_ result: Result<[URL], any Error>) {
         switch result {
         case .success(let urls):

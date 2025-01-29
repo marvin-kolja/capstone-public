@@ -12,7 +12,7 @@ struct LoadingView<Content: View>: View {
     var hasData: Bool
     var refresh: () -> Void
     @ViewBuilder var content: () -> Content
-    
+
     var body: some View {
         VStack {
             HStack {
@@ -37,9 +37,12 @@ struct LoadingView<Content: View>: View {
 }
 
 #Preview {
-    LoadingView(isLoading: true, hasData: true, refresh: {
-        print("Refresh")
-    }) {
+    LoadingView(
+        isLoading: true, hasData: true,
+        refresh: {
+            print("Refresh")
+        }
+    ) {
         Text("Some Content")
     }
 }

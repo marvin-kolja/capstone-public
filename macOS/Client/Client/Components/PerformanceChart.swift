@@ -5,8 +5,8 @@
 //  Created by Marvin Willms on 28.01.25.
 //
 
-import SwiftUI
 import Charts
+import SwiftUI
 
 struct PerformanceChartData {
     let timestamp: TimeInterval
@@ -41,7 +41,7 @@ struct PerformanceChart: View {
         GeometryReader { geometry in
             let labelsCount = min(maxLabels, max(minLabels, Int(geometry.size.width / 50)))
             let secondsPerLabel = max(1, maxTime / Double(labelsCount))
-            
+
             Chart {
                 ForEach(data, id: \.timestamp) { point in
                     switch markType {
@@ -63,7 +63,8 @@ struct PerformanceChart: View {
             .chartScrollableAxes(.horizontal)
             .chartXVisibleDomain(length: 30 / secondsPerLabel)
             .chartXAxis {
-                AxisMarks(position: .bottom, values: .stride(by: Double(Int(secondsPerLabel)))) { value in
+                AxisMarks(position: .bottom, values: .stride(by: Double(Int(secondsPerLabel)))) {
+                    value in
                     if let time = value.as(TimeInterval.self) {
                         AxisValueLabel("\(Int(time))s")
                     }
@@ -71,13 +72,11 @@ struct PerformanceChart: View {
             }
             .padding()
             .chartYAxis {
-                AxisMarks(
-                    
-                )
-                
+                AxisMarks()
+
                 switch yFormat {
                 case .fps:
-                    AxisMarks() { value in
+                    AxisMarks { value in
                         AxisValueLabel("\(String(describing: value.as(Int.self)!)) FPS")
                     }
                 case .percent:
@@ -85,7 +84,7 @@ struct PerformanceChart: View {
                         format: Decimal.FormatStyle.Percent.percent.scale(1)
                     )
                 case .mb:
-                    AxisMarks() { value in
+                    AxisMarks { value in
                         AxisValueLabel("\(String(describing: value.as(Int.self)!)) MB")
                     }
                 }

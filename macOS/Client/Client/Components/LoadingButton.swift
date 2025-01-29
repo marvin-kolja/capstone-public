@@ -11,9 +11,9 @@ struct LoadingButton<Label: View>: View {
     var isLoading: Bool
     var action: @MainActor () -> Void
     @ViewBuilder var label: () -> Label
-    
+
     @State private var showLoading = false
-    
+
     var body: some View {
         Button(action: action) {
             ZStack {
@@ -39,7 +39,9 @@ struct LoadingButton<Label: View>: View {
 }
 
 #Preview {
-    LoadingButton(isLoading: false, action: {}, label: {
-        
-    })
+    LoadingButton(
+        isLoading: false, action: {},
+        label: {
+
+        })
 }

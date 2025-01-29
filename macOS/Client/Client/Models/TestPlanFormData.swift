@@ -18,7 +18,8 @@ struct TestPlanFormData {
     var metrics: [Components.Schemas.Metric] = []
 
     /// Uses the test plan data to create form data
-    static func fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic) -> TestPlanFormData {
+    static func fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic) -> TestPlanFormData
+    {
         return .init(
             id: testPlan.id,
             buildId: testPlan.buildId,

@@ -122,7 +122,7 @@ class SessionStore: ProjectContext {
 
     @Published var streamingSessionUpdates: [String: Bool] = [:]
     @Published var errorStreamingSessionUpdates: [String: AppError] = [:]
-    
+
     @Published var exportingSessionResults: [String: Bool] = [:]
     @Published var errorExportingSessionResults: [String: AppError] = [:]
 
@@ -179,7 +179,7 @@ class SessionStore: ProjectContext {
         streamingSessionUpdates[sessionId] = true
         defer {
             streamingSessionUpdates[sessionId] = false
-            
+
             Task {
                 // TODO: Just reload the specific session
                 await loadSessions()
@@ -194,7 +194,8 @@ class SessionStore: ProjectContext {
         } catch let appError as AppError {
             errorStreamingSessionUpdates[sessionId] = appError
         } catch {
-            errorStreamingSessionUpdates[sessionId] = AppError(type: StreamExecutionStepsError.unexpected)
+            errorStreamingSessionUpdates[sessionId] = AppError(
+                type: StreamExecutionStepsError.unexpected)
         }
     }
 
@@ -203,7 +204,7 @@ class SessionStore: ProjectContext {
 
         exportingSessionResults[sessionId] = true
         defer { exportingSessionResults[sessionId] = false }
-        
+
         do {
             try await apiClient.exportSessionResults(sessionId: sessionId)
         } catch let appError as AppError {
@@ -213,9 +214,13 @@ class SessionStore: ProjectContext {
         }
     }
 
-    private func replaceExecutionStep(sessionId: String, executionStep: Components.Schemas.ExecutionStepPublic) {
+    private func replaceExecutionStep(
+        sessionId: String, executionStep: Components.Schemas.ExecutionStepPublic
+    ) {
         if let sessionIndex = getSessionIndex(sessionId) {
-            if let stepIndex = sessions[sessionIndex].executionSteps.firstIndex(where: { $0.id == executionStep.id }) {
+            if let stepIndex = sessions[sessionIndex].executionSteps.firstIndex(where: {
+                $0.id == executionStep.id
+            }) {
                 sessions[sessionIndex].executionSteps[stepIndex] = executionStep
             }
         }
@@ -229,4 +234,3 @@ class SessionStore: ProjectContext {
         return sessions.first(where: { $0.id == sessionId })
     }
 }
-

@@ -10,7 +10,7 @@ import Foundation
 @MainActor
 class CurrentProjectStore: ObservableObject {
     @Published var project: Components.Schemas.XcProjectPublic
-    
+
     init(project: Components.Schemas.XcProjectPublic) {
         self.project = project
     }

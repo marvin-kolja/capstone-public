@@ -7,18 +7,26 @@
 
 extension Components.Schemas.TraceResultPublic {
     var fpsChartData: [PerformanceChartData] {
-        return coreAnimation.map { PerformanceChartData(timestamp: $0.timestampInterval, value:  $0.fps) }
+        return coreAnimation.map {
+            PerformanceChartData(timestamp: $0.timestampInterval, value: $0.fps)
+        }
     }
-    
+
     var gpuChartData: [PerformanceChartData] {
-        return coreAnimation.map { PerformanceChartData(timestamp: $0.timestampInterval, value:  $0.gpuUtilization) }
+        return coreAnimation.map {
+            PerformanceChartData(timestamp: $0.timestampInterval, value: $0.gpuUtilization)
+        }
     }
-    
+
     var cpuChartData: [PerformanceChartData] {
-        return sysmon.map { PerformanceChartData(timestamp: $0.timestampInterval, value: $0.cpu ?? 0 ) }
+        return sysmon.map {
+            PerformanceChartData(timestamp: $0.timestampInterval, value: $0.cpu ?? 0)
+        }
     }
-    
+
     var memoryChartData: [PerformanceChartData] {
-        return sysmon.map { PerformanceChartData(timestamp: $0.timestampInterval, value: $0.memory ?? 0 ) }
+        return sysmon.map {
+            PerformanceChartData(timestamp: $0.timestampInterval, value: $0.memory ?? 0)
+        }
     }
 }

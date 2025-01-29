@@ -16,9 +16,12 @@ struct DevicesView: View {
 
         VStack(alignment: .center) {
             HStack {
-                LoadingButton(isLoading: deviceStore.loadingDevices, action: {
-                    Task { await deviceStore.loadDevices() }
-                }) {
+                LoadingButton(
+                    isLoading: deviceStore.loadingDevices,
+                    action: {
+                        Task { await deviceStore.loadDevices() }
+                    }
+                ) {
                     Image(systemName: "arrow.clockwise")
                 }
                 Picker("Device", selection: $selectedDeviceId) {
@@ -32,7 +35,9 @@ struct DevicesView: View {
 
             Divider()
 
-            if let deviceId = selectedDeviceId, let device = deviceStore.getDeviceById(deviceId: deviceId) {
+            if let deviceId = selectedDeviceId,
+                let device = deviceStore.getDeviceById(deviceId: deviceId)
+            {
 
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                     GridRow {
@@ -126,7 +131,6 @@ struct DevicesView: View {
                 }
             }
             Spacer()
-
 
         }
         .task { await deviceStore.loadDevices() }

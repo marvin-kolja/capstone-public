@@ -6,7 +6,8 @@
 //
 
 extension Components.Schemas.IDeviceStatus {
-    static let mock = Components.Schemas.IDeviceStatus(ddiMounted: true, developerModeEnabled: true, paired: true, tunnelConnected: true)
+    static let mock = Components.Schemas.IDeviceStatus(
+        ddiMounted: true, developerModeEnabled: true, paired: true, tunnelConnected: true)
 }
 
 extension Components.Schemas.DeviceWithStatus {

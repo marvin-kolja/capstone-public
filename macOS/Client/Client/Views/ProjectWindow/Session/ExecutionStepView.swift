@@ -25,7 +25,7 @@ struct ExecutionStepView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Divider()
 
                 Grid(alignment: .leading) {
@@ -41,9 +41,9 @@ struct ExecutionStepView: View {
                         Text(step.reinstallApp ? "True" : "False")
 
                     }
-                    
+
                     Divider()
-                    
+
                     GridRow {
                         Text("Test Cases")
                             .bold()
@@ -51,15 +51,15 @@ struct ExecutionStepView: View {
                             Text(testCase)
                         }
                     }
-                    
+
                     GridRow {
                         Text("Test Result File")
                             .bold()
                         LocalFileLinkButton(path: step.xcresultPath)
                     }
-                    
+
                     Divider()
-                    
+
                     GridRow {
                         Text("Trace File")
                             .bold()
@@ -71,9 +71,9 @@ struct ExecutionStepView: View {
                         TestStatusIcon(status: step.traceResult?.exportStatus?.rawValue)
                     }
                 }.font(.subheadline)
-                
+
                 Divider()
-                
+
                 ForEach(step.metrics, id: \.self) { metric in
                     PerformanceChartSection(metric: metric, traceResult: step.traceResult)
                 }

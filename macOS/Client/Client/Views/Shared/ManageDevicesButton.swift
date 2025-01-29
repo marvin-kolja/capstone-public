@@ -11,7 +11,7 @@ struct ManageDevicesButton: View {
     @State var isManaging = false
 
     var body: some View {
-        Button() {
+        Button {
             isManaging = true
         } label: {
             Label("Manage Devices", systemImage: "iphone")

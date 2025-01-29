@@ -9,7 +9,7 @@ import Foundation
 
 struct AppError: Error {
     let type: any LocalizedError
-    
+
     var userMessage: String {
         var message = "\(type.failureReason ?? "Error")"
         if let recoverySuggestion = type.recoverySuggestion {
@@ -17,7 +17,7 @@ struct AppError: Error {
         }
         return message
     }
-    
+
     init(type: any LocalizedError, debugInfo: String? = nil) {
         self.type = type
         guard let debugInfo else { return }

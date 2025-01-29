@@ -11,7 +11,7 @@ import Foundation
 @MainActor
 class APIClientContext: ObservableObject {
     internal let apiClient: APIClientProtocol
-    
+
     init(apiClient: APIClientProtocol) {
         self.apiClient = apiClient
     }

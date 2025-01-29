@@ -9,7 +9,7 @@ import SwiftUI
 
 enum JSONExportError: LocalizedError {
     case unexpected
-    
+
     var failureReason: String? {
         switch self {
         case .unexpected:
@@ -20,20 +20,20 @@ enum JSONExportError: LocalizedError {
 
 struct JSONFileSaver<Label: View>: View {
     let json: Encodable
-    
+
     @ViewBuilder var label: () -> Label
-    
+
     private let jsonDocument: JSONDocument
     @State private var isExporting = false
     @State private var exportError: AppError?
     @State private var showError = false
-    
+
     init(json: Encodable, label: @escaping () -> Label) {
         self.json = json
         self.label = label
         self.jsonDocument = JSONDocument(json: json)
     }
-    
+
     var body: some View {
         Button {
             isExporting = true
@@ -48,7 +48,8 @@ struct JSONFileSaver<Label: View>: View {
             case .success(let file):
                 file.absoluteURL.showInFinder()
             case .failure(let error):
-                exportError = AppError(type: JSONExportError.unexpected, debugInfo: error.localizedDescription)
+                exportError = AppError(
+                    type: JSONExportError.unexpected, debugInfo: error.localizedDescription)
             }
         }.alert(isPresented: $showError, withError: exportError)
     }

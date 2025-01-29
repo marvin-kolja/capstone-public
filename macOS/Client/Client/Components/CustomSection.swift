@@ -19,10 +19,10 @@ struct CustomSection<Label: View, Content: View>: View {
             content(isExpanded)
         } header: {
             label(isExpanded)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                isExpanded.toggle()
-            }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isExpanded.toggle()
+                }
         }
     }
 }
@@ -35,7 +35,8 @@ struct CustomSection<Label: View, Content: View>: View {
             Text("Some Title")
                 .font(.title3)
             Spacer()
-            Button { } label : {
+            Button {
+            } label: {
                 Image(systemName: "trash")
                     .foregroundStyle(.red)
             }

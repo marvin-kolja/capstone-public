@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ServerStatusDetailView: View {
     @EnvironmentObject var serverStatusStore: ServerStatusStore
-    
+
     var body: some View {
         VStack(spacing: 10) {
             VStack(alignment: .leading) {
@@ -30,18 +30,20 @@ struct ServerStatusDetailView: View {
                 }.padding(.leading, 20)
             }
             Divider()
-            LoadingButton(isLoading: serverStatusStore.checkingHealth, action: {
-                Task {
-                    await serverStatusStore.checkHealth()
+            LoadingButton(
+                isLoading: serverStatusStore.checkingHealth,
+                action: {
+                    Task {
+                        await serverStatusStore.checkHealth()
+                    }
                 }
-            }) {
+            ) {
                 Text("Check Health")
             }
         }
         .padding()
     }
 }
-
 
 #Preview {
     ServerStatusDetailView()

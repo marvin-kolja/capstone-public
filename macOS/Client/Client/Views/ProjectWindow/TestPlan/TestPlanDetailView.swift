@@ -30,13 +30,16 @@ struct TestPlanDetailView: View {
 
     var body: some View {
         VStack {
-            Picker("", selection: $selectedPage, content: {
-                Text("Test Config")
-                    .tag(TestPlanPage.testConfig)
-                Text("Steps")
-                    .tag(TestPlanPage.steps)
-            }).pickerStyle(.palette)
-            VStack{
+            Picker(
+                "", selection: $selectedPage,
+                content: {
+                    Text("Test Config")
+                        .tag(TestPlanPage.testConfig)
+                    Text("Steps")
+                        .tag(TestPlanPage.steps)
+                }
+            ).pickerStyle(.palette)
+            VStack {
                 switch selectedPage {
                 case .testConfig:
                     VStack {
@@ -46,15 +49,19 @@ struct TestPlanDetailView: View {
                         }
                         HStack {
                             Spacer()
-                            LoadingButton(isLoading: testPlanStore.updatingTestPlans[testPlan.id] ?? false) {
+                            LoadingButton(
+                                isLoading: testPlanStore.updatingTestPlans[testPlan.id] ?? false
+                            ) {
                                 Task {
-                                    await testPlanStore.update(testPlanId: testPlan.id, data: testPlanData.toTestPlanUpdate())
+                                    await testPlanStore.update(
+                                        testPlanId: testPlan.id,
+                                        data: testPlanData.toTestPlanUpdate())
                                 }
                             } label: {
                                 Text("Save Config")
                             }
                             .buttonStyle(.borderedProminent)
-                            
+
                         }.padding(.bottom, 4)
                     }
                 case .steps:
@@ -69,7 +76,7 @@ struct TestPlanDetailView: View {
         .padding()
         .task { await buildsStore.loadBuilds() }
     }
-    
+
     var availableXcTestCases: [String] {
         return buildsStore.getBuildById(buildId: testPlan.buildId)?.xcTestCases ?? []
     }
@@ -77,6 +84,11 @@ struct TestPlanDetailView: View {
 
 #Preview {
     TestPlanDetailView(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
-        .environmentObject(BuildStore(projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
-        .environmentObject(TestPlanStore(projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
+        .environmentObject(
+            BuildStore(
+                projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient())
+        )
+        .environmentObject(
+            TestPlanStore(
+                projectId: Components.Schemas.XcProjectPublic.mock.id, apiClient: MockAPIClient()))
 }

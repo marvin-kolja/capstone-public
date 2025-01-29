@@ -95,21 +95,20 @@ enum DeleteTestPlanError: LocalizedError {
     }
 }
 
-
 class TestPlanStore: ProjectContext {
     @Published var testPlans: [Components.Schemas.SessionTestPlanPublic] = []
 
     @Published var loadingTestPlans = false
     @Published var errorLoadingTestPlans: AppError?
-    
+
     @Published var addingTestPlan = false
     @Published var errorAddingTestPlan: AppError?
 
-    @Published var updatingTestPlans: [String:Bool] = [:]
-    @Published var errorUpdatingTestPlans: [String:AppError] = [:]
-    
-    @Published var deletingTestPlans: [String:Bool] = [:]
-    @Published var errorDeletingTestPlans: [String:AppError] = [:]
+    @Published var updatingTestPlans: [String: Bool] = [:]
+    @Published var errorUpdatingTestPlans: [String: AppError] = [:]
+
+    @Published var deletingTestPlans: [String: Bool] = [:]
+    @Published var errorDeletingTestPlans: [String: AppError] = [:]
 
     func loadTestPlans() async {
         guard !loadingTestPlans else {
@@ -131,15 +130,15 @@ class TestPlanStore: ProjectContext {
             errorLoadingTestPlans = AppError(type: LoadBuildsError.unexpected)
         }
     }
-    
+
     func add(data: Components.Schemas.SessionTestPlanCreate) async {
         guard !addingTestPlan else {
             return
         }
-        
+
         addingTestPlan = true
         defer { addingTestPlan = false }
-        
+
         do {
             let newTestPlan = try await apiClient.createTestPlan(data: data)
             setTestPlan(plan: newTestPlan)
@@ -155,8 +154,8 @@ class TestPlanStore: ProjectContext {
             return
         }
 
-        updatingTestPlans[testPlanId]  = true
-        defer { updatingTestPlans[testPlanId]  = false }
+        updatingTestPlans[testPlanId] = true
+        defer { updatingTestPlans[testPlanId] = false }
 
         do {
             let newTestPlan = try await apiClient.updateTestPlan(testPlanId: testPlanId, data: data)
@@ -167,14 +166,14 @@ class TestPlanStore: ProjectContext {
             errorUpdatingTestPlans[testPlanId] = AppError(type: UpdateTestPlanError.unexpected)
         }
     }
-    
+
     func delete(testPlanId: String) async {
         guard !(deletingTestPlans[testPlanId] ?? false) else {
             return
         }
 
-        deletingTestPlans[testPlanId]  = true
-        defer { deletingTestPlans[testPlanId]  = false }
+        deletingTestPlans[testPlanId] = true
+        defer { deletingTestPlans[testPlanId] = false }
 
         do {
             try await apiClient.deleteTestPlan(testPlanId: testPlanId)

@@ -10,13 +10,13 @@ import SwiftUI
 struct TwoColumnView<Content: View, Detail: View>: View {
     @ViewBuilder var content: () -> Content
     @ViewBuilder var detail: () -> Detail
-    
+
     var body: some View {
         VStack {
             HSplitView {
-                VStack{
+                VStack {
                     Spacer()
-                    HStack{
+                    HStack {
                         Spacer()
                         content()
                         Spacer()
@@ -24,9 +24,9 @@ struct TwoColumnView<Content: View, Detail: View>: View {
                     Spacer()
                 }
                 .frame(minWidth: 200, maxWidth: 400)
-                VStack{
+                VStack {
                     Spacer()
-                    HStack{
+                    HStack {
                         Spacer()
                         detail()
                         Spacer()
@@ -40,9 +40,11 @@ struct TwoColumnView<Content: View, Detail: View>: View {
 }
 
 #Preview {
-    TwoColumnView( content: {
-        Text("Content")
-    }, detail: {
-        Text("Detail")
-    })
+    TwoColumnView(
+        content: {
+            Text("Content")
+        },
+        detail: {
+            Text("Detail")
+        })
 }

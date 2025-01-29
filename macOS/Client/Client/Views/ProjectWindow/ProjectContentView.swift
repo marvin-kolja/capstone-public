@@ -31,9 +31,12 @@ struct ProjectContentView: View {
 
     init(project: Components.Schemas.XcProjectPublic, apiClient: APIClientProtocol) {
         _currentProjectStore = StateObject(wrappedValue: CurrentProjectStore(project: project))
-        _buildsStore = StateObject(wrappedValue: BuildStore(projectId: project.id, apiClient: apiClient))
-        _testPlanStore = StateObject(wrappedValue: TestPlanStore(projectId: project.id, apiClient: apiClient))
-        _sessionStore = StateObject(wrappedValue: SessionStore(projectId: project.id, apiClient: apiClient))
+        _buildsStore = StateObject(
+            wrappedValue: BuildStore(projectId: project.id, apiClient: apiClient))
+        _testPlanStore = StateObject(
+            wrappedValue: TestPlanStore(projectId: project.id, apiClient: apiClient))
+        _sessionStore = StateObject(
+            wrappedValue: SessionStore(projectId: project.id, apiClient: apiClient))
     }
 
     var body: some View {
@@ -73,7 +76,10 @@ struct ProjectContentView: View {
         .task { await devicesStore.loadDevices() }
         .toolbar {
             ToolbarItem(placement: .status) {
-                ServerStatusButton(isLoading: serverStatusStore.checkingHealth, serverStatus: serverStatusStore.serverStatus) {
+                ServerStatusButton(
+                    isLoading: serverStatusStore.checkingHealth,
+                    serverStatus: serverStatusStore.serverStatus
+                ) {
                     ServerStatusDetailView()
                 }
                 .accessibilityIdentifier("server-status")

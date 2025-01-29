@@ -5,17 +5,17 @@
 //  Created by Marvin Willms on 29.10.24.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct ClientApp: App {
     @StateObject private var projectStore: ProjectStore
     @StateObject private var serverStatusStore: ServerStatusStore
     @StateObject private var deviceStore: DeviceStore
-    
+
     private var apiClient: APIClientProtocol
-    
+
     init() {
         do {
             let apiClient: APIClientProtocol
@@ -32,7 +32,7 @@ struct ClientApp: App {
             fatalError("Failed to intiialize API Client: \(error)")
         }
     }
-    
+
     var body: some Scene {
         Window("Welcome to Capstone", id: "main") {
             WelcomeContentView()
@@ -50,7 +50,7 @@ struct ClientApp: App {
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
-        
+
         WindowGroup(for: Components.Schemas.XcProjectPublic.self) { $project in
             if let project = project {
                 ProjectContentView(project: project, apiClient: apiClient)
@@ -65,7 +65,7 @@ struct ClientApp: App {
         }
         .defaultPosition(.center)
         .commands {
-            CommandGroup(replacing: CommandGroupPlacement.newItem) { }
+            CommandGroup(replacing: CommandGroupPlacement.newItem) {}
         }
     }
 }

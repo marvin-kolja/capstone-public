@@ -9,9 +9,9 @@ import SwiftUI
 
 struct ProjectDetailView: View {
     @EnvironmentObject var currentProjectStore: CurrentProjectStore
-    
+
     var project: Components.Schemas.XcProjectPublic { currentProjectStore.project }
-    
+
     var body: some View {
         VStack(alignment: .center) {
             Text("Project information")
@@ -31,23 +31,26 @@ struct ProjectDetailView: View {
                 GridRow {
                     Text("Configuration")
                         .bold()
-                    Text(project.configurations.map { resource in
-                        resource.name
-                    }.joined(separator: ", "))
+                    Text(
+                        project.configurations.map { resource in
+                            resource.name
+                        }.joined(separator: ", "))
                 }
                 GridRow {
                     Text("Targets")
                         .bold()
-                    Text(project.targets.map { resource in
-                        resource.name
-                    }.joined(separator: ", "))
+                    Text(
+                        project.targets.map { resource in
+                            resource.name
+                        }.joined(separator: ", "))
                 }
                 GridRow {
                     Text("Schemes")
                         .bold()
-                    Text(project.schemes.map { resource in
-                        resource.name
-                    }.joined(separator: ", "))
+                    Text(
+                        project.schemes.map { resource in
+                            resource.name
+                        }.joined(separator: ", "))
                 }
             }
             Spacer()

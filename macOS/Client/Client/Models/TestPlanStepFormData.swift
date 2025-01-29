@@ -18,9 +18,10 @@ struct TestPlanStepFormData {
     var testCases: [String] = []
 
     /// Uses the test plan data as default values for new steps
-    static func fromTestPlanData(testPlanData: TestPlanFormData, order: Int) -> TestPlanStepFormData {
+    static func fromTestPlanData(testPlanData: TestPlanFormData, order: Int) -> TestPlanStepFormData
+    {
         return .init(
-            id: UUID().uuidString, // Placeholder
+            id: UUID().uuidString,  // Placeholder
             metrics: testPlanData.metrics,
             order: order,
             recordingStartStrategy: testPlanData.recordingStartStrategy,
@@ -30,13 +31,16 @@ struct TestPlanStepFormData {
     }
 
     /// Used for steps that already exist. The test plan is used as backup for nil values.
-    static func fromExisting(step: Components.Schemas.SessionTestPlanStepPublic, testPlanData: TestPlanFormData) -> TestPlanStepFormData {
+    static func fromExisting(
+        step: Components.Schemas.SessionTestPlanStepPublic, testPlanData: TestPlanFormData
+    ) -> TestPlanStepFormData {
         return .init(
             id: step.id,
             metrics: step.metrics ?? testPlanData.metrics,
             name: step.name,
             order: step.order,
-            recordingStartStrategy: step.recordingStartStrategy ?? testPlanData.recordingStartStrategy,
+            recordingStartStrategy: step.recordingStartStrategy
+                ?? testPlanData.recordingStartStrategy,
             reinstallApp: step.reinstallApp ?? testPlanData.reinstallApp,
             repetitions: step.repetitions ?? 1,
             testCases: step.testCases

@@ -8,5 +8,6 @@
 import UniformTypeIdentifiers
 
 extension UTType {
-    static let xcodeproj = UTType(tag: "xcodeproj", tagClass: .filenameExtension, conformingTo: .compositeContent)!
+    static let xcodeproj = UTType(
+        tag: "xcodeproj", tagClass: .filenameExtension, conformingTo: .compositeContent)!
 }

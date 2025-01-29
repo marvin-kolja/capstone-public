@@ -10,7 +10,7 @@ import SwiftUI
 /// Creates a badge reflecting the current server status
 struct ServerStatusBadge: View {
     var status: ServerStatus
-    
+
     private var systemImage: String {
         switch status {
         case .down:
@@ -23,7 +23,7 @@ struct ServerStatusBadge: View {
             return "questionmark.circle.fill"
         }
     }
-    
+
     private var color: Color {
         switch status {
         case .down:
@@ -36,7 +36,7 @@ struct ServerStatusBadge: View {
             return .gray
         }
     }
-    
+
     var body: some View {
         Image(systemName: systemImage)
             .foregroundColor(color)

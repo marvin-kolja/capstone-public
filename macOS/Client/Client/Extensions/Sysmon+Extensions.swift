@@ -12,4 +12,3 @@ extension Components.Schemas.Sysmon {
         return TimeInterval(timestamp) / 1_000_000_000
     }
 }
-

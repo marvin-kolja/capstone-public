@@ -13,7 +13,7 @@ import SwiftUI
 /// The Button is link styled, uses a line limit of 1, and truncates the head.
 struct LocalFileLinkButton: View {
     var path: String?
-    
+
     var body: some View {
         Button(action: {
             guard let path = path else {

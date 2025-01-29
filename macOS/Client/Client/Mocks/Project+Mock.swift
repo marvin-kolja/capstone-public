@@ -26,11 +26,20 @@ extension Components.Schemas.XcProjectConfigurationPublic {
 
 extension Components.Schemas.XcProjectPublic {
     static let mock: Components.Schemas.XcProjectPublic = .init(
-        configurations: [Components.Schemas.XcProjectConfigurationPublic.mock, Components.Schemas.XcProjectConfigurationPublic.mock],
+        configurations: [
+            Components.Schemas.XcProjectConfigurationPublic.mock,
+            Components.Schemas.XcProjectConfigurationPublic.mock,
+        ],
         id: "some_id",
         name: "RP Swift",
         path: "/Path/to/project.xcodeproj",
-        schemes: [Components.Schemas.XcProjectSchemePublic.mock, Components.Schemas.XcProjectSchemePublic.mock],
-        targets: [Components.Schemas.XcProjectTargetPublic.mock, Components.Schemas.XcProjectTargetPublic.mock]
+        schemes: [
+            Components.Schemas.XcProjectSchemePublic.mock,
+            Components.Schemas.XcProjectSchemePublic.mock,
+        ],
+        targets: [
+            Components.Schemas.XcProjectTargetPublic.mock,
+            Components.Schemas.XcProjectTargetPublic.mock,
+        ]
     )
 }

@@ -5,19 +5,19 @@
 //  Created by Marvin Willms on 24.01.25.
 //
 
-import Foundation
 import Combine
+import Foundation
 
 enum ServerHealthCheckError: LocalizedError {
     case unexpected
-    
+
     var failureReason: String? {
         switch self {
         case .unexpected:
             return "An unexpected error checking the server health"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .unexpected:
@@ -39,25 +39,25 @@ class ServerStatusStore: APIClientContext {
     @Published var serverStatus: ServerStatus = .unknown
     @Published var dbStatus: ServerStatus = .unknown
     @Published var tunnelConnectStatus: ServerStatus = .unknown
-    
+
     /// Stores the subscription for succesfull api calls, otherwise it would be disposed directly
     private var cancellables = Set<AnyCancellable>()
     private var checkScheduled = false
-    
-    override init(apiClient: APIClientProtocol) {        
+
+    override init(apiClient: APIClientProtocol) {
         super.init(apiClient: apiClient)
-        
+
         Task {
             await self.checkHealth()
         }
-        
+
         if let apiClient = apiClient as? APIClient {
             apiClient.apiCallSuccessSubject
                 .sink { [weak self] success in
                     logger.debug("Got new apiCallSuccessSubject event, sucess: \(success)")
-                    
+
                     guard let self = self else { return }
-                    
+
                     switch self.serverStatus {
                     case .healthy:
                         if !success {
@@ -80,21 +80,21 @@ class ServerStatusStore: APIClientContext {
                 .store(in: &cancellables)
         }
     }
-    
+
     func checkHealth() async {
         guard !checkingHealth else {
             logger.debug("Already checking server health")
             return
         }
-        
+
         checkingHealth = true
-        
+
         defer { checkingHealth = false }
-        
+
         do {
             logger.debug("Checking server health")
             let serverHealth = try await apiClient.healthCheck()
-            
+
             switch serverHealth.status {
             case .ok:
                 serverStatus = .healthy
@@ -125,16 +125,16 @@ class ServerStatusStore: APIClientContext {
             dbStatus = .unknown
         }
     }
-    
+
     /// This will schedule a new check in the given `inSeconds` seconds when no check is scheduled already
     private func tryScheduleNextCheck(inSeconds: Double) {
         guard !checkScheduled else {
             logger.debug("Sever health check already scheduled")
             return
         }
-        
+
         checkScheduled = true
-        
+
         logger.debug("Schedule next check")
         DispatchQueue.main.asyncAfter(deadline: .now() + inSeconds) { [weak self] in
             self?.checkScheduled = false

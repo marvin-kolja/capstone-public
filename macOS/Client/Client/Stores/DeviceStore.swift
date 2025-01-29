@@ -20,15 +20,15 @@ class DeviceStore: APIClientContext {
     @Published var loadingDevices = false
     @Published var loadingDevicesError: AppError?
 
-    @Published var devicesPairing: [String:Bool] = [:]
-    @Published var devicesMounting: [String:Bool] = [:]
-    @Published var devicesEnablingDeveloperMode: [String:Bool] = [:]
-    @Published var devicesConnectingTunnel: [String:Bool] = [:]
+    @Published var devicesPairing: [String: Bool] = [:]
+    @Published var devicesMounting: [String: Bool] = [:]
+    @Published var devicesEnablingDeveloperMode: [String: Bool] = [:]
+    @Published var devicesConnectingTunnel: [String: Bool] = [:]
 
-    @Published var devicePairingErros: [String:AppError] = [:]
-    @Published var deviceMountingErros: [String:AppError] = [:]
-    @Published var deviceEnablingDeveloperModeErros: [String:AppError] = [:]
-    @Published var deviceConnectingTunnelErros: [String:AppError] = [:]
+    @Published var devicePairingErros: [String: AppError] = [:]
+    @Published var deviceMountingErros: [String: AppError] = [:]
+    @Published var deviceEnablingDeveloperModeErros: [String: AppError] = [:]
+    @Published var deviceConnectingTunnelErros: [String: AppError] = [:]
 
     func loadDevices() async {
         guard !loadingDevices else {

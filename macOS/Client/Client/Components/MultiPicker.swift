@@ -10,9 +10,9 @@ import SwiftUI
 struct MultiPicker: View {
     @Binding var selectedOptions: [String]
     var allOptions: [String]
-    
+
     @State private var showSelector = false
-    
+
     private var availableOptions: [String] {
         return allOptions.filter { !selectedOptions.contains($0) }
     }
@@ -21,7 +21,7 @@ struct MultiPicker: View {
         VStack {
             ForEach(selectedOptions.indices, id: \.self) { index in
                 let option = selectedOptions[index]
-                
+
                 HStack {
                     if !allOptions.contains(option) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -36,9 +36,9 @@ struct MultiPicker: View {
                         Image(systemName: "trash")
                             .foregroundColor(.red)
                     }
-                    
+
                 }
-                
+
             }.onMove { from, to in
                 selectedOptions.move(fromOffsets: from, toOffset: to)
             }
@@ -62,7 +62,6 @@ struct MultiPicker: View {
 #Preview {
     @Previewable @State var selection: [String] = ["4"]
     var options = ["1", "2", "3"]
-    
+
     MultiPicker(selectedOptions: $selection, allOptions: options).padding()
 }
-

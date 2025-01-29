@@ -10,15 +10,15 @@ extension Components.Schemas.BuildPublic {
         guard status == .success else {
             return false
         }
-        
+
         guard let _xctestrun = xctestrun else {
             return false
         }
-        
+
         guard let _xcTestCases = xcTestCases, !_xcTestCases.isEmpty else {
             return false
         }
-        
+
         return true
     }
 }

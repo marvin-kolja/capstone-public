@@ -17,7 +17,8 @@ struct TestPlanConfigForm: View {
             Divider()
 
             Picker("Recording Start Strategy", selection: $data.recordingStartStrategy) {
-                ForEach(Components.Schemas.RecordingStartStrategy.allCases, id: \.self) { strategy in
+                ForEach(Components.Schemas.RecordingStartStrategy.allCases, id: \.self) {
+                    strategy in
                     Text(strategy.rawValue.capitalized).tag(strategy)
                 }
             }
@@ -51,7 +52,8 @@ struct TestPlanConfigForm: View {
 }
 
 #Preview {
-    @Previewable @State var data = TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
+    @Previewable @State var data = TestPlanFormData.fromExisting(
+        testPlan: Components.Schemas.SessionTestPlanPublic.mock)
 
     TestPlanConfigForm(data: $data)
 }

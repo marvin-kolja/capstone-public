@@ -24,9 +24,9 @@ struct BuildDetailView: View {
                         await buildStore.streamUpdates(buildId: build.id)
                     }
                 }.disabled(
-                    (buildStore.streamingBuildsUpdates[build.id] ?? false) ||
-                    build.status == .pending ||
-                    build.status == .running
+                    (buildStore.streamingBuildsUpdates[build.id] ?? false)
+                        || build.status == .pending
+                        || build.status == .running
                 )
             }
             Divider()
@@ -53,7 +53,9 @@ struct BuildDetailView: View {
                 GridRow {
                     Text("Device")
                         .bold()
-                    Text(deviceStore.getDeviceById(deviceId: build.deviceId)?.deviceName ?? build.deviceId)
+                    Text(
+                        deviceStore.getDeviceById(deviceId: build.deviceId)?.deviceName
+                            ?? build.deviceId)
                 }
                 GridRow {
                     Text("Configuration")
@@ -111,13 +113,14 @@ struct BuildDetailView: View {
         guard let device = deviceUsedInBuild else {
             return true
         }
-        return build.status != .success ||
-        build.xctestrun == nil ||
-        !device.isDeviceReadyForBuilds
+        return build.status != .success || build.xctestrun == nil || !device.isDeviceReadyForBuilds
     }
 }
 
 #Preview {
     BuildDetailView(build: Components.Schemas.BuildPublic.mock)
-        .environmentObject(BuildStore(projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()))
+        .environmentObject(
+            BuildStore(
+                projectId: Components.Schemas.BuildPublic.mock.projectId, apiClient: MockAPIClient()
+            ))
 }

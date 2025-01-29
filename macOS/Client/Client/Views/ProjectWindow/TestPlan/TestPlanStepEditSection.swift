@@ -9,13 +9,13 @@ import SwiftUI
 
 struct TestPlanStepEditSection: View {
     @EnvironmentObject var stepStore: TestPlanStepStore
-    
+
     let step: Components.Schemas.SessionTestPlanStepPublic
     // Used as default data for the step form data
     let testPlanData: TestPlanFormData
-    
+
     @State private var stepFormData: TestPlanStepFormData
-    
+
     var availableXcTestCases: [String]
 
     init(
@@ -25,15 +25,19 @@ struct TestPlanStepEditSection: View {
     ) {
         self.step = step
         self.testPlanData = testPlanData
-        _stepFormData = State(initialValue: TestPlanStepFormData.fromExisting(step: step, testPlanData: testPlanData))
+        _stepFormData = State(
+            initialValue: TestPlanStepFormData.fromExisting(
+                step: step, testPlanData: testPlanData))
         self.availableXcTestCases = availableXcTestCases
     }
-    
+
     var body: some View {
         CustomSection { _ in
-            TestPlanStepForm(data: $stepFormData, availableXcTestCases: availableXcTestCases)
-                .disabled(isUpdating || isDeleting)
-                .padding()
+            TestPlanStepForm(
+                data: $stepFormData, availableXcTestCases: availableXcTestCases
+            )
+            .disabled(isUpdating || isDeleting)
+            .padding()
         } label: { isExpanded in
             HStack {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
@@ -41,12 +45,12 @@ struct TestPlanStepEditSection: View {
                     .scaledToFit()
                     .frame(width: 10, height: 10)
                     .bold()
-                
+
                 Text($stepFormData.order.wrappedValue.description)
                     .font(.title3)
                     .foregroundColor(.primary)
                 Spacer()
-                
+
                 LoadingButton(isLoading: isUpdating) {
                     updateStep(data: $stepFormData.wrappedValue)
                 } label: {
@@ -54,33 +58,34 @@ struct TestPlanStepEditSection: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(isDeleting)
-                
+
                 LoadingButton(isLoading: isDeleting) {
                     removeStep(id: step.id)
                 } label: {
                     Label("Delete", systemImage: "trash")
                         .foregroundColor(.red)
                 }
-                
+
             }.padding()
         }
         .listRowSeparator(.hidden)
         .onChange(of: step) { old, new in
             if old.hashValue != new.hashValue {
                 // Overwrite form data when step changed
-                stepFormData = TestPlanStepFormData.fromExisting(step: step, testPlanData: testPlanData)
+                stepFormData = TestPlanStepFormData.fromExisting(
+                    step: step, testPlanData: testPlanData)
             }
         }
     }
-    
+
     var isUpdating: Bool {
         return stepStore.updatingSteps[step.id] ?? false
     }
-    
+
     var isDeleting: Bool {
         return stepStore.deletingSteps[step.id] ?? false
     }
-    
+
     func updateStep(data: TestPlanStepFormData) {
         Task {
             await stepStore.update(stepId: data.id, data: data.toStepUpdate())
@@ -97,17 +102,20 @@ struct TestPlanStepEditSection: View {
 #Preview {
     let projectId = Components.Schemas.SessionTestPlanPublic.mock.projectId
     let testPlanId = Components.Schemas.SessionTestPlanPublic.mock.id
-    let testPlanData = TestPlanFormData.fromExisting(testPlan: Components.Schemas.SessionTestPlanPublic.mock)
-    
+    let testPlanData = TestPlanFormData.fromExisting(
+        testPlan: Components.Schemas.SessionTestPlanPublic.mock)
+
     TestPlanStepEditSection(
         step: Components.Schemas.SessionTestPlanStepPublic.mock,
         testPlanData: testPlanData,
-        availableXcTestCases: Components.Schemas.BuildPublic.mock.xcTestCases ?? []
+        availableXcTestCases: Components.Schemas.BuildPublic.mock.xcTestCases
+            ?? []
     )
-        .environmentObject(TestPlanStepStore(
+    .environmentObject(
+        TestPlanStepStore(
             projectId: projectId,
             testPlanId: testPlanId,
             apiClient: MockAPIClient(),
             steps: [Components.Schemas.SessionTestPlanStepPublic.mock])
-        )
+    )
 }
