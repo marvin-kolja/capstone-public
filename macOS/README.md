@@ -146,9 +146,9 @@ As there are already a mocked API client and mocked data, it should be easy to i
 > [!NOTE]
 > In the future GitHub Actions will be used to do the following and upload the `.dmg` file to GitHub artifacts.
 
-There are two scripts that help you to build, sign, and notarize the app for distribution.
+There are three scripts that help you to archive, build a `.dmg` file, and notarize the app for distribution.
 
-### Build
+### Archive
 
 > [!WARNING]
 > Change the `teamID` in the [`ExportOptions.plist`](Client/Client/ExportOptions.plist) file to your own team ID.
