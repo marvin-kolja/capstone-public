@@ -5,24 +5,26 @@ A SwiftUI macOS app that provides a graphical user interface to interact with th
 ## Table of Contents
 
 <!-- TOC -->
+
 * [macOS Client](#macos-client)
-  * [Table of Contents](#table-of-contents)
-  * [Features](#features)
-  * [Structure](#structure)
-  * [Development](#development)
-    * [Prerequisites](#prerequisites)
-    * [Setup](#setup)
-    * [Run Schemes](#run-schemes)
-    * [Data Stores](#data-stores)
-    * [Previews](#previews)
-    * [Formatting](#formatting)
-    * [Error handling](#error-handling)
-    * [Tests](#tests)
-  * [Distribution](#distribution)
-    * [Build](#build)
-    * [Export and create `.dmg` file](#export-and-create-dmg-file)
-    * [Notarize](#notarize)
-  * [Contact](#contact)
+    * [Table of Contents](#table-of-contents)
+    * [Features](#features)
+    * [Structure](#structure)
+    * [Development](#development)
+        * [Prerequisites](#prerequisites)
+        * [Setup](#setup)
+        * [Run Schemes](#run-schemes)
+        * [Data Stores](#data-stores)
+        * [Previews](#previews)
+        * [Formatting](#formatting)
+        * [Error handling](#error-handling)
+        * [Tests](#tests)
+    * [Distribution](#distribution)
+        * [Build](#build)
+        * [Export and create `.dmg` file](#export-and-create-dmg-file)
+        * [Notarize](#notarize)
+    * [Contact](#contact)
+
 <!-- TOC -->
 
 ## Features
@@ -78,13 +80,13 @@ A SwiftUI macOS app that provides a graphical user interface to interact with th
 
 ### Prerequisites
 
-| Prerequisite                                                 | Version | Description                                                            |
-|--------------------------------------------------------------|---------|------------------------------------------------------------------------|
-| Xcode                                                        | 15.0+   | Adds support for macOS 14                                              |
-| macOS                                                        | 14.0+   | Minimum supported version of app                                       |
-| Swift                                                        | 5+      | Swift version used in project                                          |
-| swift-format                                                 | -       | Required to install if not using Xcode 16 (which bundles swift-format) |
-| ([`create-dmg`](https://github.com/sindresorhus/create-dmg)) | -       | Only required to create `.dmg` file for [distribution](#Distribution). |
+| Prerequisite                                                 | Version | Description                                                                                          |
+|--------------------------------------------------------------|---------|------------------------------------------------------------------------------------------------------|
+| macOS                                                        | 14.0+   | Minimum supported version of app                                                                     |
+| Xcode                                                        | 15.0+   | Required as min macOS version of app is 14 and Xcode 15 is the first to add support for that version |
+| Swift                                                        | 5+      | Swift version used in project                                                                        |
+| swift-format                                                 | -       | Required to install if not using Xcode 16 (which bundles swift-format)                               |
+| ([`create-dmg`](https://github.com/sindresorhus/create-dmg)) | -       | Only required to create `.dmg` file for [distribution](#Distribution).                               |
 
 ### Setup
 
@@ -185,7 +187,9 @@ To notarize the app, run the following command in the `macos/Client` directory:
 NOTARY_PASSWORD=<your_app_specific_password> sh ./Scripts/notarize.sh
 ```
 
-This will upload the `.dmg` file to Apple's notarization service which will check the app. This process is important as it allows Gatekeeper to know the app was checked by Apple and is safe to run on macOS. Read more [here](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution). *We could also staple the notarization ticket to the `.dmg` file after this step and allow execution of the app even if the user is offline. This is a future improvement.*
+This will upload the `.dmg` file to Apple's notarization service which will check the app. This process is important as it allows Gatekeeper to know the app was checked by Apple and is safe to run on macOS. Read more [here](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
+*We could also staple the notarization ticket to the `.dmg` file after this step and allow execution of the app even if
+the user is offline. This is a future improvement.*
 
 ## Contact
 
