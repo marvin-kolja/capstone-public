@@ -66,7 +66,7 @@ struct TestPlanStepEditSection: View {
         }
         .listRowSeparator(.hidden)
         .onChange(of: step) { old, new in
-            if step.hashValue != step.hashValue {
+            if old.hashValue != new.hashValue {
                 // Overwrite form data when step changed
                 stepFormData = TestPlanStepFormData.fromExisting(step: step, testPlanData: testPlanData)
             }

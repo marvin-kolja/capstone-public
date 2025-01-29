@@ -46,6 +46,7 @@ struct TestPlansView: View {
         }, detail: {
             if let testPlanId = selectedTestPlanId, let testPlan = testPlanStore.getTestPlanById(testPlanId: testPlanId) {
                 TestPlanDetailView(testPlan: testPlan)
+                    .id(testPlan.id)
                     .disabled(testPlanStore.deletingTestPlans[testPlan.id] ?? false)
                     .environmentObject(TestPlanStepStore(projectId: testPlanStore.projectId, testPlanId: testPlan.id, apiClient: testPlanStore.apiClient, steps: testPlan.steps))
             } else {
