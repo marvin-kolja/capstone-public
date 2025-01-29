@@ -35,10 +35,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CE33E1452D4A2BAB00302B98 /* Exceptions for "Client" folder in "Client" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ExportOptions.plist,
+			);
+			target = CE75DF942CD0E3B000CAB26A /* Client */;
+		};
 		CE4706BA2D47E64E0030302D /* Exceptions for "Scripts" folder in "Client" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				apple_device_types.txt,
+				archive.sh,
+				build_dmg.sh,
 				parse_apple_device_types.sh,
 			);
 			target = CE75DF942CD0E3B000CAB26A /* Client */;
@@ -56,6 +65,9 @@
 		};
 		CE75DF972CD0E3B000CAB26A /* Client */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CE33E1452D4A2BAB00302B98 /* Exceptions for "Client" folder in "Client" target */,
+			);
 			path = Client;
 			sourceTree = "<group>";
 		};
