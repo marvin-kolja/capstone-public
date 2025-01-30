@@ -93,7 +93,7 @@ sh ~/capstone/start_server.sh
 3. Start the tunnel connect server
 
 ```bash
-sh ~/capstone/start_tunnel_connect.sh
+sh ~/capstone/start_tunnel_server.sh
 ```
 
 4. Make sure it's working
