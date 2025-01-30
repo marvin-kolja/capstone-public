@@ -5,27 +5,30 @@ A FastAPI server that provides a RESTful API to interact with the [Core](../core
 ## Table of Contents
 
 <!-- TOC -->
+
 * [API](#api)
-  * [Table of Contents](#table-of-contents)
-  * [Technologies](#technologies)
-    * [Server](#server)
-    * [Database](#database)
-    * [Async](#async)
-  * [Features](#features)
-  * [Structure](#structure)
-  * [Development](#development)
-    * [Prerequisites](#prerequisites)
-    * [Quick Start](#quick-start)
-    * [Tests & Coverage](#tests--coverage)
-      * [Run tests](#run-tests)
-      * [Coverage](#coverage)
-    * [Migrations](#migrations)
-      * [Create Database migration scripts](#create-database-migration-scripts)
-      * [Migrate Database](#migrate-database)
-    * [Formatting](#formatting)
-    * [Logging](#logging)
-    * [Generate OpenAPI schema](#generate-openapi-schema)
-  * [Contact](#contact)
+    * [Table of Contents](#table-of-contents)
+    * [Technologies](#technologies)
+        * [Server](#server)
+        * [Database](#database)
+        * [Async](#async)
+    * [Features](#features)
+    * [Structure](#structure)
+    * [Development](#development)
+        * [Prerequisites](#prerequisites)
+        * [Quick Start](#quick-start)
+        * [Tests & Coverage](#tests--coverage)
+            * [Run tests](#run-tests)
+            * [Coverage](#coverage)
+        * [Migrations](#migrations)
+            * [Create Database migration scripts](#create-database-migration-scripts)
+            * [Migrate Database](#migrate-database)
+        * [Formatting](#formatting)
+        * [Logging](#logging)
+        * [Generate OpenAPI schema](#generate-openapi-schema)
+    * [Database Diagram](#database-diagram)
+    * [Contact](#contact)
+
 <!-- TOC -->
 
 ## Technologies
@@ -223,6 +226,12 @@ sh scripts/gen_openapi.sh
 
 > [!TIP]
 > If you don't want to generate for the macOS app, you can call `python3 scripts/custom_openapi.py` to generate and print it to stdout.
+
+## Database Diagram
+
+The following shows the database schema currently used by the API server:
+
+![Database Schema](docs/db_schema_diagram.png)
 
 ## Contact
 
