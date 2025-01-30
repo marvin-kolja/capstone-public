@@ -226,6 +226,12 @@ Alternatively, you can use the server programmatically in python by either impor
 > [!IMPORTANT]
 > Requiring elevated privileges to create trusted tunnel is a python limitation. Other libraries do not require this. `pymobiledevice3` is actively looking into ways to remove this limitation which would make requiring a separate server run with root privileges obsolete. Read more [here](https://github.com/doronz88/pymobiledevice3/issues/1260).
 
+## How `pymobiledevice3` is used.
+
+As described above the core library uses `pymobiledevice3` to interact with physical iOS devices. The diagram below illustrates the parts of the `pymobiledevice3` that the core library uses. It is based on my understanding and helps to realize why it requires elevated privileges to interact with physical iOS devices:
+
+![](docs/pymobiledevice3_diagram.png)
+
 ## Contact
 
 Marvin Kolja Willms - [marvin.willms@code.berlin](mailto:marvin.willms@code.berlin)
