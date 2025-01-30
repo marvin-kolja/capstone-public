@@ -14,7 +14,7 @@ Mobile iOS Applications: Designed for repetitive tests and data collection of pe
         * [Repository Structure](#repository-structure)
     * [Usage](#usage)
         * [Prerequisites](#prerequisites)
-        * [Install and Run the API](#install-and-run-the-api)
+        * [Install and Run the servers](#install-and-run-the-servers)
         * [Install and Run the macOS App](#install-and-run-the-macos-app)
     * [Development](#development)
     * [Contact](#contact)
@@ -45,6 +45,10 @@ The project is divided into three main components:
 | Core      | A Python library that provides the main functionality of the project.   | [README](core/README.md)  |
 | API       | A FastAPI server that provides a RESTful API to interact with the Core. | [README](api/README.md)   |
 | macOS     | A SwiftUI macOS app that provides a graphical user interface.           | [README](macOS/README.md) |
+
+The following diagram shows a basic overview of the interaction between the components, the real device, database, and file system.
+
+<img src="docs/architecture_overview.png" width="800"/>
 
 ### Repository Structure
 
