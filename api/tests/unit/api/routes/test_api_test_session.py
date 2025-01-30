@@ -379,7 +379,7 @@ async def test_export_test_session_results_200(
             return_value=mock_db_test_session,
         ) as mock_read_test_session,
         patch(
-            "api.routes.api_test_session.api_test_session_service.process_trace_results",
+            "api.routes.api_test_session.api_test_session_service._process_trace_results_job",
         ) as mock_process_results,
     ):
 
@@ -389,10 +389,9 @@ async def test_export_test_session_results_200(
 
         assert r.status_code == 200, r.text
 
-        assert mock_read_test_session.call_count == 2
+        assert mock_read_test_session.call_count == 1
         mock_process_results.assert_called_once_with(
-            test_session_id=fake_test_session_id,
-            job_runner=mock_async_job_runner_dependency,
+            test_session_id=fake_test_session_id
         )
 
 
