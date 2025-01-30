@@ -145,9 +145,9 @@ curl http://127.0.0.1:8000/health # Use port as specified in .env (API_PORT)
 # {"status":"ok","db":"ok","tunnel_connect":"ok"}
 ```
 
-### Tests
+### Tests & Coverage
 
-The api server uses `pytest` for testing.
+The api server uses `pytest` for testing and `coverage` for code coverage.
 
 #### Run tests
 
@@ -160,6 +160,14 @@ sh scripts/test.sh
 **Options:**
 
 - Any pytest options can be passed to the script (e.g. `sh scripts/test.sh -k test_name` to run tests with `test_name` in the name).
+
+#### Coverage
+
+To generate a coverage report, run the following command:
+
+```sh
+coverage report -m
+```
 
 ### Migrations
 
