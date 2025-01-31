@@ -71,21 +71,37 @@ The following diagram shows a basic overview of the interaction between the comp
 | Xcode      | 16+     | Xcode for xcode specific operations.                                                                                           |
 | macOS      | 14+     | macOS is required for this to run as the Core interacts with xcode tools. The minimum version of `14` is set by the macOS app. |
 
+### Clone the repository
+
+```bash
+   git clone git@github.com:marvin-kolja/capstone.git
+   cd capstone
+```
+
 ### Install and Run the servers
 
 1. Run the installation script
 
-This will install python dependencies and sets up server environment.
+This will install python dependencies and sets up server environment in `~/capstone`.
 
 > [!CAUTION]
 > This requires `python3.13` to be installed and available in the PATH. Check if `python3.13` is available by running `command -v python3.13`.
 
-> [!CAUTION]
-> As the project isn't publicly available on GitHub the following command requires a URL with a token.
-> Please go to https://github.com/marvin-kolja/capstone/tree/main/misc/install_server.sh and get the RAW URL and replace the URL in the following command.
+[//]: # (> [!CAUTION])
+
+[//]: # (> As the project isn't publicly available on GitHub the following command requires a URL with a token.)
+
+[//]: # (> Please go to https://github.com/marvin-kolja/capstone/tree/main/misc/install_server.sh and get the RAW URL and replace the URL in the following command.)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (curl -sSL "https://raw.githubusercontent.com/marvin-kolja/capstone/refs/heads/main/misc/install_server.sh" | bash)
+
+[//]: # (```)
 
 ```bash
-curl -sSL "https://raw.githubusercontent.com/marvin-kolja/capstone/refs/heads/main/misc/install_server.sh" | bash
+sh ./misc/install_server.sh
 ```
 
 2. Start the server
@@ -95,6 +111,9 @@ sh ~/capstone/start_server.sh
 ```
 
 3. Start the tunnel connect server
+
+> [!NOTE]
+> This will ask for your password to start the tunnel connect server. Please read more about why this is necessary in the [core README](core/README.md#ios-trusted-tunnel).
 
 ```bash
 sh ~/capstone/start_tunnel_server.sh
