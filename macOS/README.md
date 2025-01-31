@@ -20,7 +20,7 @@ A SwiftUI macOS app that provides a graphical user interface to interact with th
         * [Error handling](#error-handling)
         * [Tests](#tests)
     * [Distribution](#distribution)
-        * [Build](#build)
+        * [Archive](#archive)
         * [Export and create `.dmg` file](#export-and-create-dmg-file)
         * [Notarize](#notarize)
     * [Contact](#contact)
@@ -92,12 +92,11 @@ A SwiftUI macOS app that provides a graphical user interface to interact with th
 
 > [!WARNING]
 > **Unique Bundle Identifier & Team**
-> If you're not part of the developer team specified in the projects `Signing & Capabilities` settings, you'll need to change the `Bundle Identifier` and `Team` of the targets.
+> If you're not part of the developer team specified in the projects' `Signing & Capabilities` settings, you'll need to change the `Bundle Identifier` and `Team` of the targets.
 
 1. Open the `macos/Client/Client.xcodeproj` file in Xcode.
 2. Make sure that the package dependencies are installed by checking "Package Dependencies" tab in the Xcode project settings.
-3. Build the application `Cmd + B`. This will generate an openapi client and data structs from the `openapi.yaml` file.
-   *Every time you change the openapi.yaml file, you need to build the app again.*
+3. Build the application `Cmd + B`. This will generate an openapi client and data structs from the `openapi.yaml` file. *Every time you change the openapi.yaml file, you need to build the app again.*
 
 ### Run Schemes
 
@@ -131,7 +130,7 @@ swift-format --recursive -i --configuration .swift-format .
 
 ### Error handling
 
-The app uses a custom error type `AppError` to takes a `LocalizedError`. This should be used to propagate errors as we can use those errors to show error toasts in the app.
+The app uses a custom error type `AppError` that takes a `LocalizedError`. This should be used to propagate errors as we can use those errors to show error toasts in the app.
 
 > Showing error toast is not implemented yet. Though if we keep using `AppError` for error handling, it will be easy to implement error toasts in the future.
 
@@ -187,9 +186,7 @@ To notarize the app, run the following command in the `macos/Client` directory:
 NOTARY_PASSWORD=<your_app_specific_password> sh ./Scripts/notarize.sh
 ```
 
-This will upload the `.dmg` file to Apple's notarization service which will check the app. This process is important as it allows Gatekeeper to know the app was checked by Apple and is safe to run on macOS. Read more [here](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
-*We could also staple the notarization ticket to the `.dmg` file after this step and allow execution of the app even if
-the user is offline. This is a future improvement.*
+This will upload the `.dmg` file to Apple's notarization service which will check the app. This process is important as it allows Gatekeeper to know the app was checked by Apple and is safe to run on macOS. Read more [here](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution). *We could also staple the notarization ticket to the `.dmg` file after this step and allow execution of the app even if the user is offline. This is a future improvement.*
 
 ## Contact
 

@@ -14,6 +14,7 @@ Mobile iOS Applications: Designed for repetitive tests and data collection of pe
         * [Repository Structure](#repository-structure)
     * [Usage](#usage)
         * [Prerequisites](#prerequisites)
+        * [Clone the repository](#clone-the-repository)
         * [Install and Run the servers](#install-and-run-the-servers)
         * [Install and Run the macOS App](#install-and-run-the-macos-app)
     * [Development](#development)
@@ -55,7 +56,7 @@ The following diagram shows a basic overview of the interaction between the comp
 ```
 /root
 |-- core/                   # Core library
-|-- api/                    # Backend
+|-- api/                    # API Server
 |-- macOS/                  # SwiftUI macOS app
 |-- misc/                   # Miscellaneous files (example iOS xcode project and server installation script)
 |-- README.md               # This file
@@ -94,6 +95,7 @@ This will install python dependencies and sets up server environment in `~/capst
 [//]: # (> Please go to https://github.com/marvin-kolja/capstone/tree/main/misc/install_server.sh and get the RAW URL and replace the URL in the following command.)
 
 [//]: # ()
+
 [//]: # (```bash)
 
 [//]: # (curl -sSL "https://raw.githubusercontent.com/marvin-kolja/capstone/refs/heads/main/misc/install_server.sh" | bash)
