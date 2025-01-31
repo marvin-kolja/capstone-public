@@ -655,10 +655,12 @@ async def process_trace_file(
     toc_path.unlink(missing_ok=True)
     data_path.unlink(missing_ok=True)
 
+    await asyncio.sleep(0.1)  # Wait for a moment to let the previous command finish
     await Xctrace.export_toc(
         trace_path=trace_path.as_posix(),
         toc_path=toc_path.as_posix(),
     )
+    await asyncio.sleep(0.1)  # Wait for a moment to let the previous command finish
     await Xctrace.export_data(
         trace_path=trace_path.as_posix(),
         data_path=data_path.as_posix(),
