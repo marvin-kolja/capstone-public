@@ -75,7 +75,7 @@ The following diagram shows a basic overview of the interaction between the comp
 ### Clone the repository
 
 ```bash
-   git clone git@github.com:marvin-kolja/capstone.git
+   git clone git@github.com:marvin-kolja/capstone-public.git
    cd capstone
 ```
 
@@ -92,13 +92,13 @@ This will install python dependencies and sets up server environment in `~/capst
 
 [//]: # (> As the project isn't publicly available on GitHub the following command requires a URL with a token.)
 
-[//]: # (> Please go to https://github.com/marvin-kolja/capstone/tree/main/misc/install_server.sh and get the RAW URL and replace the URL in the following command.)
+[//]: # (> Please go to https://github.com/marvin-kolja/capstone-public/tree/main/misc/install_server.sh and get the RAW URL and replace the URL in the following command.)
 
 [//]: # ()
 
 [//]: # (```bash)
 
-[//]: # (curl -sSL "https://raw.githubusercontent.com/marvin-kolja/capstone/refs/heads/main/misc/install_server.sh" | bash)
+[//]: # (curl -sSL "https://raw.githubusercontent.com/marvin-kolja/capstone-public/refs/heads/main/misc/install_server.sh" | bash)
 
 [//]: # (```)
 
@@ -137,7 +137,7 @@ curl http://localhost:8000/health
 
 1. Clone the repository:
    ```sh
-   git clone git@github.com:marvin-kolja/capstone.git
+   git clone git@github.com:marvin-kolja/capstone-public.git
    cd capstone
    ```
 
